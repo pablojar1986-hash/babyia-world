@@ -35,7 +35,7 @@
 - Metricas de interacciones en training_stats.json
 - 4 nuevos tests; 110 tests totales pasando
 
-### 0.2.1 — Observabilidad de red neuronal, control de commits y laberintos progresivos (actual)
+### 0.2.1 — Observabilidad de red neuronal, control de commits y laberintos progresivos (completado)
 - brain/network_inspector.py — inspeccion de arquitectura DQN (input_size, params, capas)
 - world/maze_generator.py — generacion procedural de laberintos con semilla y BFS
 - world/level_factory.py — laberintos progresivos por nivel 0-6 con validacion de solucionabilidad
@@ -45,6 +45,19 @@
 - interface/pygame_view.py — muestra dificultad, semilla y estado de solucionabilidad
 - data/network_stats.json y data/level_stats.json — persistencia de metadatos
 - 4 nuevos archivos de tests; 161 tests totales pasando
+
+### 0.2.2 — Estabilidad, seguridad de reset y progresion real de laberintos (actual)
+- main.py: corregido --episodes 0 (era interpretado como False)
+- main.py: flag --yes para confirmar resets destructivos con advertencia visible
+- main.py: muestra arquitectura DQN al iniciar (input, output, params)
+- world/level_factory.py: nivel 0 = mundo completamente abierto (frozenset vacio)
+- world/level_factory.py: nivel 1 = paredes base; niveles 4-6 = validacion llave->puerta->meta
+- world/maze_generator.py: is_solvable_with_key_door() con BFS por etapas
+- world/maze_generator.py: generate_solvable_maze_with_key_door()
+- brain/model_store.py: load() reporta errores claramente (last_load_error)
+- brain/network_inspector.py: version actualizada a 0.2.2
+- .vscode/tasks.json: tarea reset usa --yes para omitir advertencia
+- 1 nuevo archivo de tests; tests actualizados; todos pasan
 
 ### 0.3 — Lenguaje simple
 - Frases generadas por plantillas más ricas

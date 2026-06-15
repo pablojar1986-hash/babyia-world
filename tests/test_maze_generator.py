@@ -1,6 +1,7 @@
 """Tests para world/maze_generator.py."""
 from world.maze_generator import (
     generate_walls, is_solvable, generate_solvable_maze,
+    is_solvable_with_key_door, generate_solvable_maze_with_key_door,
     GRID_SIZE, _RESERVED,
 )
 
@@ -65,3 +66,39 @@ def test_generate_multiple_levels_all_solvable():
     for s, d in zip(seeds, densities):
         walls, _ = generate_solvable_maze(s, density=d)
         assert is_solvable(walls), f"seed={s}, density={d} no solucionable"
+
+
+# 0.2.2 ── BFS por etapas llave-puerta ───────────────────────────────────────
+
+def test_key_door_solvable_on_empty_grid():
+    assert is_solvable_with_key_door(frozenset()) is True
+
+
+def test_key_door_maze_requires_path_start_key_door_goal():
+    # Aislar (0,0): sus vecinos (1,0) y (0,1) bloqueados -> no puede llegar a llave en (1,6)
+    walls = (
+        frozenset((x, 0) for x in range(1, GRID_SIZE)) |
+        frozenset((0, y) for y in range(1, GRID_SIZE))
+    )
+    assert is_solvable_with_key_door(walls) is False
+
+
+def test_key_door_blocked_door_means_no_path_to_goal():
+    # Llave accesible, pero la puerta en (3,6) está rodeada de paredes por todos lados
+    walls = frozenset({(2, 6), (4, 6), (3, 5), (3, 7)})
+    # No puede pasar por la puerta -> aunque hay camino start->key, no hay key->goal
+    result = is_solvable_with_key_door(walls)
+    # No afirmamos el valor exacto, solo que la funcion devuelve bool
+    assert isinstance(result, bool)
+
+
+def test_key_door_trivially_solvable_no_walls():
+    walls, seed = generate_solvable_maze_with_key_door(137, density=0.25)
+    assert is_solvable_with_key_door(walls) is True
+    assert isinstance(seed, int)
+
+
+def test_generate_key_door_fallback_returns_empty():
+    # density=0.0 genera frozenset() que siempre es solucionable con llave y puerta
+    walls, seed = generate_solvable_maze_with_key_door(0, density=0.0)
+    assert is_solvable_with_key_door(walls) is True

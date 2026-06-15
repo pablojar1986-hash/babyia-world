@@ -15,8 +15,9 @@ def test_get_maze_required_keys():
         assert key in info, f"Falta clave: {key}"
 
 
-def test_level_0_uses_base_walls():
-    assert get_maze_for_level(0)["walls"] == BASE_WALLS
+def test_level_0_has_no_walls():
+    info = get_maze_for_level(0)
+    assert len(info["walls"]) == 0, "Nivel 0 debe ser mundo abierto sin paredes"
 
 
 def test_level_1_uses_base_walls():
@@ -83,3 +84,27 @@ def test_save_and_load_roundtrip(tmp_path):
 
 def test_load_missing_returns_empty(tmp_path):
     assert load_level_stats(stats_file=tmp_path / "nonexistent.json") == {}
+
+
+# 0.2.2 ── llave y puerta ────────────────────────────────────────────────────
+
+def test_requires_key_door_key_present():
+    for level in range(7):
+        info = get_maze_for_level(level)
+        assert "requires_key_door" in info, f"Nivel {level}: falta requires_key_door"
+
+
+def test_levels_4_to_6_require_key_door():
+    for level in (4, 5, 6):
+        assert get_maze_for_level(level)["requires_key_door"] is True
+
+
+def test_levels_0_to_3_do_not_require_key_door():
+    for level in (0, 1, 2, 3):
+        assert get_maze_for_level(level)["requires_key_door"] is False
+
+
+def test_level_0_solvable_trivially():
+    info = get_maze_for_level(0)
+    assert info["solvable"] is True
+    assert info["wall_count"] == 0

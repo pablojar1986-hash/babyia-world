@@ -1,8 +1,8 @@
 """
-BabyIA World 0.2 — punto de entrada.
+BabyIA World 0.2.2 — punto de entrada.
 
 Modos:
-  python main.py                              → train (por defecto)
+  python main.py                              -> train (por defecto)
   python main.py --mode train --episodes 500
   python main.py --mode watch
   python main.py --mode evaluate --episodes 50
@@ -10,19 +10,21 @@ Modos:
   python main.py --reset-memory
   python main.py --reset-model
   python main.py --reset-stats
-  python main.py --reset-all
+  python main.py --reset-all --yes
+  python main.py --reset-all --episodes 0    (reset sin entrenar)
 """
 
 import argparse
 import random
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import torch
 
 from brain.metrics import TrainingMetrics
 from brain.model_store import ModelStore
+from brain.network_inspector import save_network_stats
 from brain.trainer import Trainer
 from config import (
     DEFAULT_EPISODES,
@@ -54,6 +56,7 @@ class RunConfig:
     reset_model: bool = False
     reset_stats: bool = False
     reset_concepts: bool = False
+    yes: bool = False   # 0.2.2: confirmar operaciones destructivas
 
 
 # ── Argumentos ────────────────────────────────────────────────────────────────
@@ -64,9 +67,9 @@ def parse_args() -> RunConfig:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--mode", choices=[MODE_TRAIN, MODE_WATCH, MODE_EVALUATE],
-                        default=MODE_TRAIN, help="Modo de ejecución")
+                        default=MODE_TRAIN, help="Modo de ejecucion")
     parser.add_argument("--episodes", type=int, default=None,
-                        help="Cantidad de episodios a ejecutar")
+                        help="Cantidad de episodios a ejecutar (0 = solo reset)")
     parser.add_argument("--seed", type=int, default=None,
                         help="Semilla para reproducibilidad")
     parser.add_argument("--reset-memory", action="store_true",
@@ -74,11 +77,13 @@ def parse_args() -> RunConfig:
     parser.add_argument("--reset-model", action="store_true",
                         help="Borra pesos .pt antes de iniciar (nace desde cero)")
     parser.add_argument("--reset-stats", action="store_true",
-                        help="Borra estadísticas de entrenamiento")
+                        help="Borra estadisticas de entrenamiento")
     parser.add_argument("--reset-concepts", action="store_true",
                         help="Borra conceptos aprendidos (data/concepts.json)")
     parser.add_argument("--reset-all", action="store_true",
                         help="Borra memorias, modelo, estadisticas y conceptos")
+    parser.add_argument("--yes", action="store_true",
+                        help="Confirma operaciones destructivas sin advertencia")
 
     args = parser.parse_args()
 
@@ -88,7 +93,8 @@ def parse_args() -> RunConfig:
         args.reset_stats    = True
         args.reset_concepts = True
 
-    episodes = args.episodes or DEFAULT_EPISODES[args.mode]
+    # 0.2.2: usar is not None para que --episodes 0 no sea ignorado
+    episodes = args.episodes if args.episodes is not None else DEFAULT_EPISODES[args.mode]
 
     return RunConfig(
         mode=args.mode,
@@ -98,6 +104,7 @@ def parse_args() -> RunConfig:
         reset_model=args.reset_model,
         reset_stats=args.reset_stats,
         reset_concepts=getattr(args, "reset_concepts", False),
+        yes=args.yes,
     )
 
 
@@ -111,6 +118,12 @@ def set_seed(seed: int):
 
 def handle_resets(cfg: RunConfig, trainer: Trainer,
                   metrics: TrainingMetrics, store: ModelStore):
+    any_reset = cfg.reset_memory or cfg.reset_model or cfg.reset_stats or cfg.reset_concepts
+    if any_reset and not cfg.yes:
+        console.print(
+            "[bold red]ADVERTENCIA: operacion destructiva en curso. "
+            "Usa --yes para omitir esta advertencia.[/bold red]"
+        )
     if cfg.reset_memory:
         trainer.memory.episodes = []
         trainer.memory.autobiography = []
@@ -128,10 +141,10 @@ def handle_resets(cfg: RunConfig, trainer: Trainer,
 
 
 def build_status(trainer: Trainer, metrics: TrainingMetrics, mode: str) -> dict:
-    """Combina estado del trainer con métricas agregadas para la vista."""
+    """Combina estado del trainer con metricas agregadas para la vista."""
     return {
         **trainer.get_status(),
-        "mode":      mode,
+        "mode":       mode,
         "avg_reward": metrics.average_reward,
         "avg_steps":  metrics.average_steps,
     }
@@ -179,6 +192,15 @@ def main():
     store   = ModelStore(trainer.brain)
     view    = PygameView()
 
+    # 0.2.2: guardar y mostrar metadatos de arquitectura al iniciar
+    net_info = save_network_stats(trainer.brain.q_net)
+    console.print(
+        f"[dim]Red DQN: input={net_info['input_size']} "
+        f"output={net_info['output_size']} "
+        f"params={net_info['total_params']} "
+        f"v{net_info['version']}[/dim]"
+    )
+
     handle_resets(cfg, trainer, metrics, store)
 
     # Cargar modelo (si no fue reseteado)
@@ -186,11 +208,13 @@ def main():
         loaded = store.load()
         if loaded:
             console.print("[dim]Modelo cargado desde babyia_latest.pt[/dim]")
+        elif store.last_load_error:
+            console.print(f"[yellow]{store.last_load_error}[/yellow]")
 
     # Inicializar mejor tasa conocida (para no sobreescribir el mejor modelo)
     store.init_best_rate(metrics.best_success_rate)
 
-    # En watch/evaluate, epsilon mínimo
+    # En watch/evaluate, epsilon minimo
     if not is_training:
         trainer.brain.epsilon = INFERENCE_EPSILON
 
@@ -244,7 +268,7 @@ def main():
         if is_training:
             store.save_latest()
         view.quit()
-        console.print("[bold green]BabyIA guardó su progreso. Hasta pronto.[/bold green]")
+        console.print("[bold green]BabyIA guardo su progreso. Hasta pronto.[/bold green]")
 
 
 if __name__ == "__main__":

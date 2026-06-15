@@ -32,7 +32,7 @@
     {
       "label": "BabyIA — Reset total (memoria + modelo + stats)",
       "type": "shell",
-      "command": "python main.py --reset-all --episodes 0",
+      "command": "python main.py --reset-all --episodes 0 --yes",
       "group": "build",
       "problemMatcher": []
     },

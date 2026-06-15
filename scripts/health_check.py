@@ -159,13 +159,49 @@ def check_data_files(root: Path = ROOT) -> list[dict]:
     data = root / "data"
     results = []
     for fname in ["concepts.json", "training_stats.json",
-                  "network_stats.json", "level_stats.json"]:
+                  "network_stats.json", "level_stats.json"]:  # 0.2.1+
         path = data / fname
         results.append({
             "status" : "ok" if path.exists() else "warn",
             "message": f"data/{fname}" + (" existe" if path.exists() else " aun no creado"),
         })
     return results
+
+
+def check_level0_is_open(root: Path = ROOT) -> list[dict]:
+    """Verifica que nivel 0 sea mundo completamente abierto (sin paredes)."""
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(root))
+        from world.level_factory import get_maze_for_level
+        info = get_maze_for_level(0)
+        ok = info["wall_count"] == 0
+        return [{
+            "status" : "ok" if ok else "fail",
+            "message": ("Nivel 0 es mundo abierto (0 paredes)"
+                        if ok else f"Nivel 0 tiene {info['wall_count']} paredes (debe ser 0)"),
+        }]
+    except Exception as e:
+        return [{"status": "warn", "message": f"No se pudo verificar nivel 0: {e}"}]
+
+
+def check_tasks_reset_zero(root: Path = ROOT) -> list[dict]:
+    """Verifica que la tarea de reset en tasks.json usa --episodes 0."""
+    import json as _json
+    tasks_file = root / ".vscode" / "tasks.json"
+    if not tasks_file.exists():
+        return [{"status": "warn", "message": "tasks.json no encontrado"}]
+    try:
+        with open(tasks_file, encoding="utf-8") as f:
+            tasks = _json.load(f)
+        for task in tasks.get("tasks", []):
+            if "reset" in task.get("label", "").lower():
+                cmd = task.get("command", "")
+                if "--episodes 0" in cmd:
+                    return [{"status": "ok", "message": "Tarea reset usa --episodes 0"}]
+        return [{"status": "warn", "message": "Tarea reset no encontrada o sin --episodes 0"}]
+    except Exception as e:
+        return [{"status": "warn", "message": f"Error leyendo tasks.json: {e}"}]
 
 
 def run_all_checks(root: Path = ROOT) -> list[dict]:
@@ -177,6 +213,8 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_selfmod(root))
     checks.extend(check_interface_purity(root))
     checks.extend(check_data_files(root))
+    checks.extend(check_level0_is_open(root))     # 0.2.2
+    checks.extend(check_tasks_reset_zero(root))   # 0.2.2
     return checks
 
 

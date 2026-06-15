@@ -1,5 +1,6 @@
 """Versionado y persistencia de pesos del cerebro."""
 import shutil
+import sys
 from pathlib import Path
 
 from config import CHECKPOINT_EVERY, CHECKPOINTS_DIR, MODEL_BEST, MODEL_LATEST
@@ -8,9 +9,9 @@ from config import CHECKPOINT_EVERY, CHECKPOINTS_DIR, MODEL_BEST, MODEL_LATEST
 class ModelStore:
     """
     Gestiona tres capas de persistencia:
-      - babyia_latest.pt  → modelo más reciente siempre actualizado
-      - babyia_best.pt    → solo se sobreescribe si mejora la tasa de éxito
-      - checkpoints/      → copias numeradas cada N episodios
+      - babyia_latest.pt  -> modelo mas reciente siempre actualizado
+      - babyia_best.pt    -> solo se sobreescribe si mejora la tasa de exito
+      - checkpoints/      -> copias numeradas cada N episodios
 
     Acepta rutas opcionales para facilitar tests sin tocar el sistema de archivos real.
     """
@@ -24,6 +25,7 @@ class ModelStore:
         self._best            = Path(model_best)      if model_best      else MODEL_BEST
         self._checkpoints_dir = Path(checkpoints_dir) if checkpoints_dir else CHECKPOINTS_DIR
         self._best_rate       = 0.0
+        self.last_load_error  = ""   # 0.2.2: razon del ultimo fallo de carga
 
     # ── Guardado ──────────────────────────────────────────────────────────────
 
@@ -32,7 +34,7 @@ class ModelStore:
         self.brain.save(str(self._latest))
 
     def save_best(self, success_rate: float) -> bool:
-        """Guarda como mejor modelo solo si supera el récord. Devuelve True si actualizó."""
+        """Guarda como mejor modelo solo si supera el record. Devuelve True si actualizo."""
         if success_rate > self._best_rate:
             self._best_rate = success_rate
             self._best.parent.mkdir(parents=True, exist_ok=True)
@@ -49,17 +51,30 @@ class ModelStore:
     # ── Carga ─────────────────────────────────────────────────────────────────
 
     def load(self) -> bool:
-        """Carga babyia_latest.pt si existe. Devuelve True si cargó algo."""
-        if self._latest.exists():
-            try:
-                self.brain.load(str(self._latest))
-                return True
-            except Exception:
-                pass
-        return False
+        """
+        Carga babyia_latest.pt si existe. Devuelve True si cargo correctamente.
+        Si el modelo no existe o es incompatible, devuelve False y registra la razon
+        en self.last_load_error (y la imprime en stderr).
+        """
+        self.last_load_error = ""
+
+        if not self._latest.exists():
+            return False
+
+        try:
+            self.brain.load(str(self._latest))
+            return True
+        except Exception as e:
+            msg = str(e)
+            if "size mismatch" in msg.lower() or "mismatch" in msg.lower():
+                self.last_load_error = f"Modelo incompatible (STATE_SIZE diferente): {msg[:120]}"
+            else:
+                self.last_load_error = f"Error al cargar modelo: {msg[:120]}"
+            print(f"[model_store] {self.last_load_error}", file=sys.stderr)
+            return False
 
     def init_best_rate(self, rate: float):
-        """Inicializa el mejor récord conocido (cargado desde métricas)."""
+        """Inicializa el mejor record conocido (cargado desde metricas)."""
         self._best_rate = rate
 
     # ── Reset ─────────────────────────────────────────────────────────────────

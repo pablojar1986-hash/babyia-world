@@ -73,3 +73,41 @@ def test_init_best_rate(store):
     # Con un valor menor no debe guardar
     improved = store.save_best(0.5)
     assert improved is False
+
+
+# 0.2.2 ── reporte de errores ────────────────────────────────────────────────
+
+def test_last_load_error_empty_initially(store):
+    assert store.last_load_error == ""
+
+
+def test_load_no_error_when_no_file(store):
+    result = store.load()
+    assert result is False
+    assert store.last_load_error == ""   # no hay archivo -> no es un error
+
+
+def test_model_load_reports_incompatible_model(tmp_path):
+    """Modelo guardado con input_size diferente debe dar False y registrar razon."""
+    import torch
+    import torch.nn as nn
+    from brain.baby_brain import BabyBrain
+
+    # Guardar modelo con tamano de entrada incorrecto (10 en vez de 18)
+    wrong_net = nn.Sequential(
+        nn.Linear(10, 128), nn.ReLU(),
+        nn.Linear(128, 64), nn.ReLU(),
+        nn.Linear(64, 5),
+    )
+    model_file = tmp_path / "bad_brain.pt"
+    torch.save({"q_net": wrong_net.state_dict(), "epsilon": 0.5, "train_steps": 0},
+               model_file)
+
+    brain = BabyBrain()
+    store = ModelStore(brain, model_latest=model_file,
+                       model_best=tmp_path / "best.pt",
+                       checkpoints_dir=tmp_path / "ckpt")
+    result = store.load()
+
+    assert result is False
+    assert store.last_load_error != "", "Debe registrar razon del fallo"

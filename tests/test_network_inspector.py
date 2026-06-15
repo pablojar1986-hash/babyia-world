@@ -66,7 +66,7 @@ def test_save_returns_dict(tmp_path):
 def test_save_includes_version(tmp_path):
     p = tmp_path / "net_stats.json"
     info = save_network_stats(_make_model(), stats_file=p)
-    assert info["version"] == "0.2.1"
+    assert info["version"] == "0.2.2"
 
 
 def test_load_after_save(tmp_path):
@@ -75,9 +75,21 @@ def test_load_after_save(tmp_path):
     loaded = load_network_stats(stats_file=p)
     assert loaded["input_size"] == 18
     assert loaded["output_size"] == 5
-    assert loaded["version"] == "0.2.1"
+    assert loaded["version"] == "0.2.2"
 
 
 def test_load_missing_returns_empty(tmp_path):
     result = load_network_stats(stats_file=tmp_path / "nonexistent.json")
     assert result == {}
+
+
+# 0.2.2 ── test requerido por spec ───────────────────────────────────────────
+
+def test_network_stats_file_created(tmp_path):
+    """save_network_stats crea el archivo y usa version 0.2.2."""
+    p = tmp_path / "net.json"
+    save_network_stats(_make_model(), stats_file=p)
+    assert p.exists()
+    loaded = load_network_stats(stats_file=p)
+    assert loaded["version"] == "0.2.2"
+    assert loaded["input_size"] == 18

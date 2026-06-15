@@ -2,12 +2,32 @@
   "input_size": 18,
   "output_size": 5,
   "total_params": 11013,
-  "layer_sizes": [18, 128, 64, 5],
-  "layers": [
-    {"name": "0", "in": 18, "out": 128, "params": 2432},
-    {"name": "2", "in": 128, "out": 64, "params": 8256},
-    {"name": "4", "in": 64, "out": 5, "params": 325}
+  "layer_sizes": [
+    18,
+    128,
+    64,
+    5
   ],
-  "last_updated": "2026-06-15T00:00:00",
-  "version": "0.2.1"
+  "layers": [
+    {
+      "name": "net.0",
+      "in": 18,
+      "out": 128,
+      "params": 2432
+    },
+    {
+      "name": "net.2",
+      "in": 128,
+      "out": 64,
+      "params": 8256
+    },
+    {
+      "name": "net.4",
+      "in": 64,
+      "out": 5,
+      "params": 325
+    }
+  ],
+  "last_updated": "2026-06-15T08:03:19.726973",
+  "version": "0.2.2"
 }

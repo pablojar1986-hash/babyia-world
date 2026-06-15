@@ -14,8 +14,8 @@ BabyIA World/
 |   |-- grid_world.py    <- Cuadricula 8x8, objetos, step(has_key), set_walls (0.2.1).
 |   |-- inventory.py     <- Inventario de BabyIA por episodio (0.2).
 |   |-- interactions.py  <- Reglas causa-efecto puras (0.2).
-|   |-- maze_generator.py <- Generacion procedural con semilla y BFS (0.2.1).
-|   `-- level_factory.py  <- Laberintos progresivos por nivel 0-6 (0.2.1).
+|   |-- maze_generator.py <- BFS simple y BFS por etapas llave-puerta (0.2.2).
+|   `-- level_factory.py  <- Laberintos por nivel: 0=vacio, 1=base, 4-6=llave-puerta (0.2.2).
 |
 |-- brain/               <- Todo lo relacionado con el aprendizaje.
 |   |-- baby_brain.py    <- DQN: red neuronal 18->128->64->5, replay buffer.

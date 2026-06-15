@@ -1,8 +1,8 @@
-# BabyIA World 0.2.1
+# BabyIA World 0.2.2
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.2.1 agrega observabilidad de red neuronal y laberintos progresivos por nivel.**
+> **0.2.2 corrige estabilidad, seguridad de reset y progresion real de laberintos.**
 > BabyIA todavia no tiene lenguaje avanzado ni conciencia real.
 > Los conceptos descubiertos son relaciones estadisticas aprendidas por experiencia.
 
@@ -170,6 +170,17 @@ Estas senales **no son emociones reales**.
 Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 
 ---
+
+## Que se implemento en 0.2.2
+
+- `main.py` — corriegido `--episodes 0` (antes era ignorado por `or`)
+- `main.py` — flag `--yes` para confirmar resets; muestra arquitectura DQN al iniciar
+- `world/level_factory.py` — nivel 0 realmente vacio; niveles 4-6 con BFS llave->puerta
+- `world/maze_generator.py` — `is_solvable_with_key_door()` y `generate_solvable_maze_with_key_door()`
+- `brain/model_store.py` — `load()` reporta errores en `last_load_error` (no silencia excepciones)
+- `brain/network_inspector.py` — version 0.2.2
+- `scripts/health_check.py` — verifica nivel 0 abierto y tarea reset con --episodes 0
+- 1 nuevo archivo de tests (`test_stability.py`); tests actualizados
 
 ## Que se implemento en 0.2.1
 
