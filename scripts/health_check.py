@@ -12,13 +12,19 @@ from rich import box
 
 ROOT = Path(__file__).parent.parent
 
-REQUIRED_DIRS  = ["brain", "world", "interface", "data", "models", "tests", "godot", ".vscode"]
+REQUIRED_DIRS  = ["brain", "world", "worlds", "interface", "data", "models",
+                  "tests", "godot", ".vscode"]
 REQUIRED_FILES = [
     "main.py", "README.md", "requirements.txt", ".gitignore", "config.py",
     # 0.2
     "brain/concepts.py", "world/interactions.py", "world/inventory.py",
     # 0.2.1
     "brain/network_inspector.py", "world/level_factory.py", "world/maze_generator.py",
+    # 0.3
+    "worlds/world_definition.py", "worlds/portal.py", "worlds/reward_profiles.py",
+    "worlds/world_registry.py", "worlds/world_manager.py",
+    "brain/world_memory.py", "brain/preferences.py", "brain/home_drive.py",
+    "interface/avatar_renderer.py",
 ]
 REQUIRED_TESTS = [
     "tests/test_world.py", "tests/test_rewards.py", "tests/test_memory.py",
@@ -28,6 +34,10 @@ REQUIRED_TESTS = [
     # 0.2.1
     "tests/test_level_factory.py", "tests/test_maze_generator.py",
     "tests/test_network_inspector.py", "tests/test_curriculum_levels.py",
+    # 0.3
+    "tests/test_world_manager.py", "tests/test_portals.py",
+    "tests/test_world_preferences.py", "tests/test_home_drive.py",
+    "tests/test_avatar_renderer.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -158,14 +168,36 @@ def check_data_files(root: Path = ROOT) -> list[dict]:
     """Verifica archivos de datos persistentes (pueden no existir si no hay entrenamientos)."""
     data = root / "data"
     results = []
-    for fname in ["concepts.json", "training_stats.json",
-                  "network_stats.json", "level_stats.json"]:  # 0.2.1+
+    for fname in [
+        "concepts.json", "training_stats.json",
+        "network_stats.json", "level_stats.json",   # 0.2.1+
+        "world_history.json", "world_preferences.json", "home_stats.json",  # 0.3
+    ]:
         path = data / fname
         results.append({
             "status" : "ok" if path.exists() else "warn",
             "message": f"data/{fname}" + (" existe" if path.exists() else " aun no creado"),
         })
     return results
+
+
+def check_worlds_have_return(root: Path = ROOT) -> list[dict]:
+    """Verifica que todos los mundos no-home tengan home_return_required=True."""
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(root))
+        from worlds.world_registry import ALL_WORLDS, HOME_WORLD_ID
+        bad = [
+            w.world_id for w in ALL_WORLDS.values()
+            if w.world_id != HOME_WORLD_ID and not w.home_return_required
+        ]
+        if bad:
+            return [{"status": "fail",
+                     "message": f"Mundos sin retorno a casa: {bad}"}]
+        return [{"status": "ok",
+                 "message": "Todos los mundos no-home tienen home_return_required=True"}]
+    except Exception as e:
+        return [{"status": "warn", "message": f"No se pudo verificar mundos: {e}"}]
 
 
 def check_level0_is_open(root: Path = ROOT) -> list[dict]:
@@ -215,6 +247,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_data_files(root))
     checks.extend(check_level0_is_open(root))     # 0.2.2
     checks.extend(check_tasks_reset_zero(root))   # 0.2.2
+    checks.extend(check_worlds_have_return(root)) # 0.3
     return checks
 
 

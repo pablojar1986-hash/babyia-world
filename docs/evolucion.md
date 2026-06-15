@@ -59,9 +59,25 @@
 - .vscode/tasks.json: tarea reset usa --yes para omitir advertencia
 - 1 nuevo archivo de tests; tests actualizados; todos pasan
 
-### 0.3 — Lenguaje simple
-- Frases generadas por plantillas más ricas
-- Vocabulario básico de navegación y objetos
+### 0.3 — Puertas a diferentes mundos, preferencias aprendidas y regreso a casa (actual)
+- worlds/ — nuevo modulo con 5 definiciones de mundo (home, food, danger, curiosity, challenge)
+- worlds/world_manager.py — detecta portales por posicion, gestiona transiciones de mundo
+- worlds/reward_profiles.py — perfiles de recompensa distintos por tipo de mundo
+- worlds/world_registry.py — portales de salida (blue, red, green, gold) y puerta de regreso
+- brain/world_memory.py — registra visitas a mundos en data/world_history.json
+- brain/preferences.py — calcula preferencia simulada (avg_reward + retorno*5 - riesgo*4)
+- brain/home_drive.py — impulso de regreso a casa; penalizacion extra por pasos lejanos
+- interface/avatar_renderer.py — avatar visual que cambia por nivel y senales internas
+- brain/baby_brain.py — STATE_SIZE 18 -> 26 (+8 features de contexto de mundo)
+- brain/trainer.py — integra WorldManager, HomeDrive, WorldMemory, PreferenceTracker
+- brain/metrics.py — metricas de mundos: visitas, retorno a casa, episodios lejos
+- interface/pygame_view.py — panel Mundo: nombre, retorno, portal usado, tasa de regreso
+- config.py — MODEL_V3_LATEST/BEST; WORLD_HISTORY_FILE, WORLD_PREFS_FILE, HOME_STATS_FILE
+- 5 nuevos archivos de tests; 21+ tests nuevos
+
+### 0.4 — Lenguaje simple
+- Frases generadas por plantillas mas ricas
+- Vocabulario basico de navegacion y objetos
 - BabyIA puede "describir" lo que ve
 - data/skills.json activo con habilidades rastreadas
 

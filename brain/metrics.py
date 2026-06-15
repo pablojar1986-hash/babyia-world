@@ -39,6 +39,11 @@ class TrainingMetrics:
         self.interactions_fail   = 0
         # 0.2.1 — metricas por nivel
         self.level_stats: dict[str, dict] = {}
+        # 0.3 — metricas de mundos multiples
+        self.world_visits: dict[str, int] = {}
+        self.episodes_at_home = 0
+        self.episodes_away    = 0
+        self.total_returns    = 0
         self._successes = deque(maxlen=WINDOW)
         self._rewards   = deque(maxlen=WINDOW)
         self._steps     = deque(maxlen=WINDOW)
@@ -51,7 +56,9 @@ class TrainingMetrics:
                        # 0.2 opcionales (compatibilidad hacia atras)
                        keys: int = 0, doors: int = 0, food: int = 0,
                        danger: int = 0, concepts: int = 0,
-                       ok: int = 0, fail: int = 0):
+                       ok: int = 0, fail: int = 0,
+                       # 0.3 — mundos multiples
+                       world_id: str = "home", returned_home: bool = True):
         self.total_episodes += 1
         if reached_goal:
             self.goal_reached_count += 1
@@ -79,6 +86,13 @@ class TrainingMetrics:
         if reached_goal:
             self.level_stats[lk]["successes"] += 1
         self.level_stats[lk]["total_reward"] += reward
+
+        # 0.3
+        self.world_visits[world_id] = self.world_visits.get(world_id, 0) + 1
+        if returned_home:
+            self.episodes_at_home += 1
+        else:
+            self.episodes_away += 1
 
         rate = self.recent_success_rate
         if rate > self.best_success_rate:
@@ -126,6 +140,12 @@ class TrainingMetrics:
             "interactions_ok"     : self.interactions_ok,
             "interactions_fail"   : self.interactions_fail,
             "level_stats"         : self.level_stats,
+            # 0.3
+            "world_visits"        : self.world_visits,
+            "episodes_at_home"    : self.episodes_at_home,
+            "episodes_away"       : self.episodes_away,
+            "return_home_rate"    : round(
+                self.episodes_at_home / max(1, self.total_episodes), 3),
             "last_updated"        : datetime.now().isoformat(),
         }
 
@@ -152,6 +172,10 @@ class TrainingMetrics:
             # 0.2
             self.keys_collected      = d.get("keys_collected", 0)
             self.doors_opened        = d.get("doors_opened", 0)
+            # 0.3
+            self.world_visits        = d.get("world_visits", {})
+            self.episodes_at_home    = d.get("episodes_at_home", 0)
+            self.episodes_away       = d.get("episodes_away", 0)
             self.food_consumed       = d.get("food_consumed", 0)
             self.danger_entries      = d.get("danger_entries", 0)
             self.concepts_discovered = d.get("concepts_discovered", 0)

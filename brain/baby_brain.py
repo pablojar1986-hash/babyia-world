@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-STATE_SIZE = 18  # 0.2: +8 features (has_key, energy, dist_llave, dist_puerta, door_open, peligro)
+STATE_SIZE = 26  # 0.3: 10 base + 8 inventario/objetos + 8 contexto-mundo
 ACTION_SIZE = 5
 REPLAY_CAPACITY = 10_000
 BATCH_SIZE = 64

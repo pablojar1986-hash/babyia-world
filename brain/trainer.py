@@ -4,9 +4,12 @@ from brain.baby_brain import BabyBrain
 from brain.concepts import ConceptMemory
 from brain.curriculum import Curriculum
 from brain.emotions import Emotions
+from brain.home_drive import HomeDrive
 from brain.memory import Memory
+from brain.preferences import PreferenceTracker
 from brain.self_model import SelfModel
 from brain.strategy import StrategyTracker
+from brain.world_memory import WorldMemory
 from world.grid_world import GRID_SIZE, GridWorld
 from world.interactions import (
     interact_danger, interact_door_closed, interact_food,
@@ -14,6 +17,7 @@ from world.interactions import (
 )
 from world.inventory import Inventory
 from world.rewards import object_reward
+from worlds.world_manager import WorldManager
 
 SAVE_EVERY = 10  # episodios entre guardados de memoria
 
@@ -35,6 +39,12 @@ class Trainer:
         self.inventory  = Inventory()
         self.concepts   = ConceptMemory()
         self.strategies = StrategyTracker()
+
+        # 0.3 — sistema de mundos multiples
+        self.world_manager = WorldManager()
+        self.world_memory  = WorldMemory()
+        self.preferences   = PreferenceTracker()
+        self.home_drive    = HomeDrive()
 
         self.training = training
         self.episode  = 0
@@ -60,6 +70,8 @@ class Trainer:
         self._ep_ok     = 0
         self._ep_fail   = 0
         self.inventory.reset()
+        self.world_manager.reset()
+        self.home_drive.reset_episode()
         base_obs = self.world.reset()
         self._current_state = self._full_obs(base_obs)
 
@@ -75,7 +87,19 @@ class Trainer:
 
         # Aplicar interacciones de objetos y calcular delta de recompensa
         obj_delta = self._apply_interactions(info)
-        reward    = base_reward + obj_delta
+
+        # 0.3: recompensa del mundo actual y transiciones de portal
+        w_delta, w_events = self.world_manager.process_step(
+            self.world.baby_pos, self.self_model.level
+        )
+        if not self.world_manager.is_at_home:
+            self.home_drive.step_outside()
+        if w_events.get("returned_home"):
+            self.home_drive.register_return()
+        if w_events:
+            self._ep_events.update(w_events)
+
+        reward = base_reward + obj_delta + w_delta
 
         # Construir siguiente estado completo (con inventario ya actualizado)
         next_state = self._full_obs(base_next)
@@ -123,9 +147,34 @@ class Trainer:
             self._maze_info = maze
             save_level_stats(maze)
 
+        # 0.3 — registrar visita y actualizar preferencias
+        ep_sum = self.world_manager.get_episode_summary()
+        self.world_memory.record_visit(
+            episode      = self.episode,
+            world_id     = ep_sum["world_id"],
+            entered_from = ep_sum["last_portal"] or "home",
+            reward_gained= ep_sum["reward_outside"],
+            risk_events  = int(bool(self._ep_events.get("in_danger"))),
+            returned_home= ep_sum["is_at_home"],
+            steps_spent  = ep_sum["steps_outside"],
+        )
+        self.preferences.update(
+            world_id     = ep_sum["world_id"],
+            reward       = ep_sum["reward_outside"],
+            risk_events  = int(bool(self._ep_events.get("in_danger"))),
+            returned_home= ep_sum["is_at_home"],
+            steps        = ep_sum["steps_outside"],
+        )
+        self.home_drive.end_episode()
+        pref = self.preferences.get_score(self.world_manager.current_world_id)
+        self.world_manager.set_preference_score(pref)
+
         if self.episode % SAVE_EVERY == 0:
             self.memory.save()
             self.concepts.save()
+            self.world_memory.save()
+            self.preferences.save()
+            self.home_drive.save()
 
         return new_level
 
@@ -151,6 +200,9 @@ class Trainer:
             "concepts"       : top_c,
             "ep_events"      : dict(self._ep_events),
             "maze_info"      : self._maze_info,
+            # 0.3
+            "world_info"     : self.world_manager.get_episode_summary(),
+            "home_drive"     : self.home_drive.to_dict(),
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────
@@ -183,7 +235,9 @@ class Trainer:
             float(world.danger_nearby()),  # 18: peligro cercano
         ], dtype=np.float32)
 
-        return np.concatenate([base_obs, extra])
+        # 0.3: 8 features de contexto de mundo (total: 10+8+8 = 26)
+        world_feats = self.world_manager.get_state_features(tuple(self.world.baby_pos))
+        return np.concatenate([base_obs, extra, world_feats])
 
     def _apply_interactions(self, info: dict) -> float:
         """

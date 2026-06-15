@@ -1,10 +1,10 @@
-# BabyIA World 0.2.2
+# BabyIA World 0.3
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.2.2 corrige estabilidad, seguridad de reset y progresion real de laberintos.**
-> BabyIA todavia no tiene lenguaje avanzado ni conciencia real.
-> Los conceptos descubiertos son relaciones estadisticas aprendidas por experiencia.
+> **0.3 introduce mundos multiples, portales, preferencias aprendidas y retorno a casa.**
+> BabyIA todavia no tiene conciencia real.
+> Los mundos, preferencias y el impulso de retorno son reglas de entrenamiento, no emociones.
 
 ---
 
@@ -204,10 +204,21 @@ Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 - STATE_SIZE 10 -> 18 (8 features nuevas: llave, energia, distancias, puerta, peligro)
 - Metricas de interacciones (llaves, puertas, comida, peligro, conceptos)
 
-## Que queda para 0.3
+## Novedades en 0.3
 
-- Multiples objetivos por episodio
-- Relaciones mas complejas entre objetos
-- Texto generado simple basado en conceptos
+- `worlds/` — sistema de 5 mundos (casa, comida, peligro, curiosidad, desafio)
+- Portales en el grid 8x8: puertas azul, roja, verde y dorada
+- `brain/world_memory.py` — historial de visitas a mundos
+- `brain/preferences.py` — preferencia simulada: avg_reward + retorno*5 - riesgo*4
+- `brain/home_drive.py` — impulso de regreso a casa con penalizacion por pasos lejanos
+- `interface/avatar_renderer.py` — avatar visual que evoluciona con el nivel
+- STATE_SIZE 18 → 26 (+8 features de contexto de mundo); modelo v0.3 incompatible con v0.2
+- 5 nuevos archivos de tests
+
+## Que queda para 0.4
+
+- Lenguaje simple: frases generadas por plantillas
+- Vocabulario basico de navegacion y objetos
+- BabyIA puede "describir" lo que ve
 
 Ver: [docs/evolucion.md](docs/evolucion.md)

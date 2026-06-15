@@ -1,5 +1,5 @@
 """
-BabyIA World 0.2.2 — punto de entrada.
+BabyIA World 0.3 — punto de entrada.
 
 Modos:
   python main.py                              -> train (por defecto)
@@ -32,6 +32,8 @@ from config import (
     MODE_EVALUATE,
     MODE_TRAIN,
     MODE_WATCH,
+    MODEL_V3_BEST,
+    MODEL_V3_LATEST,
     SAVE_LATEST_EVERY,
     SAVE_METRICS_EVERY,
 )
@@ -189,8 +191,9 @@ def main():
 
     trainer = Trainer(training=is_training)
     metrics = TrainingMetrics()
-    store   = ModelStore(trainer.brain)
-    view    = PygameView()
+    store   = ModelStore(trainer.brain,
+                         model_latest=MODEL_V3_LATEST, model_best=MODEL_V3_BEST)
+    view    = PygameView(title="BabyIA World 0.3")
 
     # 0.2.2: guardar y mostrar metadatos de arquitectura al iniciar
     net_info = save_network_stats(trainer.brain.q_net)
@@ -228,6 +231,7 @@ def main():
 
             ev = status.get("ep_events", {})
             inv = status.get("inventory", {})
+            world_info = status.get("world_info", {})
             metrics.record_episode(
                 reached_goal=reached_goal,
                 reward=status["episode_reward"],
@@ -242,6 +246,8 @@ def main():
                 concepts=trainer.concepts.total(),
                 ok=status.get("ep_events", {}).get("picked_key", 0),
                 fail=0,
+                world_id=world_info.get("world_id", "home"),
+                returned_home=world_info.get("is_at_home", True),
             )
 
             if is_training:

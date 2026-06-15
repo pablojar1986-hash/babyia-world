@@ -1,4 +1,5 @@
 import pygame
+from interface.avatar_renderer import AvatarRenderer
 from world.objects import Cell, ACTION_NAMES, GRID_SIZE
 
 # ── Paleta de colores ─────────────────────────────────────────────────────────
@@ -25,6 +26,15 @@ BAR_WARN     = (255, 165,  50)
 BAR_DANGER   = (220,  70,  70)
 COLOR_POS    = (100, 220, 100)
 COLOR_NEG    = (220,  90,  90)
+
+# Colores de portales (0.3)
+PORTAL_COLORS = {
+    (7, 2): ( 50, 130, 220),   # blue_door  → food_world
+    (7, 4): (210,  50,  50),   # red_door   → danger_world
+    (7, 6): ( 50, 200,  80),   # green_door → curiosity_world
+    (6, 7): (255, 200,   0),   # gold_door  → challenge_world
+    (0, 0): (200, 200, 255),   # home_door  → return home
+}
 
 # ── Etiquetas de celda ────────────────────────────────────────────────────────
 CELL_LABELS = {
@@ -58,15 +68,16 @@ WINDOW_H  = MARGIN + GRID_W + MARGIN
 
 
 class PygameView:
-    def __init__(self, title="BabyIA World 0.2.1"):
+    def __init__(self, title="BabyIA World 0.3"):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
         pygame.display.set_caption(title)
-        self.clock = pygame.time.Clock()
-        self.f_big = pygame.font.SysFont("consolas", 17, bold=True)
-        self.f_med = pygame.font.SysFont("consolas", 14)
-        self.f_sm  = pygame.font.SysFont("consolas", 12)
-        self.f_xs  = pygame.font.SysFont("consolas", 11)
+        self.clock   = pygame.time.Clock()
+        self.f_big   = pygame.font.SysFont("consolas", 17, bold=True)
+        self.f_med   = pygame.font.SysFont("consolas", 14)
+        self.f_sm    = pygame.font.SysFont("consolas", 12)
+        self.f_xs    = pygame.font.SysFont("consolas", 11)
+        self.avatar  = AvatarRenderer()
         self.running = True
 
     # ── Bucle principal ───────────────────────────────────────────────────────
@@ -81,7 +92,7 @@ class PygameView:
 
     def render(self, world, status):
         self.screen.fill(BG)
-        self._draw_grid(world)
+        self._draw_grid(world, status)
         self._draw_panel(status)
         pygame.display.flip()
         self.clock.tick(60)
@@ -91,7 +102,7 @@ class PygameView:
 
     # ── Grid ──────────────────────────────────────────────────────────────────
 
-    def _draw_grid(self, world):
+    def _draw_grid(self, world, status=None):
         grid    = world.get_grid()
         visited = world.visited
         bx, by  = world.baby_pos
@@ -104,9 +115,16 @@ class PygameView:
                 rect = pygame.Rect(x, y, CELL_SIZE - 2, CELL_SIZE - 2)
                 val  = grid[row][col]
 
-                color = CELL_COLORS.get(val,
-                        CELL_VISIT if (col, row) in visited else CELL_EMPTY)
-                pygame.draw.rect(self.screen, color, rect, border_radius=5)
+                # Portales 0.3 — dibujados como marco de color sobre celda vacia
+                portal_color = PORTAL_COLORS.get((col, row))
+                base_color   = CELL_COLORS.get(val,
+                               CELL_VISIT if (col, row) in visited else CELL_EMPTY)
+                pygame.draw.rect(self.screen, base_color, rect, border_radius=5)
+                if portal_color:
+                    pygame.draw.rect(self.screen, portal_color, rect,
+                                     width=3, border_radius=5)
+                    p_lbl = self.f_xs.render("P", True, portal_color)
+                    self.screen.blit(p_lbl, (x + CELL_SIZE // 2 - 4, y + 4))
 
                 # Etiqueta de celda
                 cell_enum = Cell(val) if val in [c.value for c in Cell] else None
@@ -115,14 +133,12 @@ class PygameView:
                     lbl = self.f_xs.render(lbl_text, True, lbl_color)
                     self.screen.blit(lbl, (x + CELL_SIZE // 2 - 6, y + CELL_SIZE // 2 - 6))
 
-        # BabyIA (circulo)
+        # BabyIA — avatar con AvatarRenderer (0.3)
         cx = ox + bx * CELL_SIZE + CELL_SIZE // 2 - 1
         cy = oy + by * CELL_SIZE + CELL_SIZE // 2 - 1
-        r  = CELL_SIZE // 2 - 7
-        pygame.draw.circle(self.screen, CELL_BABY, (cx, cy), r)
-        pygame.draw.circle(self.screen, (30, 30, 40), (cx - 5, cy - 4), 3)
-        pygame.draw.circle(self.screen, (30, 30, 40), (cx + 5, cy - 4), 3)
-        pygame.draw.line(self.screen, (30, 30, 40), (cx - 4, cy + 5), (cx + 4, cy + 5), 2)
+        emotions = status.get("emotions", {}) if status else {}
+        level    = status.get("level", 0) if status else 0
+        self.avatar.draw(self.screen, cx, cy, CELL_SIZE, level, emotions)
 
     # ── Panel lateral ─────────────────────────────────────────────────────────
 
@@ -134,7 +150,7 @@ class PygameView:
                          (px - 6, py - 6, PANEL_W + 6, panel_h + 12), border_radius=8)
 
         # Titulo + modo
-        self._txt("BabyIA World 0.2.1", px, py, self.f_big, ACCENT)
+        self._txt("BabyIA World 0.3", px, py, self.f_big, ACCENT)
         py += 22
         mode_str   = status.get("mode", "train").upper()
         mode_color = {"TRAIN": (100,200,100), "WATCH": (100,170,255),
@@ -171,6 +187,22 @@ class PygameView:
         self._txt(f"Semilla:  {seed}", px, py, self.f_xs, TEXT_DIM); py += 14
         self._txt(f"Solucion: {'OK' if solv else 'NO'}", px, py, self.f_xs, solv_color)
         py += 14
+        py += 4
+        self._divider(px, py, PANEL_W - 8); py += 10
+
+        # Mundo actual (0.3)
+        self._txt("Mundo", px, py, self.f_med, ACCENT); py += 20
+        wi = status.get("world_info", {})
+        wname = wi.get("world_id", "home").replace("_", " ")
+        home_c = (100, 220, 100) if wi.get("is_at_home", True) else (255, 180, 50)
+        self._txt(f"Mundo: {wname[:18]}", px, py, self.f_sm, home_c); py += 16
+        at_home = "SI" if wi.get("is_at_home", True) else "NO"
+        self._txt(f"En casa: {at_home}", px, py, self.f_xs, home_c); py += 14
+        portal = wi.get("last_portal") or "-"
+        self._txt(f"Portal: {portal[:18]}", px, py, self.f_xs, TEXT_DIM); py += 14
+        hd = status.get("home_drive", {})
+        rhr = hd.get("return_home_rate", 0.0)
+        self._txt(f"Retorno: {rhr*100:.0f}%", px, py, self.f_xs, TEXT_DIM); py += 14
         py += 4
         self._divider(px, py, PANEL_W - 8); py += 10
 
