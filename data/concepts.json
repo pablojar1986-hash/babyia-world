@@ -1,0 +1,58 @@
+{
+  "concepts": [
+    {
+      "name": "key_found:True",
+      "relation": "key_found",
+      "value": "True",
+      "confidence": 1.0,
+      "evidence_count": 1156,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 1000
+    },
+    {
+      "name": "danger_reduces:energy",
+      "relation": "danger_reduces",
+      "value": "energy",
+      "confidence": 0.0,
+      "evidence_count": 0,
+      "first_discovered_episode": 2,
+      "last_seen_episode": 1000
+    },
+    {
+      "name": "key_opens:door",
+      "relation": "key_opens",
+      "value": "door",
+      "confidence": 1.0,
+      "evidence_count": 1148,
+      "first_discovered_episode": 2,
+      "last_seen_episode": 1000
+    },
+    {
+      "name": "door_requires:unknown_tool",
+      "relation": "door_requires",
+      "value": "unknown_tool",
+      "confidence": 0.0,
+      "evidence_count": 0,
+      "first_discovered_episode": 5,
+      "last_seen_episode": 842
+    },
+    {
+      "name": "food_restores:energy",
+      "relation": "food_restores",
+      "value": "energy",
+      "confidence": 1.0,
+      "evidence_count": 1076,
+      "first_discovered_episode": 5,
+      "last_seen_episode": 1000
+    },
+    {
+      "name": "unknown_object:discovered",
+      "relation": "unknown_object",
+      "value": "discovered",
+      "confidence": 1.0,
+      "evidence_count": 1008,
+      "first_discovered_episode": 5,
+      "last_seen_episode": 1000
+    }
+  ]
+}

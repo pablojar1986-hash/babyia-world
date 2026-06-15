@@ -1,0 +1,31 @@
+{
+  "total_episodes": 1321,
+  "recent_success_rate": 0.85,
+  "best_success_rate": 1.0,
+  "average_reward": 44.09,
+  "average_steps": 136.9,
+  "wall_hits": 8824,
+  "goal_reached_count": 1126,
+  "exploration_rate": 0.05,
+  "current_level": 1,
+  "keys_collected": 1156,
+  "doors_opened": 1148,
+  "food_consumed": 1076,
+  "danger_entries": 589,
+  "concepts_discovered": 6,
+  "interactions_ok": 1156,
+  "interactions_fail": 0,
+  "level_stats": {
+    "0": {
+      "episodes": 19,
+      "successes": 18,
+      "total_reward": 735.3500000000001
+    },
+    "1": {
+      "episodes": 981,
+      "successes": 842,
+      "total_reward": 40999.350000000006
+    }
+  },
+  "last_updated": "2026-06-15T07:15:17.568692"
+}

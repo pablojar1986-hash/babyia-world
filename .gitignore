@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Modelos y datos pesados
+models/*.pt
+models/*.pth
+models/*.ckpt
+models/checkpoints/*.pt
+*.onnx
+
+# Sesion de Claude Code (datos locales de la sesion)
+.claude/
+
+# Archivos temporales
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -1,0 +1,51 @@
+{
+  "level": 1,
+  "walls": [
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      1
+    ],
+    [
+      2,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      4,
+      2
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      5,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ]
+  ],
+  "seed": 0,
+  "density": 0.0,
+  "difficulty": "Basico",
+  "solvable": true,
+  "description": "paredes fijas del mundo base",
+  "wall_count": 10
+}

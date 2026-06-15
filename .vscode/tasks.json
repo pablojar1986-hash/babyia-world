@@ -1,0 +1,82 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BabyIA — Entrenar (1000 episodios)",
+      "type": "shell",
+      "command": "python main.py --mode train --episodes 1000",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "BabyIA — Entrenar rápido (100 episodios)",
+      "type": "shell",
+      "command": "python main.py --mode train --episodes 100",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "BabyIA — Observar modelo aprendido",
+      "type": "shell",
+      "command": "python main.py --mode watch",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "BabyIA — Evaluar (50 episodios)",
+      "type": "shell",
+      "command": "python main.py --mode evaluate --episodes 50",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "BabyIA — Reset total (memoria + modelo + stats)",
+      "type": "shell",
+      "command": "python main.py --reset-all --episodes 0",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ejecutar pruebas",
+      "type": "shell",
+      "command": "pytest tests -v",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Ejecutar pruebas con cobertura",
+      "type": "shell",
+      "command": "pytest tests --cov=brain --cov=world -v",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Health check",
+      "type": "shell",
+      "command": "python scripts/health_check.py",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Formatear código (Black)",
+      "type": "shell",
+      "command": "black .",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Revisar código (Ruff)",
+      "type": "shell",
+      "command": "ruff check .",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Instalar dependencias",
+      "type": "shell",
+      "command": "python -m pip install -r requirements.txt",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
