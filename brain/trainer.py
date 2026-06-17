@@ -89,12 +89,13 @@ class Trainer:
         self._ep_next_door_blocked = 0
         self._ep_optional_rooms_visited: set = set()  # evita reward farming
         self._current_state: np.ndarray | None = None
-        self._maze_info: dict = {
-            "difficulty": "Basico",
-            "seed": 0,
-            "solvable": True,
-            "level": 0,
-        }
+
+        # Inicializar laberinto desde level_factory (nivel 0 = mapa abierto)
+        from world.level_factory import get_maze_for_level
+
+        _init_maze = get_maze_for_level(self.curriculum.current_level)
+        self.world.set_walls(_init_maze["walls"])
+        self._maze_info: dict = _init_maze
 
     # ── Control de episodio ────────────────────────────────────────────────────
 
@@ -394,7 +395,8 @@ class Trainer:
 
         if info.get("opened_door"):
             result = interact_door_closed(has_key=True)
-            inv.use_key()
+            # La llave NO se consume: debe seguir disponible para next_level_door (7,7).
+            # La puerta queda abierta (door_open=True en GridWorld) para el resto del episodio.
             delta += result["reward_delta"]
             self.concepts.observe(result["concept_signal"], True, self.episode)
             self._ep_events["opened_door"] = True

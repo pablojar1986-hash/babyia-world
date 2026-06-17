@@ -122,7 +122,7 @@
 - scripts/health_check.py: check_042_integrity() — 5 nuevas verificaciones de integridad
 - 7 nuevos archivos de test; 413 tests pasando
 
-### 0.4.3 — Progresion real por puertas de nivel, curriculo anti-estancamiento y recompensa orientada a completar niveles (actual)
+### 0.4.3 — Progresion real por puertas de nivel, curriculo anti-estancamiento y recompensa orientada a completar niveles (actual, fix 2)
 - PROBLEMA resuelto: BabyIA podia acumular alta recompensa (hasta 64 pts por exploracion)
   sin completar nunca el nivel. REWARD_NEW_CELL=0.05 (antes 1.0) elimina este reward hacking.
 - world/level_doors.py (NUEVO): LevelDoor, LEVEL_DOOR_POSITIONS (3 puertas), attempt_level_door()
@@ -144,6 +144,9 @@
 - interface/pygame_view.py: colores dorado/turquesa para LEVEL_DOOR/OPTIONAL_DOOR; log de eventos
 - scripts/health_check.py: check_043_integrity() — 6 nuevas verificaciones
 - 5 nuevos archivos de test; 476 tests pasando
+- **fix 2**: Trainer.__init__ aplica level_factory(0) = mapa abierto; inv.use_key() eliminado de
+  opened_door (la llave persiste para next_level_door); status actualizado tras end_episode;
+  1 nuevo archivo de test; 495 tests pasando
 
 ### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas

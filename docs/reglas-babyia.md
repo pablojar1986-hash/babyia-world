@@ -10,6 +10,7 @@
 - Recibir daño de hazards y ser bloqueado por su estado corporal (mecanica de juego)
 - Intentar cruzar puertas especiales con requisitos corporales (mecanica de juego)
 - Subir de nivel al completar la puerta de nivel con llave (level_completed, 0.4.3)
+- Usar la llave para abrir puertas normales sin consumirla; la llave persiste para next_level_door (fix 0.4.3)
 - Activar anti-estancamiento si lleva 100 episodios sin completar nivel (0.4.3)
 - Entrar a salas opcionales (tesoro, entrenamiento) sin requisito (0.4.3)
 - Registrar frases autobiográficas generadas por reglas simples

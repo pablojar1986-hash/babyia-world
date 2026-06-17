@@ -272,6 +272,9 @@ def main():
             new_level = trainer.end_episode(
                 reached_goal, level_completed=level_completed
             )
+            # Actualizar status DESPUÉS de end_episode para que curriculum.record_episode()
+            # ya haya corrido y episodes_without_progress/stagnation_active sean correctos
+            status = build_status(trainer, metrics, cfg.mode)
 
             # 0.4.3: anti-estancamiento progresivo — fija un piso de epsilon
             # proporcional a la gravedad (el decay no puede bajar de ese piso)
