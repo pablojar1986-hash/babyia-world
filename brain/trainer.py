@@ -267,7 +267,9 @@ class Trainer:
             self.brain.remember(state, action, reward, next_state, done)
             self.brain.train()
 
-        self.emotions.update(reward, info["hit_wall"], info["reached_goal"])
+        self.emotions.update(
+            reward, info["hit_wall"], info["reached_goal"], events=info
+        )
         self.memory.record_step(
             self.episode, self.world.steps, state, action, reward, info
         )

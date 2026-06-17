@@ -1,15 +1,17 @@
 """
-BabyIA World 0.4.3 — Coordinador de la interfaz gráfica.
+BabyIA World — Coordinador de la interfaz gráfica.
 Gestiona la ventana y delega dibujo a módulos especializados.
 No contiene lógica de aprendizaje.
 """
 
 import pygame
+from config import APP_VERSION
 from interface.avatar_renderer import AvatarRenderer
+from interface.camera import Camera
 from interface.layout import WINDOW_W, WINDOW_H, GRID_AREA, LOG_AREA, CELL_SIZE
 from interface.panel_renderer import PanelRenderer
 from interface.ui_components import BG, LOG_BG, TEXT_DIM, ACCENT, divider
-from world.objects import Cell, GRID_SIZE
+from world.objects import Cell
 
 # ── Colores específicos del grid ───────────────────────────────────────────────
 _EMPTY = (42, 44, 56)
@@ -78,7 +80,7 @@ _LEGEND = [
 
 
 class PygameView:
-    def __init__(self, title: str = "BabyIA World 0.4.2"):
+    def __init__(self, title: str = f"BabyIA World {APP_VERSION}"):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
         pygame.display.set_caption(title)
@@ -92,6 +94,7 @@ class PygameView:
         self.avatar = AvatarRenderer()
         self.panels = PanelRenderer()
         self.panels.set_fonts(self.fonts)
+        self._cam = Camera()
         self.running = True
 
     # ── Bucle principal ───────────────────────────────────────────────────────
@@ -127,17 +130,21 @@ class PygameView:
         bx, by = world.baby_pos
         ox, oy = GRID_AREA[0], GRID_AREA[1]
         gs = CELL_SIZE
+        world_size = getattr(world, "size", 8)
 
-        for row in range(GRID_SIZE):
-            for col in range(GRID_SIZE):
-                cx = ox + col * gs
-                cy_ = oy + row * gs
-                rect = pygame.Rect(cx, cy_, gs - 2, gs - 2)
-                val = grid[row][col]
+        # Actualizar cámara según posición de BabyIA y tamaño del mundo
+        self._cam.update((bx, by), grid_size=world_size)
+        mn_x, mn_y, mx_x, mx_y = self._cam.get_visible_bounds()
 
-                portal_c = PORTAL_COLORS.get((col, row))
+        for wy in range(mn_y, mx_y):
+            for wx in range(mn_x, mx_x):
+                sx, sy = self._cam.world_to_screen(wx, wy, gs, ox, oy)
+                rect = pygame.Rect(sx, sy, gs - 2, gs - 2)
+                val = grid[wy][wx]
+
+                portal_c = PORTAL_COLORS.get((wx, wy))
                 base_color = CELL_COLORS.get(
-                    val, _VISIT if (col, row) in visited else _EMPTY
+                    val, _VISIT if (wx, wy) in visited else _EMPTY
                 )
                 pygame.draw.rect(self.screen, base_color, rect, border_radius=4)
 
@@ -146,17 +153,18 @@ class PygameView:
                         self.screen, portal_c, rect, width=3, border_radius=4
                     )
                     p = self.fonts["xs"].render("P", True, portal_c)
-                    self.screen.blit(p, (cx + gs // 2 - 4, cy_ + 3))
+                    self.screen.blit(p, (sx + gs // 2 - 4, sy + 3))
 
                 cell_e = Cell(val) if val in [c.value for c in Cell] else None
                 if cell_e and cell_e in CELL_LABELS:
                     lbl_txt, lbl_clr = CELL_LABELS[cell_e]
                     lbl = self.fonts["xs"].render(lbl_txt, True, lbl_clr)
-                    self.screen.blit(lbl, (cx + gs // 2 - 6, cy_ + gs // 2 - 6))
+                    self.screen.blit(lbl, (sx + gs // 2 - 6, sy + gs // 2 - 6))
 
-        # Avatar
-        av_cx = ox + bx * gs + gs // 2
-        av_cy = oy + by * gs + gs // 2
+        # Avatar — posición calculada con cámara, nunca fuera del viewport
+        av_sx, av_sy = self._cam.world_to_screen(bx, by, gs, ox, oy)
+        av_cx = av_sx + gs // 2
+        av_cy = av_sy + gs // 2
         self.avatar.draw(
             self.screen,
             av_cx,
