@@ -59,7 +59,7 @@
 - .vscode/tasks.json: tarea reset usa --yes para omitir advertencia
 - 1 nuevo archivo de tests; tests actualizados; todos pasan
 
-### 0.3 — Puertas a diferentes mundos, preferencias aprendidas y regreso a casa (actual)
+### 0.3 — Puertas a diferentes mundos, preferencias aprendidas y regreso a casa (completado)
 - worlds/ — nuevo modulo con 5 definiciones de mundo (home, food, danger, curiosity, challenge)
 - worlds/world_manager.py — detecta portales por posicion, gestiona transiciones de mundo
 - worlds/reward_profiles.py — perfiles de recompensa distintos por tipo de mundo
@@ -75,16 +75,44 @@
 - config.py — MODEL_V3_LATEST/BEST; WORLD_HISTORY_FILE, WORLD_PREFS_FILE, HOME_STATS_FILE
 - 5 nuevos archivos de tests; 21+ tests nuevos
 
-### 0.4 — Lenguaje simple
+### 0.3.1 — Integracion completa de recompensas por mundo (completado)
+- brain/trainer.py: _apply_interactions llama world_manager.on_object_event() en ate_food, in_danger, found_unknown
+- brain/trainer.py: end_episode aplica penalizacion de world_manager.on_episode_end() si fuera de casa
+- tests/test_world_integration_031.py: 9 tests de integracion verifican el comportamiento
+
+### 0.4.0 — Recompensas evolutivas: tamano, velocidad, energia, escudo e inmunidades (actual)
+- brain/body_state.py — BodyState: size, speed, shield, fire_immunity, poison_immunity, vision_range
+- world/powerups.py — 8 tipos de powerup: GROWTH_CRYSTAL, SPEED_BOOTS, SHIELD_ORB, etc.
+- world/hazards.py — 8 peligros: FIRE_ZONE, POISON_ZONE, MUD, SHRINK_TRAP, SLOW_TRAP, etc.
+- world/doors.py — 6 tipos de puertas con requisitos: HEAVY_DOOR, SPEED_DOOR, FIRE_DOOR, etc.
+- brain/causal_memory.py — memoria de relaciones causa-efecto (powerup->efecto, hazard->daño)
+- brain/utility_evaluator.py — calcula utilidad de recompensas segun objetivo y estado corporal
+- STATE_SIZE 26 -> 34 (+8 features: size, speed, shield, immunities, proximidades)
+- 6 nuevos archivos de test
+
+### 0.4.1 — Peligros y supervivencia
+- Peligros colocados en el grid (FIRE_ZONE, POISON_ZONE, MUD, etc.)
+- BabyIA aprende a evitar peligros segun su estado corporal
+- Interacciones con hazards en tiempo real
+
+### 0.4.2 — Puertas con requisitos
+- Puertas especiales colocadas en el grid con requisitos de acceso
+- BabyIA aprende que necesita para abrir cada puerta
+- Registro de intentos fallidos y exitosos
+
+### 0.4.3 — Evaluador de utilidad y aprendizaje causa-efecto avanzado
+- Utilidad integrada en toma de decisiones del agente
+- Memoria causal completa con actualizacion por experiencia
+
+### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas
 - Vocabulario basico de navegacion y objetos
 - BabyIA puede "describir" lo que ve
-- data/skills.json activo con habilidades rastreadas
 
-### 0.4 — Interfaz Godot
-- Comunicación Python ↔ Godot vía sockets o JSON
-- Visualización 2D/2.5D del mundo
-- Animaciones de BabyIA según estado interno
+### 0.6.0 — Interfaz Godot
+- Comunicacion Python <-> Godot via sockets o JSON
+- Visualizacion 2D/2.5D del mundo
+- Animaciones de BabyIA segun estado interno
 - El cerebro sigue siendo Python puro
 
 ### 1.0 — Juego-laboratorio completo

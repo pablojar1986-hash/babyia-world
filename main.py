@@ -1,5 +1,5 @@
 """
-BabyIA World 0.3 — punto de entrada.
+BabyIA World 0.4 — punto de entrada.
 
 Modos:
   python main.py                              -> train (por defecto)
@@ -32,8 +32,8 @@ from config import (
     MODE_EVALUATE,
     MODE_TRAIN,
     MODE_WATCH,
-    MODEL_V3_BEST,
-    MODEL_V3_LATEST,
+    MODEL_V4_BEST,
+    MODEL_V4_LATEST,
     SAVE_LATEST_EVERY,
     SAVE_METRICS_EVERY,
 )
@@ -192,8 +192,8 @@ def main():
     trainer = Trainer(training=is_training)
     metrics = TrainingMetrics()
     store   = ModelStore(trainer.brain,
-                         model_latest=MODEL_V3_LATEST, model_best=MODEL_V3_BEST)
-    view    = PygameView(title="BabyIA World 0.3")
+                         model_latest=MODEL_V4_LATEST, model_best=MODEL_V4_BEST)
+    view    = PygameView(title="BabyIA World 0.4")
 
     # 0.2.2: guardar y mostrar metadatos de arquitectura al iniciar
     net_info = save_network_stats(trainer.brain.q_net)

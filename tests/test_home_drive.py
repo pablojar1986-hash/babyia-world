@@ -9,8 +9,8 @@ def make_hd(tmp: Path | None = None) -> HomeDrive:
     return HomeDrive(stats_file=tmp)
 
 
-def test_initial_state():
-    hd = make_hd()
+def test_initial_state(tmp_path):
+    hd = make_hd(tmp_path / "home_stats.json")
     assert hd.total_episodes   == 0
     assert hd.episodes_at_home == 0
     assert hd.episodes_away    == 0
@@ -38,15 +38,15 @@ def test_should_return_true_at_threshold():
     assert hd.should_return(threshold=60)
 
 
-def test_register_return():
-    hd = make_hd()
+def test_register_return(tmp_path):
+    hd = make_hd(tmp_path / "s.json")
     hd.register_return()
     assert hd._ep_returned is True
     assert hd.total_returns == 1
 
 
-def test_end_episode_at_home():
-    hd = make_hd()
+def test_end_episode_at_home(tmp_path):
+    hd = make_hd(tmp_path / "s.json")
     hd.register_return()
     hd.end_episode()
     assert hd.total_episodes   == 1
@@ -54,15 +54,15 @@ def test_end_episode_at_home():
     assert hd.episodes_away    == 0
 
 
-def test_end_episode_away():
-    hd = make_hd()
+def test_end_episode_away(tmp_path):
+    hd = make_hd(tmp_path / "s.json")
     hd.end_episode()   # sin registrar retorno
-    assert hd.episodes_away == 1
+    assert hd.episodes_away    == 1
     assert hd.episodes_at_home == 0
 
 
-def test_return_home_rate():
-    hd = make_hd()
+def test_return_home_rate(tmp_path):
+    hd = make_hd(tmp_path / "s.json")
     hd.register_return(); hd.end_episode()
     hd.end_episode()
     assert hd.return_home_rate == 0.5

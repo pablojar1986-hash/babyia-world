@@ -44,6 +44,13 @@ class TrainingMetrics:
         self.episodes_at_home = 0
         self.episodes_away    = 0
         self.total_returns    = 0
+        # 0.4 — estado corporal y causal
+        self.powerups_collected : int = 0
+        self.hazards_hit        : int = 0
+        self.hazards_blocked    : int = 0
+        self.door_attempts      : int = 0
+        self.door_successes     : int = 0
+        self.causal_learned     : int = 0
         self._successes = deque(maxlen=WINDOW)
         self._rewards   = deque(maxlen=WINDOW)
         self._steps     = deque(maxlen=WINDOW)
@@ -58,7 +65,11 @@ class TrainingMetrics:
                        danger: int = 0, concepts: int = 0,
                        ok: int = 0, fail: int = 0,
                        # 0.3 — mundos multiples
-                       world_id: str = "home", returned_home: bool = True):
+                       world_id: str = "home", returned_home: bool = True,
+                       # 0.4 — estado corporal y causal
+                       powerups: int = 0, hazards: int = 0, hazards_blocked: int = 0,
+                       door_attempts: int = 0, door_successes: int = 0,
+                       causal_learned: int = 0):
         self.total_episodes += 1
         if reached_goal:
             self.goal_reached_count += 1
@@ -93,6 +104,14 @@ class TrainingMetrics:
             self.episodes_at_home += 1
         else:
             self.episodes_away += 1
+
+        # 0.4
+        self.powerups_collected += powerups
+        self.hazards_hit        += hazards
+        self.hazards_blocked    += hazards_blocked
+        self.door_attempts      += door_attempts
+        self.door_successes     += door_successes
+        self.causal_learned      = causal_learned  # total acumulado
 
         rate = self.recent_success_rate
         if rate > self.best_success_rate:
@@ -146,6 +165,13 @@ class TrainingMetrics:
             "episodes_away"       : self.episodes_away,
             "return_home_rate"    : round(
                 self.episodes_at_home / max(1, self.total_episodes), 3),
+            # 0.4
+            "powerups_collected"  : self.powerups_collected,
+            "hazards_hit"         : self.hazards_hit,
+            "hazards_blocked"     : self.hazards_blocked,
+            "door_attempts"       : self.door_attempts,
+            "door_successes"      : self.door_successes,
+            "causal_learned"      : self.causal_learned,
             "last_updated"        : datetime.now().isoformat(),
         }
 

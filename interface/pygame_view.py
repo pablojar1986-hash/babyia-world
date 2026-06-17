@@ -68,7 +68,7 @@ WINDOW_H  = MARGIN + GRID_W + MARGIN
 
 
 class PygameView:
-    def __init__(self, title="BabyIA World 0.3"):
+    def __init__(self, title="BabyIA World 0.4"):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
         pygame.display.set_caption(title)
@@ -136,9 +136,10 @@ class PygameView:
         # BabyIA — avatar con AvatarRenderer (0.3)
         cx = ox + bx * CELL_SIZE + CELL_SIZE // 2 - 1
         cy = oy + by * CELL_SIZE + CELL_SIZE // 2 - 1
-        emotions = status.get("emotions", {}) if status else {}
-        level    = status.get("level", 0) if status else 0
-        self.avatar.draw(self.screen, cx, cy, CELL_SIZE, level, emotions)
+        emotions   = status.get("emotions", {}) if status else {}
+        level      = status.get("level", 0) if status else 0
+        body_state = status.get("body_state", {}) if status else {}
+        self.avatar.draw(self.screen, cx, cy, CELL_SIZE, level, emotions, body_state)
 
     # ── Panel lateral ─────────────────────────────────────────────────────────
 
@@ -150,7 +151,7 @@ class PygameView:
                          (px - 6, py - 6, PANEL_W + 6, panel_h + 12), border_radius=8)
 
         # Titulo + modo
-        self._txt("BabyIA World 0.3", px, py, self.f_big, ACCENT)
+        self._txt("BabyIA World 0.4", px, py, self.f_big, ACCENT)
         py += 22
         mode_str   = status.get("mode", "train").upper()
         mode_color = {"TRAIN": (100,200,100), "WATCH": (100,170,255),
@@ -205,6 +206,33 @@ class PygameView:
         self._txt(f"Retorno: {rhr*100:.0f}%", px, py, self.f_xs, TEXT_DIM); py += 14
         py += 4
         self._divider(px, py, PANEL_W - 8); py += 10
+
+        # Estado corporal (0.4)
+        bs = status.get("body_state", {})
+        if bs:
+            self._txt("Cuerpo", px, py, self.f_med, ACCENT); py += 20
+            size  = bs.get("size",  1.0)
+            speed = bs.get("speed", 1.0)
+            shld  = bs.get("shield", 0.0)
+            f_imm = bs.get("fire_immunity",   False)
+            p_imm = bs.get("poison_immunity", False)
+            size_c  = (100, 220, 100) if size  >= 1.5 else TEXT_DIM
+            speed_c = (100, 200, 255) if speed >= 1.5 else TEXT_DIM
+            self._txt(f"Tam: {size:.1f}  Vel: {speed:.1f}", px, py, self.f_sm, TEXT); py += 16
+            self._bar(px, py, PANEL_W - 8, "Escudo", shld); py += 22
+            fi = "[F]" if f_imm else "[ ]"
+            pi = "[P]" if p_imm else "[ ]"
+            fi_c = (255, 140, 50) if f_imm else TEXT_DIM
+            pi_c = (100, 220, 80) if p_imm else TEXT_DIM
+            self._txt(f"Fuego:{fi}", px, py, self.f_xs, fi_c)
+            self._txt(f"Veneno:{pi}", px + 90, py, self.f_xs, pi_c); py += 14
+            util = status.get("utility", {})
+            if util:
+                u = util.get("last_utility", 0.0)
+                u_c = COLOR_POS if u >= 0 else COLOR_NEG
+                self._txt(f"Utilidad: {u:+.2f}", px, py, self.f_xs, u_c); py += 14
+            py += 4
+            self._divider(px, py, PANEL_W - 8); py += 10
 
         # Inventario (0.2)
         self._txt("Inventario", px, py, self.f_med, ACCENT); py += 20

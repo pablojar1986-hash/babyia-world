@@ -25,6 +25,9 @@ REQUIRED_FILES = [
     "worlds/world_registry.py", "worlds/world_manager.py",
     "brain/world_memory.py", "brain/preferences.py", "brain/home_drive.py",
     "interface/avatar_renderer.py",
+    # 0.4
+    "brain/body_state.py", "brain/causal_memory.py", "brain/utility_evaluator.py",
+    "world/powerups.py", "world/hazards.py", "world/doors.py",
 ]
 REQUIRED_TESTS = [
     "tests/test_world.py", "tests/test_rewards.py", "tests/test_memory.py",
@@ -38,6 +41,10 @@ REQUIRED_TESTS = [
     "tests/test_world_manager.py", "tests/test_portals.py",
     "tests/test_world_preferences.py", "tests/test_home_drive.py",
     "tests/test_avatar_renderer.py",
+    # 0.4
+    "tests/test_body_state.py", "tests/test_powerups.py", "tests/test_hazards.py",
+    "tests/test_doors_requirements.py", "tests/test_causal_memory.py",
+    "tests/test_utility_evaluator.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -172,6 +179,7 @@ def check_data_files(root: Path = ROOT) -> list[dict]:
         "concepts.json", "training_stats.json",
         "network_stats.json", "level_stats.json",   # 0.2.1+
         "world_history.json", "world_preferences.json", "home_stats.json",  # 0.3
+        "causal_memory.json",  # 0.4
     ]:
         path = data / fname
         results.append({

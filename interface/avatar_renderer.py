@@ -30,13 +30,19 @@ class AvatarRenderer:
             self._font_xs = pygame.font.SysFont("consolas", 10)
 
     def draw(self, surface: pygame.Surface, cx: int, cy: int, cell_size: int,
-             level: int, emotions: dict):
+             level: int, emotions: dict, body_state: dict | None = None):
         """
         Dibuja el avatar en la posicion central (cx, cy).
         emotions: dict con curiosity, confidence, frustration, energy.
+        body_state (0.4): dict con size, speed, shield, fire_immunity, poison_immunity.
         """
         self._init_fonts()
-        r      = cell_size // 2 - 7
+        bs     = body_state or {}
+        # 0.4: radio escala con tamano corporal (size 0.5-3.0 → factor 0.75-1.5)
+        b_size = float(bs.get("size", 1.0))
+        scale  = 0.75 + 0.25 * b_size
+        r      = max(5, int((cell_size // 2 - 7) * scale))
+
         energy = float(emotions.get("energy", 1.0))
         conf   = float(emotions.get("confidence", 0.5))
         frust  = float(emotions.get("frustration", 0.0))
@@ -45,12 +51,27 @@ class AvatarRenderer:
         base  = _LEVEL_COLORS.get(min(level, 7), (200, 200, 200))
         color = self._tint(base, energy, curio)
 
+        # 0.4: escudo activo → halo azul exterior
+        shield = float(bs.get("shield", 0.0))
+        if shield > 0.05:
+            s_r = r + int(shield * 5) + 2
+            pygame.draw.circle(surface, (80, 140, 255), (cx, cy), s_r, 2)
+
         # Cuerpo
         pygame.draw.circle(surface, color, (cx, cy), r)
         # Borde segun confianza
         bw = max(1, int(conf * 3))
         bc = tuple(min(255, c + 40) for c in color)
         pygame.draw.circle(surface, bc, (cx, cy), r, bw)
+
+        # 0.4: inmunidad fuego → pequeno triangulo naranja encima
+        if bs.get("fire_immunity"):
+            pygame.draw.polygon(surface, (255, 120, 30), [
+                (cx, cy - r - 8), (cx - 4, cy - r - 2), (cx + 4, cy - r - 2)
+            ])
+        # 0.4: inmunidad veneno → punto verde a la derecha
+        if bs.get("poison_immunity"):
+            pygame.draw.circle(surface, (60, 220, 80), (cx + r + 4, cy - r + 2), 3)
 
         if level >= 1:
             # Ojos
@@ -71,9 +92,9 @@ class AvatarRenderer:
 
         if level >= 5 and energy > 0.8:
             # Aura de energia
-            for dx, dy in [(-r - 3, 0), (r + 3, 0), (0, -r - 3)]:
+            for ddx, ddy in [(-r - 3, 0), (r + 3, 0), (0, -r - 3)]:
                 pygame.draw.circle(surface, (255, 240, 100),
-                                   (cx + dx, cy + dy), 2)
+                                   (cx + ddx, cy + ddy), 2)
 
         if level >= 7:
             # Estrella de explorador

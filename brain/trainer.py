@@ -1,6 +1,8 @@
 import numpy as np
 
 from brain.baby_brain import BabyBrain
+from brain.body_state import BodyState
+from brain.causal_memory import CausalMemory
 from brain.concepts import ConceptMemory
 from brain.curriculum import Curriculum
 from brain.emotions import Emotions
@@ -9,7 +11,9 @@ from brain.memory import Memory
 from brain.preferences import PreferenceTracker
 from brain.self_model import SelfModel
 from brain.strategy import StrategyTracker
+from brain.utility_evaluator import UtilityEvaluator
 from brain.world_memory import WorldMemory
+from config import CAUSAL_MEMORY_FILE
 from world.grid_world import GRID_SIZE, GridWorld
 from world.interactions import (
     interact_danger, interact_door_closed, interact_food,
@@ -46,6 +50,11 @@ class Trainer:
         self.preferences   = PreferenceTracker()
         self.home_drive    = HomeDrive()
 
+        # 0.4 — estado corporal y aprendizaje causal
+        self.body_state      = BodyState()
+        self.causal_memory   = CausalMemory(CAUSAL_MEMORY_FILE)
+        self.utility         = UtilityEvaluator()
+
         self.training = training
         self.episode  = 0
         self.total_steps = 0
@@ -72,6 +81,8 @@ class Trainer:
         self.inventory.reset()
         self.world_manager.reset()
         self.home_drive.reset_episode()
+        self.body_state.reset_for_episode()
+        self.utility.reset_episode()
         base_obs = self.world.reset()
         self._current_state = self._full_obs(base_obs)
 
@@ -100,6 +111,16 @@ class Trainer:
             self._ep_events.update(w_events)
 
         reward = base_reward + obj_delta + w_delta
+
+        # 0.4: tick de efectos corporales
+        self.body_state.tick_effects()
+
+        # 0.4: registrar utilidad del paso
+        u = self.utility.evaluate_from_context(
+            self.body_state, self.world_manager, self.causal_memory,
+            base_reward=reward, step_count=self.world.steps,
+        )
+        self.utility.record_step_utility(u)
 
         # Construir siguiente estado completo (con inventario ya actualizado)
         next_state = self._full_obs(base_next)
@@ -168,6 +189,8 @@ class Trainer:
         self.home_drive.end_episode()
         pref = self.preferences.get_score(self.world_manager.current_world_id)
         self.world_manager.set_preference_score(pref)
+        # 0.3.1: penalizar si episodio termino fuera de casa
+        self._ep_reward += self.world_manager.on_episode_end()
 
         if self.episode % SAVE_EVERY == 0:
             self.memory.save()
@@ -175,6 +198,7 @@ class Trainer:
             self.world_memory.save()
             self.preferences.save()
             self.home_drive.save()
+            self.causal_memory.save()
 
         return new_level
 
@@ -203,14 +227,18 @@ class Trainer:
             # 0.3
             "world_info"     : self.world_manager.get_episode_summary(),
             "home_drive"     : self.home_drive.to_dict(),
+            # 0.4
+            "body_state"     : self.body_state.to_dict(),
+            "utility"        : self.utility.to_dict(),
+            "causal_learned" : self.causal_memory.count_learned(),
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────
 
     def _full_obs(self, base_obs: np.ndarray) -> np.ndarray:
         """
-        Concatena 8 features de inventario/objetos a los 10 del mundo base.
-        Resultado: vector de 18 dimensiones que alimenta el DQN.
+        Vector de observacion completo para el DQN.
+        10 base + 8 inventario/objetos + 8 contexto-mundo + 8 estado-corporal = 34
         """
         inv   = self.inventory
         world = self.world
@@ -225,19 +253,21 @@ class Trainer:
         dist_key_y = (ky - by) / n if obj["key_present"] else 0.0
 
         extra = np.array([
-            float(inv.has_key),       # 11: tiene llave
-            inv.energy,               # 12: energia actual
-            dist_key_x,              # 13: distancia llave X
-            dist_key_y,              # 14: distancia llave Y
-            (dx - bx) / n,           # 15: distancia puerta X
-            (dy - by) / n,           # 16: distancia puerta Y
-            float(world.door_open),   # 17: puerta abierta
-            float(world.danger_nearby()),  # 18: peligro cercano
+            float(inv.has_key),             # 11
+            inv.energy,                     # 12
+            dist_key_x,                     # 13
+            dist_key_y,                     # 14
+            (dx - bx) / n,                  # 15
+            (dy - by) / n,                  # 16
+            float(world.door_open),         # 17
+            float(world.danger_nearby()),   # 18
         ], dtype=np.float32)
 
-        # 0.3: 8 features de contexto de mundo (total: 10+8+8 = 26)
+        # 0.3: 8 features de contexto de mundo (indices 18-25)
         world_feats = self.world_manager.get_state_features(tuple(self.world.baby_pos))
-        return np.concatenate([base_obs, extra, world_feats])
+        # 0.4: 8 features de estado corporal (indices 26-33)
+        body_feats  = self.body_state.get_state_features()
+        return np.concatenate([base_obs, extra, world_feats, body_feats])
 
     def _apply_interactions(self, info: dict) -> float:
         """
@@ -275,7 +305,7 @@ class Trainer:
             result = interact_food(inv.energy)
             self._ep_events["energy_before_food"] = inv.energy
             inv.eat_food()
-            delta += result["reward_delta"]
+            delta += result["reward_delta"] + self.world_manager.on_object_event("ate_food")
             self.concepts.observe(result["concept_signal"], True, self.episode)
             self._ep_events["ate_food"] = True
             self._ep_ok += 1
@@ -283,7 +313,7 @@ class Trainer:
         if info.get("in_danger"):
             result = interact_danger()
             inv.take_damage()
-            delta += result["reward_delta"]
+            delta += result["reward_delta"] + self.world_manager.on_object_event("in_danger")
             self.concepts.observe(result["concept_signal"], False, self.episode)
             self._ep_events["in_danger"] = True
             self._ep_fail += 1
@@ -292,7 +322,7 @@ class Trainer:
             first  = inv.first_touch("unknown")
             result = interact_unknown(first)
             inv.touch("unknown")
-            delta += result["reward_delta"]
+            delta += result["reward_delta"] + self.world_manager.on_object_event("found_unknown")
             self.concepts.observe(result["concept_signal"], True, self.episode)
             self._ep_events["found_unknown"] = True
             self._ep_ok += 1

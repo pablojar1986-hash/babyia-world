@@ -1,10 +1,11 @@
-# BabyIA World 0.3
+# BabyIA World 0.4
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.3 introduce mundos multiples, portales, preferencias aprendidas y retorno a casa.**
+> **0.4 introduce estado corporal evolutivo (tamano, velocidad, escudo, inmunidades),
+> memoria causal causa→efecto, y un evaluador de utilidad explicativo.**
 > BabyIA todavia no tiene conciencia real.
-> Los mundos, preferencias y el impulso de retorno son reglas de entrenamiento, no emociones.
+> Todos los atributos corporales son mecanismos de juego, no indicadores biologicos.
 
 ---
 
@@ -97,13 +98,16 @@ BabyIA World/
 |-- main.py                 <- Argparse, modos, bucle de episodios
 |
 |-- brain/
-|   |-- baby_brain.py       <- DQN con PyTorch (STATE_SIZE=18)
+|   |-- baby_brain.py       <- DQN con PyTorch (STATE_SIZE=34)
 |   |-- trainer.py          <- Orquesta mundo <-> cerebro <-> memoria
+|   |-- body_state.py       <- Estado corporal evolutivo (0.4)
+|   |-- causal_memory.py    <- Memoria causa->efecto persistente (0.4)
+|   |-- utility_evaluator.py <- Capa explicativa de utilidad (0.4)
 |   |-- memory.py           <- Memorias episodicas y autobiografia
 |   |-- emotions.py         <- Senales internas de control
 |   |-- self_model.py       <- Modelo del yo (nivel, habilidades)
-|   |-- curriculum.py       <- Niveles 0-6; senaliza cambios de laberinto (0.2.1)
-|   |-- metrics.py          <- Estadisticas persistentes + por nivel (0.2.1)
+|   |-- curriculum.py       <- Niveles 0-6; senaliza cambios de laberinto
+|   |-- metrics.py          <- Estadisticas persistentes + por nivel + corporal
 |   |-- model_store.py      <- Versionado latest/best/checkpoints
 |   |-- concepts.py         <- Memoria conceptual (0.2)
 |   |-- strategy.py         <- Registro de estrategias emergentes (0.2)
@@ -115,6 +119,9 @@ BabyIA World/
 |   |-- rewards.py          <- Calculo de recompensas
 |   |-- inventory.py        <- Inventario de BabyIA (0.2)
 |   |-- interactions.py     <- Reglas causa-efecto (0.2)
+|   |-- powerups.py         <- 8 tipos de powerup (0.4)
+|   |-- hazards.py          <- 8 peligros bloqueables (0.4)
+|   |-- doors.py            <- 6 puertas con requisitos (0.4)
 |   |-- maze_generator.py   <- Generacion procedural de laberintos (0.2.1)
 |   `-- level_factory.py    <- Laberintos por nivel 0-6 con BFS (0.2.1)
 |
@@ -128,7 +135,7 @@ BabyIA World/
 |-- docs/                   <- Documentacion interna
 |-- data/                   <- Memorias, estadisticas y conceptos en JSON
 |-- models/                 <- Pesos del cerebro (.pt)
-|-- tests/                  <- 110 tests con pytest
+|-- tests/                  <- 307 tests con pytest
 `-- godot/                  <- Reservado para fase futura
 ```
 
@@ -204,6 +211,19 @@ Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 - STATE_SIZE 10 -> 18 (8 features nuevas: llave, energia, distancias, puerta, peligro)
 - Metricas de interacciones (llaves, puertas, comida, peligro, conceptos)
 
+## Novedades en 0.4.0
+
+- `brain/body_state.py` — BodyState: size, speed, shield, fire_immunity, poison_immunity, vision_range, memory_focus
+- `world/powerups.py` — 8 tipos de powerup (growth_crystal, speed_boots, shield_orb, etc.)
+- `world/hazards.py` — 8 peligros (fire_zone, poison_zone, mud, spikes, etc.) con bloqueo por estado corporal
+- `world/doors.py` — 6 tipos de puertas con requisitos de acceso (heavy_door, fire_door, etc.)
+- `brain/causal_memory.py` — memoria de relaciones causa→efecto con nivel de confianza persistido en data/causal_memory.json
+- `brain/utility_evaluator.py` — capa explicativa de utilidad (no reemplaza DQN)
+- STATE_SIZE 26 → 34 (+8 features: size, speed, shield, inmunidades, proximidades)
+- Avatar actualizado: radio escala con size, halo de escudo, iconos de inmunidad
+- Panel "Cuerpo" en la vista: tamano, velocidad, escudo, inmunidades, utilidad del paso
+- 6 nuevos archivos de tests; 307 tests totales pasando
+
 ## Novedades en 0.3
 
 - `worlds/` — sistema de 5 mundos (casa, comida, peligro, curiosidad, desafio)
@@ -215,10 +235,10 @@ Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 - STATE_SIZE 18 → 26 (+8 features de contexto de mundo); modelo v0.3 incompatible con v0.2
 - 5 nuevos archivos de tests
 
-## Que queda para 0.4
+## Que queda para 0.4.1+
 
-- Lenguaje simple: frases generadas por plantillas
-- Vocabulario basico de navegacion y objetos
-- BabyIA puede "describir" lo que ve
+- Peligros y powerups colocados fisicamente en el grid
+- Puertas especiales con requisitos en posiciones del laberinto
+- Lenguaje simple: frases generadas por plantillas (0.5)
 
 Ver: [docs/evolucion.md](docs/evolucion.md)
