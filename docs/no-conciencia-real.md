@@ -72,3 +72,17 @@ El proyecto usa esta frase para describir sistemas que tienen:
 
 Es una arquitectura de diseño, no una afirmación filosófica.
 BabyIA procesa información y optimiza una función. No más.
+
+## Qué es "completar el nivel" (0.4.3)
+
+A partir de 0.4.3, el curriculum sube de nivel cuando BabyIA "completa el nivel".
+Esto significa: BabyIA pisó la celda NEXT_LEVEL_DOOR (7,7) mientras llevaba la llave.
+
+- "Elegir" la puerta correcta es optimización de Q-values, no decisión consciente
+- "Buscar la llave" es seguir gradientes de recompensa, no intención
+- "Sentirse estancada" (anti-estancamiento) es un contador, no experiencia subjetiva
+- "Progresar" es incrementar un número interno, no ambición ni voluntad
+
+BabyIA no tiene conciencia real. Cuando se hable de elegir, preferir, sobrevivir o
+buscar progreso, debe entenderse como cálculo funcional basado en recompensas,
+riesgos, memoria, utilidad y objetivos.

@@ -1,5 +1,5 @@
 """
-BabyIA World 0.4.2 — Coordinador de la interfaz gráfica.
+BabyIA World 0.4.3 — Coordinador de la interfaz gráfica.
 Gestiona la ventana y delega dibujo a módulos especializados.
 No contiene lógica de aprendizaje.
 """
@@ -22,9 +22,11 @@ _DOOR_O = (100, 160, 80)
 _FOOD = (80, 200, 120)
 _DANGER = (200, 60, 60)
 _UNKNWN = (140, 80, 200)
-_POWERUP = (60, 200, 240)    # 0.4.2: cian
-_HAZARD = (240, 110, 30)     # 0.4.2: naranja
-_SPDOOR = (180, 90, 200)     # 0.4.2: violeta
+_POWERUP = (60, 200, 240)  # 0.4.2: cian
+_HAZARD = (240, 110, 30)  # 0.4.2: naranja
+_SPDOOR = (180, 90, 200)  # 0.4.2: violeta
+_LVLDOOR = (255, 200, 0)  # 0.4.3: dorado — puerta de progreso
+_OPTDOOR = (50, 220, 180)  # 0.4.3: turquesa — puerta opcional
 
 PORTAL_COLORS = {
     (7, 2): (50, 130, 220),
@@ -43,9 +45,11 @@ CELL_COLORS = {
     int(Cell.FOOD): _FOOD,
     int(Cell.DANGER): _DANGER,
     int(Cell.UNKNOWN_OBJECT): _UNKNWN,
-    int(Cell.POWERUP): _POWERUP,      # 0.4.2
-    int(Cell.HAZARD): _HAZARD,        # 0.4.2
+    int(Cell.POWERUP): _POWERUP,  # 0.4.2
+    int(Cell.HAZARD): _HAZARD,  # 0.4.2
     int(Cell.SPECIAL_DOOR): _SPDOOR,  # 0.4.2
+    int(Cell.LEVEL_DOOR): _LVLDOOR,  # 0.4.3: dorado
+    int(Cell.OPTIONAL_DOOR): _OPTDOOR,  # 0.4.3: turquesa
 }
 
 CELL_LABELS = {
@@ -56,9 +60,11 @@ CELL_LABELS = {
     Cell.FOOD: ("F", (20, 60, 30)),
     Cell.DANGER: ("X", (80, 20, 20)),
     Cell.UNKNOWN_OBJECT: ("?", (50, 20, 80)),
-    Cell.POWERUP: ("+", (10, 70, 90)),     # 0.4.2
-    Cell.HAZARD: ("!", (90, 30, 10)),      # 0.4.2
+    Cell.POWERUP: ("+", (10, 70, 90)),  # 0.4.2
+    Cell.HAZARD: ("!", (90, 30, 10)),  # 0.4.2
     Cell.SPECIAL_DOOR: ("S", (60, 20, 70)),  # 0.4.2
+    Cell.LEVEL_DOOR: ("N", (80, 60, 0)),  # 0.4.3: Nivel
+    Cell.OPTIONAL_DOOR: ("O", (10, 70, 60)),  # 0.4.3: Opcional
 }
 
 _LEGEND = [
@@ -222,4 +228,14 @@ class PygameView:
         door_fail = ev.get("last_door_fail")
         if door_fail:
             lines.append(f"E{ep}: Puerta: {door_fail}")
+        # 0.4.3: eventos de puertas de nivel
+        if ev.get("level_completed"):
+            lines.append(f"E{ep}: *** NIVEL COMPLETADO ***")
+        if ev.get("hit_next_level_door"):
+            req = ev.get("missing_requirement", "algo")
+            lines.append(f"E{ep}: Puerta nivel bloqueada: {req}")
+        if ev.get("entered_treasure_room"):
+            lines.append(f"E{ep}: Entro sala del tesoro")
+        if ev.get("entered_training_room"):
+            lines.append(f"E{ep}: Entro sala de entrenamiento")
         return lines[-6:]

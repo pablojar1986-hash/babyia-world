@@ -40,13 +40,14 @@ def test_new_cell_gives_bonus(world):
 
 
 def test_goal_reached(world):
+    # 0.4.3: (7,7) es NEXT_LEVEL_DOOR — requiere llave para completar
     world.reset()
-    # Mover BabyIA justo al lado de la meta
     world.baby_pos = [GOAL_POS[0] - 1, GOAL_POS[1]]
-    _, reward, done, info = world.step(Action.RIGHT)
+    _, reward, done, info = world.step(Action.RIGHT, has_key=True)
     assert info["reached_goal"]
+    assert info["level_completed"]
     assert done
-    assert reward >= 9.0  # recompensa de meta menos penalización de paso
+    assert reward > 0  # recompensa de level_completed supera penalizacion de paso
 
 
 def test_step_limit(world):

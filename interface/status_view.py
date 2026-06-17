@@ -52,6 +52,32 @@ def render(surface, fonts, area, status):
         TEXT,
     )
     py += 16
+
+    # 0.4.3: objetivo actual y anti-estancamiento
+    obj = status.get("current_objective", "")
+    if obj:
+        obj_c = (
+            (255, 215, 0) if "dorada" in obj or "completado" in obj.lower() else TEXT
+        )
+        txt(surface, f"Obj: {obj[:28]}", x, py, fonts["xs"], obj_c)
+        py += 14
+    ewp = status.get("episodes_without_progress", 0)
+    lc = status.get("level_completions", 0)
+    stag = status.get("stagnation_active", False)
+    stag_c = (220, 70, 70) if stag else TEXT_DIM
+    txt(surface, f"Sin progreso: {ewp} ep.", x, py, fonts["xs"], stag_c)
+    py += 14
+    cur = status.get("curriculum", {})
+    req = cur.get("required", 0)
+    txt(
+        surface,
+        f"Completados: {lc}/{req}",
+        x,
+        py,
+        fonts["xs"],
+        (100, 220, 100) if lc >= req else TEXT_DIM,
+    )
+    py += 14
     avg_r = status.get("avg_reward")
     avg_s = status.get("avg_steps")
     if avg_r is not None:

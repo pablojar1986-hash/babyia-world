@@ -1,21 +1,32 @@
-# ── Recompensas base de movimiento (0.1.x — sin cambios) ─────────────────────
-REWARD_GOAL     =  10.0
-REWARD_WALL     =  -1.0
-REWARD_STEP     =  -0.05
-REWARD_NEW_CELL =   1.0
-REWARD_REPEAT   =  -0.2
-REPEAT_WINDOW   =  5
+# ── Recompensas base de movimiento ────────────────────────────────────────────
+# 0.4.3: REWARD_NEW_CELL reducido de 1.0 a 0.05 para evitar reward hacking por exploracion.
+# REWARD_STEP suavizado de -0.05 a -0.02 para no penalizar demasiado el aprendizaje temprano.
+REWARD_GOAL = 10.0  # compatibilidad con tests existentes (no usado en nuevo curriculum)
+REWARD_WALL = -1.0
+REWARD_STEP = -0.02  # era -0.05
+REWARD_NEW_CELL = 0.05  # era 1.0 — reducido drasticamente para que no domine
+REWARD_REPEAT = -0.2
+REPEAT_WINDOW = 5
 
 # ── Recompensas de objetos (0.2) ──────────────────────────────────────────────
-REWARD_KEY_FIRST    =  3.0   # primera vez que recoge una llave
-REWARD_KEY_EXTRA    =  0.5   # llaves adicionales en el episodio
-REWARD_OPEN_DOOR    =  5.0   # abrir puerta con llave
-REWARD_DOOR_FAIL    = -0.5   # intentar abrir puerta sin llave
-REWARD_FOOD_LOW     =  2.0   # comer cuando energia < 50%
-REWARD_FOOD_OK      =  0.5   # comer con energia suficiente
-REWARD_DANGER       = -2.0   # entrar en zona peligrosa
-REWARD_UNKNOWN      =  1.0   # descubrir objeto desconocido por primera vez
-REWARD_CONCEPT      =  2.0   # confirmar relacion causa-efecto
+REWARD_KEY_FIRST = 8.0  # era 3.0 — mas importante ahora que la llave abre nivel
+REWARD_KEY_EXTRA = 0.5
+REWARD_OPEN_DOOR = 6.0  # era 5.0
+REWARD_DOOR_FAIL = -0.5
+REWARD_FOOD_LOW = 2.0
+REWARD_FOOD_OK = 0.5
+REWARD_DANGER = -2.0
+REWARD_UNKNOWN = 1.0
+REWARD_CONCEPT = 2.0
+
+# ── Recompensas de progresion de nivel (0.4.3) ────────────────────────────────
+REWARD_NEXT_LEVEL_DOOR = 80.0  # abrir la puerta de progreso con llave
+REWARD_LEVEL_COMPLETED = 120.0  # bonus adicional al completar el nivel
+REWARD_TREASURE_ROOM = 10.0  # entrar a sala de tesoro
+REWARD_TRAINING_ROOM = 5.0  # entrar a sala de entrenamiento
+REWARD_DANGER_ROOM_SURVIVED = 15.0  # sobrevivir sala peligrosa
+REWARD_WRONG_DOOR = -1.0  # abrir puerta opcional cuando era la de progreso?
+REWARD_NEXT_DOOR_WITHOUT_KEY = -5.0  # intentar abrir puerta de nivel sin llave
 
 
 def calculate_reward(hit_wall, reached_goal, visited_new, action_history) -> float:
@@ -53,6 +64,17 @@ def object_reward(event: str, context: dict | None = None) -> float:
         return REWARD_UNKNOWN
     if event == "concept_confirmed":
         return REWARD_CONCEPT
+    # 0.4.3: eventos de puertas de nivel
+    if event == "level_completed":
+        return REWARD_LEVEL_COMPLETED
+    if event == "next_level_door_opened":
+        return REWARD_NEXT_LEVEL_DOOR
+    if event == "treasure_room_entered":
+        return REWARD_TREASURE_ROOM
+    if event == "training_room_entered":
+        return REWARD_TRAINING_ROOM
+    if event == "next_door_without_key":
+        return REWARD_NEXT_DOOR_WITHOUT_KEY
     return 0.0
 
 

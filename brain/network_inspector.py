@@ -1,4 +1,5 @@
 """Inspeccion de arquitectura de la red neuronal DQN de BabyIA."""
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -15,20 +16,23 @@ def inspect_network(model) -> dict:
     for _name, module in model.named_modules():
         if type(module).__name__ == "Linear":
             p = module.in_features * module.out_features + module.out_features
-            layers.append({
-                "name": _name,
-                "in":   module.in_features,
-                "out":  module.out_features,
-                "params": p,
-            })
+            layers.append(
+                {
+                    "name": _name,
+                    "in": module.in_features,
+                    "out": module.out_features,
+                    "params": p,
+                }
+            )
             total_params += p
 
     return {
-        "input_size"  : layers[0]["in"] if layers else 0,
-        "output_size" : layers[-1]["out"] if layers else 0,
+        "input_size": layers[0]["in"] if layers else 0,
+        "output_size": layers[-1]["out"] if layers else 0,
         "total_params": total_params,
-        "layer_sizes" : [l["in"] for l in layers] + ([layers[-1]["out"]] if layers else []),
-        "layers"      : layers,
+        "layer_sizes": [layer["in"] for layer in layers]
+        + ([layers[-1]["out"]] if layers else []),
+        "layers": layers,
     }
 
 

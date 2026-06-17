@@ -102,7 +102,7 @@
 - Bitacora separada en panel inferior; borde de color por mundo en el grid
 - Ventana 860x618px (antes 810x490); 3 nuevos archivos de test; 351 tests pasando
 
-### 0.4.2 — Integracion jugable real de powerups, hazards, puertas especiales y supervivencia (actual)
+### 0.4.2 — Integracion jugable real de powerups, hazards, puertas especiales y supervivencia (completado)
 - world/objects.py: Cell.POWERUP=9, Cell.HAZARD=10, Cell.SPECIAL_DOOR=11
 - world/grid_world.py: posiciones estaticas de 4 powerups, 3 hazards y 2 puertas especiales en grid;
   step() registra interacciones; get_grid() renderiza nuevas celdas; 3 metodos de proximidad
@@ -122,9 +122,28 @@
 - scripts/health_check.py: check_042_integrity() — 5 nuevas verificaciones de integridad
 - 7 nuevos archivos de test; 413 tests pasando
 
-### 0.4.3 — Evaluador de utilidad y aprendizaje causa-efecto avanzado
-- Utilidad integrada en toma de decisiones del agente
-- Memoria causal completa con actualizacion por experiencia
+### 0.4.3 — Progresion real por puertas de nivel, curriculo anti-estancamiento y recompensa orientada a completar niveles (actual)
+- PROBLEMA resuelto: BabyIA podia acumular alta recompensa (hasta 64 pts por exploracion)
+  sin completar nunca el nivel. REWARD_NEW_CELL=0.05 (antes 1.0) elimina este reward hacking.
+- world/level_doors.py (NUEVO): LevelDoor, LEVEL_DOOR_POSITIONS (3 puertas), attempt_level_door()
+- world/objects.py: Cell.LEVEL_DOOR=12, Cell.OPTIONAL_DOOR=13; STATE_SIZE corregido a 34
+- world/rewards.py: REWARD_LEVEL_COMPLETED=120, REWARD_NEXT_LEVEL_DOOR=80, REWARD_NEW_CELL=0.05
+- world/grid_world.py: (7,7) es NEXT_LEVEL_DOOR; bloquea sin llave; step() devuelve level_completed;
+  puertas opcionales en (4,7) y (7,0); get_grid() renderiza LEVEL_DOOR/OPTIONAL_DOOR
+- brain/curriculum.py: record_episode() acepta level_completed; nivel 0 sube con 1 completion;
+  episodes_without_progress; stagnation_active; anti-estancamiento (threshold=100 episodios)
+- brain/trainer.py: _handle_powerup/hazard/special_door() ampliados con eventos 0.4.3;
+  contadores ep_level_completed/ep_optional_rooms/ep_treasure_rooms/ep_training_rooms/ep_next_door_blocked;
+  current_objective computado en get_status()
+- brain/memory.py: frases autobiograficas para level_completed, puertas bloqueadas, salas opcionales
+- brain/metrics.py: level_completed_count, next_level_door_attempts/successes/fails, optional_rooms
+- main.py: run_episode devuelve level_completed; end_episode recibe level_completed;
+  anti-estancamiento aumenta epsilon; titulo "BabyIA World 0.4.3"
+- interface/status_view.py: muestra current_objective, episodes_without_progress, level_completions
+- interface/world_info_view.py: seccion de puertas de nivel con estado de bloqueo y evento
+- interface/pygame_view.py: colores dorado/turquesa para LEVEL_DOOR/OPTIONAL_DOOR; log de eventos
+- scripts/health_check.py: check_043_integrity() — 6 nuevas verificaciones
+- 5 nuevos archivos de test; 476 tests pasando
 
 ### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas

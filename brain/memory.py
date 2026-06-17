@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 DATA_DIR = Path("data")
-MAX_STEPS_IN_RAM  = 1000
+MAX_STEPS_IN_RAM = 1000
 MAX_AUTOBIOGRAPHY = 200
 
 
@@ -23,38 +23,57 @@ class Memory:
 
     def record_step(self, episode, step, state, action, reward, info):
         entry = {
-            "episode"      : episode,
-            "step"         : step,
-            "state"        : state.tolist() if hasattr(state, "tolist") else list(state),
-            "action"       : int(action),
-            "reward"       : reward,
-            "hit_wall"     : info.get("hit_wall", False),
-            "reached_goal" : info.get("reached_goal", False),
-            "timestamp"    : datetime.now().isoformat(),
+            "episode": episode,
+            "step": step,
+            "state": state.tolist() if hasattr(state, "tolist") else list(state),
+            "action": int(action),
+            "reward": reward,
+            "hit_wall": info.get("hit_wall", False),
+            "reached_goal": info.get("reached_goal", False),
+            "timestamp": datetime.now().isoformat(),
         }
         self.episodes.append(entry)
         if len(self.episodes) > MAX_STEPS_IN_RAM:
             self.episodes = self.episodes[-MAX_STEPS_IN_RAM:]
 
     def record_autobiography(self, phrase: str):
-        self.autobiography.append({
-            "timestamp": datetime.now().isoformat(),
-            "text"     : phrase,
-        })
+        self.autobiography.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "text": phrase,
+            }
+        )
         if len(self.autobiography) > MAX_AUTOBIOGRAPHY:
             self.autobiography = self.autobiography[-MAX_AUTOBIOGRAPHY:]
 
     # ── Generacion de frases autobiograficas (0.2 ampliado) ───────────────────
 
-    def generate_phrase(self, episode, total_reward, wall_hits,
-                        reached_goal, epsilon,
-                        events: dict | None = None) -> str:
+    def generate_phrase(
+        self,
+        episode,
+        total_reward,
+        wall_hits,
+        reached_goal,
+        epsilon,
+        events: dict | None = None,
+    ) -> str:
         """
         Genera una frase narrativa sobre el episodio.
         events puede contener claves de interaccion (0.2).
         Estas frases son simuladas; BabyIA no tiene experiencias reales.
         """
         ev = events or {}
+
+        # 0.4.3: eventos de puertas de nivel (prioridad alta)
+        if ev.get("level_completed"):
+            return f"Abri la puerta dorada con la llave y complete el nivel. Episodio {episode}."
+        if ev.get("hit_next_level_door"):
+            req = ev.get("missing_requirement", "algo")
+            return f"Intente cruzar la puerta de nivel pero me faltaba {req}."
+        if ev.get("entered_treasure_room"):
+            return "Entre a la sala del tesoro. Es opcional pero trae recompensa."
+        if ev.get("entered_training_room"):
+            return "Entre a la sala de entrenamiento. No avanza de nivel, pero ayuda."
 
         # Eventos de objetos (0.2)
         if ev.get("opened_door"):
@@ -79,13 +98,17 @@ class Memory:
             if episode <= 10:
                 return "Encontre la meta por primera vez. Fue un momento importante."
             elif epsilon > 0.4:
-                return f"Llegue a la meta en el episodio {episode}. Aun estoy explorando."
+                return (
+                    f"Llegue a la meta en el episodio {episode}. Aun estoy explorando."
+                )
             else:
                 return f"Alcance la meta en el episodio {episode}. Mi confianza crece."
         if wall_hits > 10:
             return "Choque demasiadas veces. Debo cambiar de estrategia."
         if wall_hits > 0:
-            return "Choque con algunas paredes. Estoy aprendiendo los limites del mundo."
+            return (
+                "Choque con algunas paredes. Estoy aprendiendo los limites del mundo."
+            )
         if total_reward < -5:
             return "Este episodio fue dificil. Debo explorar nuevas rutas."
         return f"Explore el mundo en el episodio {episode}. Sigo aprendiendo."
@@ -106,8 +129,8 @@ class Memory:
 
     def _load(self):
         for filename, attr in [
-            ("memories.json",     "episodes"),
-            ("autobiography.json","autobiography"),
+            ("memories.json", "episodes"),
+            ("autobiography.json", "autobiography"),
         ]:
             path = DATA_DIR / filename
             try:

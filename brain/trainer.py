@@ -81,6 +81,12 @@ class Trainer:
         self._ep_hazards_blocked = 0
         self._ep_door_attempts = 0
         self._ep_door_successes = 0
+        # 0.4.3 — contadores de puertas de nivel
+        self._ep_level_completed = False
+        self._ep_optional_rooms = 0
+        self._ep_treasure_rooms = 0
+        self._ep_training_rooms = 0
+        self._ep_next_door_blocked = 0
         self._current_state: np.ndarray | None = None
         self._maze_info: dict = {
             "difficulty": "Basico",
@@ -104,6 +110,11 @@ class Trainer:
         self._ep_hazards_blocked = 0
         self._ep_door_attempts = 0
         self._ep_door_successes = 0
+        self._ep_level_completed = False
+        self._ep_optional_rooms = 0
+        self._ep_treasure_rooms = 0
+        self._ep_training_rooms = 0
+        self._ep_next_door_blocked = 0
         self.inventory.reset()
         self.world_manager.reset()
         self.home_drive.reset_episode()
@@ -185,14 +196,18 @@ class Trainer:
 
         return action, reward, done, info
 
-    def end_episode(self, reached_goal: bool) -> int | None:
+    def end_episode(
+        self, reached_goal: bool, level_completed: bool = False
+    ) -> int | None:
         """
         Cierra el episodio, evalua nivel y guarda si toca.
+        0.4.3: level_completed reemplaza reached_goal como disparador del curriculum.
         Devuelve el nuevo nivel si hubo subida, o None.
         """
-        self.curriculum.record_episode(reached_goal, self._ep_walls)
+        lc = level_completed or self._ep_level_completed
+        self.curriculum.record_episode(reached_goal, self._ep_walls, level_completed=lc)
 
-        ev = dict(self._ep_events, reached_goal=reached_goal)
+        ev = dict(self._ep_events, reached_goal=reached_goal, level_completed=lc)
         phrase = self.memory.generate_phrase(
             self.episode,
             self._ep_reward,
@@ -256,6 +271,16 @@ class Trainer:
     def get_status(self) -> dict:
         stats = self.curriculum.get_stats()
         top_c = self.concepts.top_concepts(2)
+
+        # Objetivo actual para la UI
+        cur_stats = stats.get("curriculum", {})
+        if self._ep_level_completed:
+            current_objective = "Nivel completado!"
+        elif self.inventory.has_key:
+            current_objective = "Ve a la puerta dorada (7,7)"
+        else:
+            current_objective = "Busca la llave (1,6)"
+
         return {
             "episode": self.episode,
             "level": self.self_model.level,
@@ -285,14 +310,24 @@ class Trainer:
             # 0.4.2
             "survival": dict(self._last_survival),
             "causal_relations": [
-                r.to_dict()
-                for r in self.causal_memory.all_relations()[-6:]
+                r.to_dict() for r in self.causal_memory.all_relations()[-6:]
             ],
             "ep_powerups": self._ep_powerups,
             "ep_hazards": self._ep_hazards,
             "ep_hazards_blocked": self._ep_hazards_blocked,
             "ep_door_attempts": self._ep_door_attempts,
             "ep_door_successes": self._ep_door_successes,
+            # 0.4.3
+            "current_objective": current_objective,
+            "ep_level_completed": self._ep_level_completed,
+            "ep_optional_rooms": self._ep_optional_rooms,
+            "ep_treasure_rooms": self._ep_treasure_rooms,
+            "ep_training_rooms": self._ep_training_rooms,
+            "ep_next_door_blocked": self._ep_next_door_blocked,
+            "episodes_without_progress": stats.get("episodes_without_progress", 0),
+            "stagnation_active": stats.get("stagnation_active", False),
+            "level_completions": stats.get("level_completions", 0),
+            "curriculum": cur_stats,
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────
@@ -409,6 +444,39 @@ class Trainer:
         if info.get("hit_special_door"):
             delta += self._handle_special_door(info["hit_special_door"])
 
+        # 0.4.3: puertas de nivel
+        if info.get("level_completed"):
+            from world.rewards import REWARD_LEVEL_COMPLETED
+
+            delta += REWARD_LEVEL_COMPLETED
+            self._ep_level_completed = True
+            self._ep_events["level_completed"] = True
+        if info.get("next_level_door_opened"):
+            from world.rewards import REWARD_NEXT_LEVEL_DOOR
+
+            delta += REWARD_NEXT_LEVEL_DOOR
+        if info.get("entered_treasure_room"):
+            from world.rewards import REWARD_TREASURE_ROOM
+
+            delta += REWARD_TREASURE_ROOM
+            self._ep_optional_rooms += 1
+            self._ep_treasure_rooms += 1
+            self._ep_events["entered_treasure_room"] = True
+        if info.get("entered_training_room"):
+            from world.rewards import REWARD_TRAINING_ROOM
+
+            delta += REWARD_TRAINING_ROOM
+            self._ep_optional_rooms += 1
+            self._ep_training_rooms += 1
+            self._ep_events["entered_training_room"] = True
+        if info.get("hit_next_level_door"):
+            from world.rewards import REWARD_NEXT_DOOR_WITHOUT_KEY
+
+            delta += REWARD_NEXT_DOOR_WITHOUT_KEY
+            self._ep_next_door_blocked += 1
+            self._ep_events["hit_next_level_door"] = True
+            self._ep_events["missing_requirement"] = info.get("missing_requirement", "")
+
         return delta
 
     # ── Handlers 0.4.2 ───────────────────────────────────────────────────────
@@ -444,7 +512,7 @@ class Trainer:
         return 0.0 if blocked else hz.reward_delta
 
     def _handle_special_door(self, door_id: str) -> float:
-        from world.doors import DOOR_TYPES, attempt_door
+        from world.doors import attempt_door
 
         result = attempt_door(door_id, self.body_state, known_concepts=None)
         outcome = "opened" if result["success"] else "blocked"

@@ -1,11 +1,14 @@
-# BabyIA World 0.4.2
+# BabyIA World 0.4.3
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.4.2 integra powerups, hazards y puertas especiales jugables en el grid.**
-> BabyIA recoge cristales, recibe dano de zonas de fuego y aprende que puertas puede cruzar.
-> BabyIA todavia no tiene conciencia real. No siente miedo ni hambre.
-> El "riesgo de supervivencia" es un calculo funcional, no un estado mental.
+> **0.4.3 implementa progresion real por puertas de nivel, curriculo anti-estancamiento
+> y recompensa orientada a completar niveles.**
+> La puerta de siguiente nivel (7,7) ahora requiere llave. BabyIA debe aprender a
+> recoger la llave Y usarla en la puerta correcta para avanzar al nivel 1.
+> El curriculo sube de nivel por `level_completed`, no por `reached_goal`.
+> Si BabyIA se estanca 100 episodios sin completar nivel, el sistema eleva epsilon.
+> BabyIA todavia no tiene conciencia real. "Elegir" o "buscar" son calculos funcionales.
 
 ---
 
@@ -59,16 +62,29 @@ python main.py --reset-all
 
 ---
 
-## Objetos del mundo (0.2)
+## Objetos del mundo
 
-| Simbolo | Tipo            | Efecto                                          |
-|---------|-----------------|--------------------------------------------------|
-| K       | Llave           | BabyIA la recoge; sirve para abrir puertas       |
-| D       | Puerta cerrada  | Bloqueante; se abre con llave                    |
-| O       | Puerta abierta  | Transitable                                      |
-| F       | Comida          | Recupera energia al tocarla                      |
-| X       | Zona peligrosa  | Reduce energia al entrar                         |
-| ?       | Objeto desconocido | Otorga curiosidad y recompensa al descubrirlo |
+| Simbolo | Tipo              | Efecto                                               |
+|---------|-------------------|------------------------------------------------------|
+| K       | Llave             | BabyIA la recoge; necesaria para la puerta de nivel  |
+| D       | Puerta cerrada    | Bloqueante; se abre con llave                        |
+| O       | Puerta abierta    | Transitable                                          |
+| F       | Comida            | Recupera energia al tocarla                          |
+| X       | Zona peligrosa    | Reduce energia al entrar                             |
+| ?       | Objeto desconocido| Otorga curiosidad y recompensa al descubrirlo        |
+| +       | Powerup           | Efecto corporal al recoger (0.4.2)                   |
+| !       | Hazard            | Peligro con efecto corporal; puede ser bloqueado (0.4.2) |
+| S       | Puerta especial   | Requiere condicion corporal (0.4.2)                  |
+| N       | Puerta de nivel   | Dorada; requiere llave; completa el nivel (0.4.3)    |
+| O       | Puerta opcional   | Turquesa; sala de tesoro o entrenamiento (0.4.3)     |
+
+### Puertas de nivel (0.4.3)
+
+| Posicion | Tipo              | Descripcion                                   |
+|----------|-------------------|-----------------------------------------------|
+| (7,7)    | NEXT_LEVEL_DOOR   | Completa el nivel. Requiere llave. Recompensa: +200 |
+| (4,7)    | TREASURE_DOOR     | Opcional. Sin requisito. Recompensa: +10       |
+| (7,0)    | TRAINING_ROOM     | Opcional. Sin requisito. Recompensa: +5        |
 
 ---
 
@@ -108,7 +124,7 @@ BabyIA World/
 |   |-- memory.py           <- Memorias episodicas y autobiografia
 |   |-- emotions.py         <- Senales internas de control
 |   |-- self_model.py       <- Modelo del yo (nivel, habilidades)
-|   |-- curriculum.py       <- Niveles 0-6; senaliza cambios de laberinto
+|   |-- curriculum.py       <- Niveles 0-6; level_completed como disparador; anti-estancamiento (0.4.3)
 |   |-- metrics.py          <- Estadisticas persistentes + por nivel + corporal
 |   |-- model_store.py      <- Versionado latest/best/checkpoints
 |   |-- concepts.py         <- Memoria conceptual (0.2)
@@ -116,9 +132,10 @@ BabyIA World/
 |   `-- network_inspector.py <- Observabilidad de arquitectura DQN (0.2.1)
 |
 |-- world/
-|   |-- grid_world.py       <- Mundo 8x8; posiciones POWERUP/HAZARD/SPECIAL_DOOR; proximidad (0.4.2)
-|   |-- objects.py          <- Cell.POWERUP=9, Cell.HAZARD=10, Cell.SPECIAL_DOOR=11 (0.4.2)
-|   |-- rewards.py          <- Calculo de recompensas
+|   |-- grid_world.py       <- Mundo 8x8; level_completed; NEXT_LEVEL_DOOR bloqueante (0.4.3)
+|   |-- objects.py          <- Cell.LEVEL_DOOR=12, Cell.OPTIONAL_DOOR=13; STATE_SIZE=34 (0.4.3)
+|   |-- level_doors.py      <- LevelDoor; LEVEL_DOOR_POSITIONS; attempt_level_door() (0.4.3)
+|   |-- rewards.py          <- REWARD_LEVEL_COMPLETED=120; REWARD_NEW_CELL=0.05 (0.4.3)
 |   |-- inventory.py        <- take_damage_by(), restore_energy() (0.4.2)
 |   |-- interactions.py     <- Reglas causa-efecto (0.2)
 |   |-- powerups.py         <- 8 powerups; apply_powerup_effect() (0.4.2)
@@ -146,7 +163,7 @@ BabyIA World/
 |-- docs/                   <- Documentacion interna
 |-- data/                   <- Memorias, estadisticas y conceptos en JSON
 |-- models/                 <- Pesos del cerebro (.pt)
-|-- tests/                  <- 413 tests con pytest
+|-- tests/                  <- 476 tests con pytest
 `-- godot/                  <- Reservado para fase futura
 ```
 

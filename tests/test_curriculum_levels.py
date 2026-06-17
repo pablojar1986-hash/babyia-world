@@ -1,4 +1,5 @@
-"""Tests de integracion Curriculum con sistema de niveles (0.2.1)."""
+"""Tests de integracion Curriculum con sistema de niveles (0.2.1 / 0.4.3)."""
+
 from brain.curriculum import Curriculum, MAX_LEVEL
 from world.level_factory import get_maze_for_level
 
@@ -15,25 +16,23 @@ def test_no_level_up_without_enough_episodes():
 
 
 def test_level_up_to_1_on_success():
+    # 0.4.3: level_completed=True dispara la subida de nivel 0 (requiere 1)
     c = Curriculum()
-    for _ in range(20):
-        c.record_episode(True, 0)
+    c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
     assert c.check_level_up() == 1
     assert c.current_level == 1
 
 
 def test_maze_needs_update_set_on_level_up():
     c = Curriculum()
-    for _ in range(20):
-        c.record_episode(True, 0)
+    c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
     c.check_level_up()
     assert c.maze_needs_update is True
 
 
 def test_consume_maze_update_resets_flag():
     c = Curriculum()
-    for _ in range(20):
-        c.record_episode(True, 0)
+    c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
     c.check_level_up()
     assert c.consume_maze_update() is True
     assert c.maze_needs_update is False
@@ -46,25 +45,26 @@ def test_consume_maze_update_false_if_no_change():
 def test_max_level_not_exceeded():
     c = Curriculum()
     c.current_level = MAX_LEVEL
-    for _ in range(20):
-        c.record_episode(True, 0)
+    c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
     assert c.check_level_up() is None
     assert c.current_level == MAX_LEVEL
 
 
-def test_level_2_requires_low_walls():
+def test_level_2_requires_multiple_completions():
+    # Nivel 1 requiere 3 level_completed; con 2 no sube
     c = Curriculum()
     c.current_level = 1
-    for i in range(20):
-        c.record_episode(i % 10 < 8, 5)  # 80% exito, avg_walls=5 > 3.0
+    c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
+    c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
     assert c.check_level_up() is None
 
 
-def test_level_2_passes_with_low_walls():
+def test_level_2_passes_with_enough_completions():
+    # Nivel 1 requiere 3 level_completed
     c = Curriculum()
     c.current_level = 1
-    for _ in range(20):
-        c.record_episode(True, 0)
+    for _ in range(3):
+        c.record_episode(reached_goal=False, wall_hits=0, level_completed=True)
     assert c.check_level_up() == 2
 
 
@@ -83,3 +83,11 @@ def test_get_stats_initial():
     stats = Curriculum().get_stats()
     assert stats["success_rate"] == 0.0
     assert stats["avg_walls"] == 0.0
+
+
+def test_reached_goal_alone_does_not_trigger_level_up():
+    # 0.4.3: reached_goal sin level_completed no basta para subir de nivel
+    c = Curriculum()
+    for _ in range(20):
+        c.record_episode(reached_goal=True, wall_hits=0, level_completed=False)
+    assert c.check_level_up() is None

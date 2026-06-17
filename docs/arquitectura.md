@@ -9,9 +9,10 @@ BabyIA World/
 ├── main.py              ← Argparse, loop de episodios, orquestación.
 |
 |-- world/               <- Reglas fisicas del mundo. No sabe nada del cerebro.
-|   |-- objects.py       <- Enumeraciones: Cell (incl. POWERUP/HAZARD/SPECIAL_DOOR 0.4.2), Action, STATE_SIZE=34.
-|   |-- rewards.py       <- Calculo de recompensas base + objetos (0.2).
-|   |-- grid_world.py    <- Cuadricula 8x8; posiciones POWERUP/HAZARD/SPECIAL_DOOR; proximidad (0.4.2).
+|   |-- objects.py       <- Cell (incl. LEVEL_DOOR=12, OPTIONAL_DOOR=13 0.4.3); STATE_SIZE=34.
+|   |-- rewards.py       <- REWARD_LEVEL_COMPLETED=120; REWARD_NEW_CELL=0.05 (0.4.3).
+|   |-- level_doors.py   <- LevelDoor; LEVEL_DOOR_POSITIONS; attempt_level_door() (0.4.3).
+|   |-- grid_world.py    <- Cuadricula 8x8; NEXT_LEVEL_DOOR bloqueante; level_completed (0.4.3).
 |   |-- inventory.py     <- Inventario: energy, take_damage_by(), restore_energy() (0.4.2).
 |   |-- interactions.py  <- Reglas causa-efecto puras (0.2).
 |   |-- powerups.py      <- 8 powerups; apply_powerup_effect() ruteado a Inventory o BodyState (0.4.2).

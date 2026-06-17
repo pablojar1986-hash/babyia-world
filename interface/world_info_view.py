@@ -6,6 +6,7 @@ from interface.ui_components import (
     divider,
     ACCENT,
     TEXT_DIM,
+    COLOR_NEG,
 )
 
 
@@ -87,4 +88,35 @@ def render(surface, fonts, area, status):
     for label, color, pos in portales:
         txt(surface, f"  {label} {pos}", x, py, fonts["xs"], color)
         py += 13
+    py += 6
+    divider(surface, x, py, w - 4)
+    py += 10
+
+    # 0.4.3: puertas de nivel
+    txt(surface, "Puertas de Nivel", x, py, fonts["med"], ACCENT)
+    py += 20
+    ep_ev = status.get("ep_events", {})
+    has_key = status.get("inventory", {}).get("has_key", False)
+
+    puertas = [
+        ("Dorada (progreso)", (255, 200, 0), "(7,7)", True, has_key),
+        ("Tesoro  (opcional)", (50, 200, 200), "(4,7)", False, True),
+        ("Entrena (opcional)", (120, 220, 120), "(7,0)", False, True),
+    ]
+    for pname, pcolor, ppos, is_progress, can_open in puertas:
+        lock = "" if can_open else " [SIN LLAVE]"
+        avanza = " -> SUBE NIVEL" if is_progress else ""
+        line = f"  {pname}{lock}{avanza}"[:36]
+        c = pcolor if can_open else COLOR_NEG
+        txt(surface, f"{line} {ppos}", x, py, fonts["xs"], c)
+        py += 13
+
+    if ep_ev.get("level_completed"):
+        txt(surface, "  *** NIVEL COMPLETADO ***", x, py, fonts["sm"], (255, 215, 0))
+        py += 16
+    elif ep_ev.get("hit_next_level_door"):
+        missing = ep_ev.get("missing_requirement", "algo")
+        txt(surface, f"  Bloqueada: {missing}", x, py, fonts["xs"], COLOR_NEG)
+        py += 14
+
     return py

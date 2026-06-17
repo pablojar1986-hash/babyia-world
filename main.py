@@ -188,11 +188,11 @@ def build_status(trainer: Trainer, metrics: TrainingMetrics, mode: str) -> dict:
 
 def run_episode(
     trainer: Trainer, view: PygameView, metrics: TrainingMetrics, mode: str
-) -> tuple[bool, dict]:
+) -> tuple[bool, bool, dict]:
     trainer.start_episode()
     log_episode_start(trainer.episode, trainer.self_model.level)
 
-    done, reached_goal = False, False
+    done, reached_goal, level_completed = False, False, False
 
     while not done and view.running:
         if not view.handle_events():
@@ -200,12 +200,14 @@ def run_episode(
 
         action, reward, done, info = trainer.step()
 
-        if info["reached_goal"]:
+        if info.get("reached_goal"):
             reached_goal = True
+        if info.get("level_completed"):
+            level_completed = True
 
         view.render(trainer.world, build_status(trainer, metrics, mode))
 
-    return reached_goal, trainer.get_status()
+    return reached_goal, level_completed, trainer.get_status()
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -231,7 +233,7 @@ def main():
     store = ModelStore(
         trainer.brain, model_latest=MODEL_V4_LATEST, model_best=MODEL_V4_BEST
     )
-    view = PygameView(title="BabyIA World 0.4.2")
+    view = PygameView(title="BabyIA World 0.4.3")
 
     # 0.2.2: guardar y mostrar metadatos de arquitectura al iniciar
     net_info = save_network_stats(trainer.brain.q_net)
@@ -264,8 +266,19 @@ def main():
             if not view.running:
                 break
 
-            reached_goal, status = run_episode(trainer, view, metrics, cfg.mode)
-            new_level = trainer.end_episode(reached_goal)
+            reached_goal, level_completed, status = run_episode(
+                trainer, view, metrics, cfg.mode
+            )
+            new_level = trainer.end_episode(
+                reached_goal, level_completed=level_completed
+            )
+
+            # 0.4.3: anti-estancamiento — elevar epsilon si BabyIA se estanca
+            if is_training and status.get("stagnation_active"):
+                trainer.brain.epsilon = min(trainer.brain.epsilon + 0.1, 0.9)
+                console.print(
+                    "[yellow]Anti-estancamiento: epsilon aumentado temporalmente.[/yellow]"
+                )
 
             ev = status.get("ep_events", {})
             inv = status.get("inventory", {})
@@ -293,6 +306,14 @@ def main():
                 door_attempts=status.get("ep_door_attempts", 0),
                 door_successes=status.get("ep_door_successes", 0),
                 causal_learned=status.get("causal_learned", 0),
+                # 0.4.3 — puertas de nivel
+                level_completed=level_completed,
+                next_door_attempts=status.get("ep_next_door_blocked", 0),
+                next_door_successes=1 if level_completed else 0,
+                next_door_fails_no_key=status.get("ep_next_door_blocked", 0),
+                optional_rooms=status.get("ep_optional_rooms", 0),
+                treasure_rooms=status.get("ep_treasure_rooms", 0),
+                episodes_without_progress=status.get("episodes_without_progress", 0),
             )
 
             if is_training:

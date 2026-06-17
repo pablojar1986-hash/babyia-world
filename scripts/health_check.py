@@ -66,6 +66,8 @@ REQUIRED_FILES = [
     "interface/memory_view.py",
     # 0.4.2
     "brain/survival.py",
+    # 0.4.3
+    "world/level_doors.py",
 ]
 REQUIRED_TESTS = [
     "tests/test_world.py",
@@ -106,6 +108,12 @@ REQUIRED_TESTS = [
     "tests/test_utility_evaluator_context.py",
     "tests/test_causal_memory_integration.py",
     "tests/test_visual_status_payload.py",
+    # 0.4.3
+    "tests/test_level_progression_doors.py",
+    "tests/test_curriculum_progression.py",
+    "tests/test_reward_balance.py",
+    "tests/test_optional_rooms.py",
+    "tests/test_progress_ui_payload.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -504,6 +512,154 @@ def check_042_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_043_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica correcciones especificas introducidas en 0.4.3."""
+    results = []
+    import sys as _sys
+
+    _sys.path.insert(0, str(root))
+
+    # 1. world/level_doors.py existe y contiene LEVEL_DOOR_POSITIONS
+    try:
+        from world.level_doors import LEVEL_DOOR_POSITIONS, LEVEL_DOOR_TYPES
+
+        if len(LEVEL_DOOR_POSITIONS) >= 3:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": f"level_doors.py: {len(LEVEL_DOOR_POSITIONS)} puertas definidas",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": f"level_doors.py: solo {len(LEVEL_DOOR_POSITIONS)} puertas (esperadas >=3)",
+                }
+            )
+    except Exception as e:
+        results.append({"status": "fail", "message": f"level_doors.py: {e}"})
+
+    # 2. Curriculum acepta level_completed
+    try:
+        from brain.curriculum import Curriculum
+        import inspect
+
+        src = inspect.getsource(Curriculum.record_episode)
+        if "level_completed" in src:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "Curriculum.record_episode acepta level_completed",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "Curriculum.record_episode NO tiene level_completed",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar Curriculum: {e}"}
+        )
+
+    # 3. REWARD_LEVEL_COMPLETED > exploracion maxima (64 * REWARD_NEW_CELL)
+    try:
+        from world.rewards import REWARD_LEVEL_COMPLETED, REWARD_NEW_CELL
+
+        max_exploration = 64 * REWARD_NEW_CELL
+        if REWARD_LEVEL_COMPLETED > max_exploration:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": (
+                        f"REWARD_LEVEL_COMPLETED={REWARD_LEVEL_COMPLETED} "
+                        f"> exploracion_max={max_exploration:.1f}"
+                    ),
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": (
+                        f"REWARD_LEVEL_COMPLETED={REWARD_LEVEL_COMPLETED} "
+                        f"<= exploracion_max={max_exploration:.1f} (reward hacking activo)"
+                    ),
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar rewards: {e}"}
+        )
+
+    # 4. NEXT_LEVEL_DOOR no es siempre pasable (requiere llave)
+    try:
+        from world.level_doors import LEVEL_DOOR_TYPES
+
+        nd = LEVEL_DOOR_TYPES.get("next_level_door")
+        if nd and nd.requires_key:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "next_level_door.requires_key=True (no siempre pasable)",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "next_level_door deberia tener requires_key=True",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar level_doors: {e}"}
+        )
+
+    # 5. world/objects.py STATE_SIZE coincide con brain/baby_brain.py STATE_SIZE
+    try:
+        from world.objects import STATE_SIZE as WS
+        from brain.baby_brain import STATE_SIZE as BS
+
+        if WS == BS:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": f"STATE_SIZE consistente: {WS} en objects y baby_brain",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": f"STATE_SIZE inconsistente: objects={WS} vs baby_brain={BS}",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar STATE_SIZE: {e}"}
+        )
+
+    # 6. README menciona version 0.4.3
+    try:
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        if "0.4.3" in readme:
+            results.append(
+                {"status": "ok", "message": "README.md menciona version 0.4.3"}
+            )
+        else:
+            results.append(
+                {"status": "warn", "message": "README.md no menciona version 0.4.3"}
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo leer README: {e}"})
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -517,6 +673,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_tasks_reset_zero(root))  # 0.2.2
     checks.extend(check_worlds_have_return(root))  # 0.3
     checks.extend(check_042_integrity(root))  # 0.4.2
+    checks.extend(check_043_integrity(root))  # 0.4.3
     return checks
 
 

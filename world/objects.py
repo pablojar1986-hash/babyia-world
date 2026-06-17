@@ -2,26 +2,28 @@ from enum import IntEnum
 
 
 class Cell(IntEnum):
-    EMPTY          = 0
-    WALL           = 1
-    GOAL           = 2
-    KEY            = 3
-    DOOR_CLOSED    = 4
-    DOOR_OPEN      = 5
-    FOOD           = 6
-    DANGER         = 7
+    EMPTY = 0
+    WALL = 1
+    GOAL = 2
+    KEY = 3
+    DOOR_CLOSED = 4
+    DOOR_OPEN = 5
+    FOOD = 6
+    DANGER = 7
     UNKNOWN_OBJECT = 8
-    POWERUP        = 9    # 0.4.2: powerup recogible
-    HAZARD         = 10   # 0.4.2: peligro especial con efecto corporal
-    SPECIAL_DOOR   = 11   # 0.4.2: puerta con requisito corporal
+    POWERUP = 9  # 0.4.2: powerup recogible
+    HAZARD = 10  # 0.4.2: peligro especial con efecto corporal
+    SPECIAL_DOOR = 11  # 0.4.2: puerta con requisito corporal
+    LEVEL_DOOR = 12  # 0.4.3: puerta de progreso de nivel (requiere llave)
+    OPTIONAL_DOOR = 13  # 0.4.3: puerta opcional (tesoro, entrenamiento, peligro)
 
 
 class Action(IntEnum):
-    UP    = 0
-    DOWN  = 1
-    LEFT  = 2
+    UP = 0
+    DOWN = 1
+    LEFT = 2
     RIGHT = 3
-    WAIT  = 4
+    WAIT = 4
 
 
 ACTION_NAMES = {
@@ -32,7 +34,7 @@ ACTION_NAMES = {
     4: "esperar",
 }
 
-GRID_SIZE   = 8
-# 0.2: ampliado de 10 a 18 (+has_key, energy, dist_llave, dist_puerta, door_open, peligro_cercano)
-STATE_SIZE  = 18
+GRID_SIZE = 8
+# 0.4: ampliado a 34 (10 base + 8 inventario/objetos + 8 contexto-mundo + 8 estado-corporal)
+STATE_SIZE = 34
 ACTION_SIZE = 5

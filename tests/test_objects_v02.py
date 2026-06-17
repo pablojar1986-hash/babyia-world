@@ -1,11 +1,10 @@
 """Tests de GridWorld con objetos 0.2."""
-import numpy as np
+
 from world.grid_world import GridWorld
-from world.inventory import Inventory
 from world.objects import Cell, STATE_SIZE
 
-
 # ── Observacion ───────────────────────────────────────────────────────────────
+
 
 def test_reset_returns_10_features():
     """El mundo base devuelve 10 features (sin inventario)."""
@@ -15,10 +14,12 @@ def test_reset_returns_10_features():
 
 
 def test_state_size_constant():
-    assert STATE_SIZE == 18
+    # 0.4.3: STATE_SIZE corregido de 18 a 34 (valor real del DQN)
+    assert STATE_SIZE == 34
 
 
 # ── Puerta cerrada sin llave ──────────────────────────────────────────────────
+
 
 def test_door_blocks_without_key():
     w = GridWorld()
@@ -42,6 +43,7 @@ def test_door_passable_with_key():
 
 # ── Llave ─────────────────────────────────────────────────────────────────────
 
+
 def test_key_collected_when_entered():
     w = GridWorld()
     w.reset()
@@ -63,6 +65,7 @@ def test_key_not_picked_if_cell_empty():
 
 # ── Comida ────────────────────────────────────────────────────────────────────
 
+
 def test_food_collected_when_entered():
     w = GridWorld()
     w.reset()
@@ -75,6 +78,7 @@ def test_food_collected_when_entered():
 
 # ── Peligro ───────────────────────────────────────────────────────────────────
 
+
 def test_danger_passable():
     w = GridWorld()
     w.reset()
@@ -85,6 +89,7 @@ def test_danger_passable():
 
 
 # ── Objeto desconocido ────────────────────────────────────────────────────────
+
 
 def test_unknown_found_first_time():
     w = GridWorld()
@@ -107,6 +112,7 @@ def test_unknown_not_repeated():
 
 
 # ── get_grid ──────────────────────────────────────────────────────────────────
+
 
 def test_get_grid_shows_key():
     w = GridWorld()
@@ -133,13 +139,27 @@ def test_get_grid_door_open_after_opening():
 
 # ── Compatibilidad con 0.1.x ──────────────────────────────────────────────────
 
-def test_reached_goal_still_works():
+
+def test_reached_goal_with_key_completes_level():
+    # 0.4.3: (7,7) es NEXT_LEVEL_DOOR — requiere llave para completar
     w = GridWorld()
     w.reset()
     w.baby_pos = [6, 7]
-    _, _, done, info = w.step(3)  # RIGHT hacia (7,7)=GOAL
-    assert info["reached_goal"] is True
+    _, _, done, info = w.step(3, has_key=True)  # RIGHT hacia (7,7) con llave
+    assert info["level_completed"] is True
+    assert info["reached_goal"] is True  # compatibilidad mantenida
     assert done is True
+
+
+def test_next_level_door_blocked_without_key():
+    # 0.4.3: sin llave, la puerta de nivel bloquea el paso
+    w = GridWorld()
+    w.reset()
+    w.baby_pos = [6, 7]
+    _, _, done, info = w.step(3, has_key=False)  # RIGHT hacia (7,7) sin llave
+    assert info["hit_next_level_door"] is True
+    assert info["level_completed"] is False
+    assert done is False
 
 
 def test_hit_wall_still_works():
