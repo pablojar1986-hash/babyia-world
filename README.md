@@ -1,13 +1,16 @@
-# BabyIA World 0.4.4
+# BabyIA World 0.4.5
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.4.4 introduce inteligencia orientada a misiones, mejor diseno visual y senales de decision mas claras.**
-> El sistema de mision calcula funcionalmente FIND_KEY → GO_TO_NEXT_LEVEL_DOOR → LEVEL_COMPLETED.
-> Nuevo reward shaping por mision (< 1.0 pt, no domina sobre completar nivel = 120 pts).
-> Nueva pestaña "Mision" (tecla 6) y brujula de navegacion en el panel lateral.
-> El avatar muestra indicadores de objetivo funcional (punto K, anillo dorado, borde rojo).
-> BabyIA no tiene conciencia real. "Misiones", "objetivos" y "decidir" son calculos funcionales
+> **0.4.5 introduce mundo escalable (8x8 a 16x16), camara viewport y percepcion funcional real.**
+> BabyIA ahora "ve" objetos cercanos con campo visual real — las paredes bloquean la vision (FOV).
+> El rango de vision viene de `body_state.vision_range` (modificable por powerups).
+> VisualMemory recuerda posiciones vistas durante el episodio; SemanticMap clasifica objetos por utilidad.
+> DecisionContext integra percepcion y memoria visual para orientar misiones hacia objetivos visibles o recordados.
+> MissionTracker usa la posicion visible/recordada de llave y puerta; detecta COLLECT_USEFUL_POWERUP.
+> Nueva pestana "Percep." (tecla 7). Minimapa con posiciones dinamicas segun tamano de grid.
+> STATE_SIZE=34 se mantiene — la percepcion va al contexto de decision y UI, no al DQN.
+> BabyIA no tiene conciencia real. "Ver", "recordar" y "decidir" son calculos funcionales
 > basados en observacion, recompensa, utilidad, memoria, riesgo y progreso.
 
 ---

@@ -1,8 +1,9 @@
 """
 brain/perception.py — Sistema de percepcion funcional para BabyIA 0.4.5.
 
-BabyIA "ve" objetos cercanos dentro de un rango de vision.
-"Ver" = detectar celdas dentro de rango Manhattan y clasificarlas.
+BabyIA "ve" objetos cercanos dentro de un rango de vision con campo visual real.
+"Ver" = detectar celdas dentro de rango Manhattan con linea de vision libre.
+Las paredes bloquean la vision — implementacion inspirada en FOV tipo roguelike.
 No implica conciencia ni procesamiento subjetivo.
 """
 
@@ -18,6 +19,11 @@ CAT_REWARD = "reward"
 CAT_OBSTACLE = "obstacle"
 CAT_UNKNOWN = "unknown"
 CAT_OPTIONAL = "optional"
+
+# Tipos de visibilidad
+VIS_VISIBLE = "visible"
+VIS_BLOCKED = "blocked"
+VIS_UNKNOWN = "unknown"
 
 _CELL_CATEGORY: dict[int, str] = {
     int(Cell.KEY): CAT_GOAL,
@@ -39,9 +45,45 @@ _CELL_CATEGORY: dict[int, str] = {
 
 class PerceptionSystem:
     """
-    Detecta objetos cercanos en un rango de vision Manhattan.
-    Devuelve un dict estructurado con objetos visibles clasificados.
+    Detecta objetos cercanos con campo visual real (paredes bloquean vision).
+    Devuelve un dict estructurado con objetos visibles y estado de visibilidad.
     """
+
+    def _has_line_of_sight(
+        self, grid, from_pos: tuple, to_pos: tuple, grid_size: int
+    ) -> bool:
+        """
+        True si hay linea de vision libre entre from_pos y to_pos.
+        Celdas adyacentes (distancia Manhattan=1) siempre son visibles.
+        Usa interpolacion lineal para detectar paredes intermedias.
+        """
+        x0, y0 = from_pos
+        x1, y1 = to_pos
+
+        if x0 == x1 and y0 == y1:
+            return True
+
+        if abs(x1 - x0) + abs(y1 - y0) == 1:
+            return True
+
+        wall_val = int(Cell.WALL)
+        steps = max(abs(x1 - x0), abs(y1 - y0))
+
+        for i in range(1, steps):
+            t = i / steps
+            cx = round(x0 + t * (x1 - x0))
+            cy = round(y0 + t * (y1 - y0))
+
+            if cx == x1 and cy == y1:
+                break
+
+            if not (0 <= cx < grid_size and 0 <= cy < grid_size):
+                return False
+
+            if int(grid[cy][cx]) == wall_val:
+                return False
+
+        return True
 
     def observe(
         self,
@@ -50,6 +92,13 @@ class PerceptionSystem:
         vision_range: int = DEFAULT_VISION_RANGE,
         body_state=None,
     ) -> dict:
+        """
+        Escanea celdas en rango Manhattan con linea de vision real.
+        Si body_state tiene vision_range (modificado por powerups), lo usa.
+        """
+        if body_state is not None and hasattr(body_state, "vision_range"):
+            vision_range = body_state.vision_range
+
         bx, by = baby_pos
         gs = world.size
         grid = world.get_grid()
@@ -75,6 +124,7 @@ class PerceptionSystem:
         danger_count = 0
         reward_count = 0
         unknown_count = 0
+        blocked_count = 0
 
         for dx in range(-vision_range, vision_range + 1):
             for dy in range(-vision_range, vision_range + 1):
@@ -87,6 +137,8 @@ class PerceptionSystem:
                 if not (0 <= wx < gs and 0 <= wy < gs):
                     continue
 
+                has_los = self._has_line_of_sight(grid, (bx, by), (wx, wy), gs)
+
                 cell_val = int(grid[wy][wx])
                 cell_type = (
                     Cell(cell_val)
@@ -96,18 +148,25 @@ class PerceptionSystem:
                 category = _CELL_CATEGORY.get(cell_val, CAT_UNKNOWN)
                 pos = [wx, wy]
 
+                visibility = VIS_VISIBLE if has_los else VIS_BLOCKED
+                if not has_los:
+                    blocked_count += 1
+
                 cell_info = {
                     "position": pos,
                     "distance": dist,
                     "cell_type": cell_type.name,
                     "category": category,
+                    "visibility": visibility,
                 }
                 visible_cells.append(cell_info)
+
+                if not has_los:
+                    continue
 
                 if cell_type == Cell.EMPTY:
                     continue
 
-                # Contar por categoria
                 if category == CAT_DANGER:
                     danger_count += 1
                 elif category == CAT_REWARD:
@@ -120,10 +179,10 @@ class PerceptionSystem:
                     "position": pos,
                     "distance": dist,
                     "category": category,
+                    "visibility": VIS_VISIBLE,
                 }
                 visible_objects.append(obj_info)
 
-                # Actualizar mas cercanos
                 if cell_type == Cell.KEY and dist < min_key_d:
                     min_key_d = dist
                     nearest_key = obj_info
@@ -160,5 +219,7 @@ class PerceptionSystem:
             "danger_count": danger_count,
             "reward_count": reward_count,
             "unknown_count": unknown_count,
+            "blocked_count": blocked_count,
             "total_visible": len(visible_objects),
+            "fov_active": True,
         }

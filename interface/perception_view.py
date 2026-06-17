@@ -36,6 +36,7 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
     perception = status.get("perception", {})
     semantic = status.get("semantic_view", [])
     visual_mem = status.get("visual_memory", {})
+    dec_ctx = status.get("decision_context", {})
 
     cy = y
 
@@ -52,10 +53,13 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
     total_visible = perception.get("total_visible", 0)
     danger_count = perception.get("danger_count", 0)
     reward_count = perception.get("reward_count", 0)
+    blocked_count = perception.get("blocked_count", 0)
+    fov_active = perception.get("fov_active", False)
 
+    fov_tag = " FOV" if fov_active else ""
     txt(
         surface,
-        f"Rango: {vision_range}  Detectados: {total_visible}",
+        f"Rango: {vision_range}{fov_tag}  Obj: {total_visible}  Bloq: {blocked_count}",
         x,
         cy,
         f_xs,
@@ -71,6 +75,16 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
         f_xs,
         peligro_color,
     )
+    cy += 14
+
+    # Visibilidad de objetivos clave
+    key_visible = dec_ctx.get("key_visible", False)
+    prog_visible = dec_ctx.get("progress_door_visible", False)
+    kv_c = _YELLOW if key_visible else _GRAY
+    dv_c = _GREEN if prog_visible else _GRAY
+    txt(surface, f"Llave visible: {'SI' if key_visible else 'no'}", x, cy, f_xs, kv_c)
+    cy += 13
+    txt(surface, f"Puerta visible: {'SI' if prog_visible else 'no'}", x, cy, f_xs, dv_c)
     cy += 18
 
     # ── Objetos mas cercanos ──────────────────────────────────────────────────
@@ -147,11 +161,43 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
         last_key = visual_mem.get("last_seen_key")
         last_door = visual_mem.get("last_seen_progress_door")
         last_hz = visual_mem.get("last_seen_hazards_count", 0)
+        expl_ratio = visual_mem.get("exploration_ratio", 0.0)
 
-        txt(surface, f"Celdas exploradas: {seen_pos}", x, cy, f_xs, _WHITE)
+        txt(
+            surface,
+            f"Explorado: {seen_pos} celdas ({expl_ratio:.0%})",
+            x,
+            cy,
+            f_xs,
+            _WHITE,
+        )
         cy += 13
         txt(surface, f"Seguras / Peligrosas: {safe} / {danger}", x, cy, f_xs, _WHITE)
         cy += 13
+
+        # Posiciones recordadas por decision_context
+        rem_key = dec_ctx.get("remembered_key_position")
+        rem_door = dec_ctx.get("remembered_progress_door_position")
+        if rem_key and not last_key:
+            txt(
+                surface,
+                f"Llave (ctx): ({rem_key[0]},{rem_key[1]})",
+                x,
+                cy,
+                f_xs,
+                _YELLOW,
+            )
+            cy += 13
+        if rem_door and not last_door:
+            txt(
+                surface,
+                f"Puerta (ctx): ({rem_door[0]},{rem_door[1]})",
+                x,
+                cy,
+                f_xs,
+                _GREEN,
+            )
+            cy += 13
 
         if last_key:
             txt(

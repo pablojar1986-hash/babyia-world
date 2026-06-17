@@ -68,10 +68,33 @@ class MissionTracker:
         key_present: bool,
         key_pos: tuple = KEY_POS,
         progress_door_pos: tuple = PROGRESS_DOOR_POS,
+        perception_result=None,
+        visual_memory=None,
     ) -> MissionState:
         bx, by = baby_pos
         gs = max(key_pos[0], key_pos[1], progress_door_pos[0], progress_door_pos[1]) + 1
         _max_dist = (gs - 1) * 2.0
+
+        # Posiciones efectivas: percepcion directa > memoria visual > estatica
+        effective_key_pos = key_pos
+        if perception_result:
+            nk = perception_result.get("nearest_key")
+            if nk:
+                effective_key_pos = tuple(nk["position"])
+        if effective_key_pos == key_pos and visual_memory is not None:
+            lsk = getattr(visual_memory, "last_seen_key", None)
+            if lsk:
+                effective_key_pos = tuple(lsk)
+
+        effective_door_pos = progress_door_pos
+        if perception_result:
+            nd = perception_result.get("nearest_progress_door")
+            if nd:
+                effective_door_pos = tuple(nd["position"])
+        if effective_door_pos == progress_door_pos and visual_memory is not None:
+            lsd = getattr(visual_memory, "last_seen_progress_door", None)
+            if lsd:
+                effective_door_pos = tuple(lsd)
 
         # 1. Nivel completado (terminal)
         if level_completed:
@@ -95,19 +118,32 @@ class MissionTracker:
 
         # 3. Tiene llave -> ir a puerta de progreso
         if has_key:
-            px, py_ = progress_door_pos
+            px, py_ = effective_door_pos
             dist = abs(bx - px) + abs(by - py_)
             progress = max(0.0, 1.0 - dist / _max_dist)
             return MissionState(
                 current_goal=GO_TO_NEXT_LEVEL_DOOR,
-                target_position=progress_door_pos,
+                target_position=effective_door_pos,
                 priority=1.0,
-                reason=f"Llave recogida. Ir a puerta dorada {progress_door_pos}",
+                reason=f"Llave recogida. Ir a puerta dorada {effective_door_pos}",
                 progress_score=progress,
             )
 
-        # 4. Sin llave -> buscarla
-        kx, ky = key_pos
+        # 3.5: powerup util visible y cercano con energia baja
+        if not has_key and not danger_nearby and energy < 0.5 and perception_result:
+            nearest_pu = perception_result.get("nearest_powerup")
+            if nearest_pu and nearest_pu.get("distance", 999) <= 2:
+                pu_pos = tuple(nearest_pu.get("position", [bx, by]))
+                return MissionState(
+                    current_goal=COLLECT_USEFUL_POWERUP,
+                    target_position=pu_pos,
+                    priority=0.6,
+                    reason=f"Powerup util a distancia {nearest_pu['distance']}",
+                    progress_score=0.0,
+                )
+
+        # 4. Sin llave -> buscarla (usando posicion efectiva si hay memoria)
+        kx, ky = effective_key_pos
         dist_key = abs(bx - kx) + abs(by - ky)
         progress = max(0.0, 1.0 - dist_key / _max_dist) if key_present else 0.5
         reason = (
@@ -117,7 +153,7 @@ class MissionTracker:
         )
         return MissionState(
             current_goal=FIND_KEY,
-            target_position=key_pos if key_present else None,
+            target_position=effective_key_pos if key_present else None,
             priority=0.95,
             reason=reason,
             progress_score=progress,

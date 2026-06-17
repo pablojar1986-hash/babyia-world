@@ -906,6 +906,183 @@ def check_045_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_045b_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica integridad especifica de BabyIA 0.4.5b (vision real, percepcion util)."""
+    results = []
+    import sys as _sys
+
+    _sys.path.insert(0, str(root))
+
+    # 1. Tests nuevos de 0.4.5b presentes
+    new_tests = [
+        "tests/test_world_scaling_8_10_12_16.py",
+        "tests/test_camera_viewport_bounds.py",
+        "tests/test_perception_uses_body_vision_range.py",
+        "tests/test_fov_wall_blocks_visibility.py",
+        "tests/test_visual_memory_remembers_seen_key.py",
+        "tests/test_decision_context_uses_perception.py",
+        "tests/test_mission_uses_visible_or_remembered_target.py",
+        "tests/test_minimap_hides_unknown_cells.py",
+        "tests/test_semantic_map_best_visible_object.py",
+    ]
+    for t in new_tests:
+        exists = (root / t).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{t} {'existe' if exists else 'FALTA (0.4.5b)'}",
+            }
+        )
+
+    # 2. PerceptionSystem usa body_state.vision_range
+    try:
+        perc_path = root / "brain" / "perception.py"
+        text = perc_path.read_text(encoding="utf-8")
+        if "body_state.vision_range" in text and "fov_active" in text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "perception.py: vision_range dinamico + fov_active",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "perception.py: falta vision_range dinamico o fov_active",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar perception.py: {e}"}
+        )
+
+    # 3. DecisionContext incluye campos de percepcion
+    try:
+        dc_path = root / "brain" / "decision_context.py"
+        text = dc_path.read_text(encoding="utf-8")
+        required = [
+            "key_visible",
+            "progress_door_visible",
+            "visible_objects_count",
+            "remembered_key_position",
+            "perception_result",
+            "visual_memory",
+        ]
+        missing = [k for k in required if k not in text]
+        if not missing:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "decision_context.py: todos los campos 0.4.5b presentes",
+                }
+            )
+        else:
+            results.append(
+                {"status": "fail", "message": f"decision_context.py: faltan {missing}"}
+            )
+    except Exception as e:
+        results.append(
+            {
+                "status": "warn",
+                "message": f"No se pudo verificar decision_context.py: {e}",
+            }
+        )
+
+    # 4. MissionTracker acepta perception_result y visual_memory
+    try:
+        from brain.mission import MissionTracker
+        import inspect
+
+        src = inspect.getsource(MissionTracker.compute)
+        if (
+            "perception_result" in src
+            and "visual_memory" in src
+            and "COLLECT_USEFUL_POWERUP" in src
+        ):
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "MissionTracker.compute: percepcion + COLLECT_USEFUL_POWERUP",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "MissionTracker.compute: faltan campos 0.4.5b",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar MissionTracker: {e}"}
+        )
+
+    # 5. Trainer.get_status() incluye key_pos y progress_door_pos
+    try:
+        from brain.trainer import Trainer
+        import inspect
+
+        src = inspect.getsource(Trainer.get_status)
+        if '"key_pos"' in src and '"progress_door_pos"' in src:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "Trainer.get_status incluye key_pos y progress_door_pos",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "Trainer.get_status: falta key_pos o progress_door_pos",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar Trainer: {e}"}
+        )
+
+    # 6. minimap_view usa posiciones dinamicas (no KEY_POS=(1,6) hardcodeado como constante global)
+    try:
+        mm_path = root / "interface" / "minimap_view.py"
+        text = mm_path.read_text(encoding="utf-8")
+        if "status.get" in text and "key_pos" in text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "minimap_view.py usa posiciones dinamicas del status",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "minimap_view.py no usa posiciones dinamicas",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar minimap_view.py: {e}"}
+        )
+
+    # 7. README menciona version 0.4.5
+    try:
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        if "0.4.5" in readme:
+            results.append(
+                {"status": "ok", "message": "README.md menciona version 0.4.5"}
+            )
+        else:
+            results.append(
+                {"status": "warn", "message": "README.md no menciona version 0.4.5"}
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo leer README: {e}"})
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -922,6 +1099,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_043_integrity(root))  # 0.4.3
     checks.extend(check_044_integrity(root))  # 0.4.4
     checks.extend(check_045_integrity(root))  # 0.4.5
+    checks.extend(check_045b_integrity(root))  # 0.4.5b
     return checks
 
 

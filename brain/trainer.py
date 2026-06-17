@@ -191,9 +191,9 @@ class Trainer:
 
         reward = base_reward + obj_delta + w_delta
 
-        # 0.4.5: percepcion funcional tras el movimiento
+        # 0.4.5: percepcion funcional tras el movimiento (usa vision_range del body_state)
         self._last_perception = self._perception.observe(
-            self.world, tuple(self.world.baby_pos)
+            self.world, tuple(self.world.baby_pos), body_state=self.body_state
         )
         self._last_semantic = self._semantic_map.classify_all(
             self._last_perception, self.causal_memory, self._current_mission
@@ -213,6 +213,8 @@ class Trainer:
             key_present=self.world.key_present,
             key_pos=self.world.key_pos,
             progress_door_pos=self.world.progress_door_pos,
+            perception_result=self._last_perception,
+            visual_memory=self._visual_memory,
         )
         curr_context = self._dec_ctx_builder.build(
             self.world,
@@ -220,6 +222,9 @@ class Trainer:
             self.body_state,
             self.world_manager,
             self._current_mission,
+            perception_result=self._last_perception,
+            visual_memory=self._visual_memory,
+            semantic_list=self._last_semantic,
         )
         self._current_decision_context = curr_context
         if prev_context:
@@ -421,8 +426,15 @@ class Trainer:
             # 0.4.5
             "perception": dict(self._last_perception),
             "semantic_view": list(self._last_semantic),
-            "visual_memory": self._visual_memory.to_dict(),
+            "visual_memory": {
+                **self._visual_memory.to_dict(),
+                "exploration_ratio": self._visual_memory.exploration_ratio(
+                    self.world.size
+                ),
+            },
             "grid_size": self.world.size,
+            "key_pos": list(self.world.key_pos),
+            "progress_door_pos": list(self.world.progress_door_pos),
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────

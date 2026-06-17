@@ -64,6 +64,18 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
     bpos = tuple(bpos_raw) if bpos_raw else (0, 0)
     goal = mission.get("current_goal", "FIND_KEY")
 
+    # Posiciones dinamicas del mundo (escalan con grid_size)
+    _kp = status.get("key_pos", [1, 6])
+    _dp = status.get("progress_door_pos", [7, 7])
+    KEY_POS = (int(_kp[0]), int(_kp[1]))
+    PROG_DOOR_POS = (int(_dp[0]), int(_dp[1]))
+
+    # Visibilidad actual y memoria
+    key_visible = ctx.get("key_visible", False)
+    prog_door_visible = ctx.get("progress_door_visible", False)
+    rem_key = ctx.get("remembered_key_position")
+    rem_door = ctx.get("remembered_progress_door_position")
+
     txt(surface, "BRUJULA DE NAVEGACION", x, py, fonts["med"], ACCENT)
     py += 20
     txt(surface, f"Pos: ({bpos[0]},{bpos[1]})", x, py, fonts["xs"], TEXT_DIM)
@@ -72,29 +84,33 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
     py += 10
 
     # ── Llave ─────────────────────────────────────────────────────────────────
-    KEY_POS = (1, 6)
     has_key = ctx.get("has_key", False)
     if not has_key:
-        arrow = _direction(bpos, KEY_POS)
-        dist = _manhattan(bpos, KEY_POS)
+        target_k = tuple(rem_key) if rem_key else KEY_POS
+        arrow = _direction(bpos, target_k)
+        dist = _manhattan(bpos, target_k)
         dn = min(1.0, dist / 10.0)
+        vis_tag = " [VIS]" if key_visible else (" [MEM]" if rem_key else "")
+        k_label = f"Llave ({target_k[0]},{target_k[1]}){vis_tag}"
         py = _render_target(
-            surface, fonts, x, py, "Llave (1,6)", arrow, dist, distance_color(dn)
+            surface, fonts, x, py, k_label, arrow, dist, distance_color(dn)
         )
     else:
-        txt(surface, "Llave: OBTENIDA ✓", x, py, fonts["sm"], (80, 220, 80))
+        txt(surface, "Llave: OBTENIDA", x, py, fonts["sm"], (80, 220, 80))
         py += 18
 
     divider(surface, x, py, w - 4)
     py += 10
 
-    # ── Puerta de progreso (7,7) ──────────────────────────────────────────────
-    PROG_DOOR_POS = (7, 7)
-    arrow = _direction(bpos, PROG_DOOR_POS)
-    dist = _manhattan(bpos, PROG_DOOR_POS)
+    # ── Puerta de progreso ────────────────────────────────────────────────────
+    target_d = tuple(rem_door) if rem_door else PROG_DOOR_POS
+    arrow = _direction(bpos, target_d)
+    dist = _manhattan(bpos, target_d)
     dn = min(1.0, dist / 10.0)
     mc = mission_color("GO_TO_NEXT_LEVEL_DOOR")
-    py = _render_target(surface, fonts, x, py, "Puerta dorada (7,7)", arrow, dist, mc)
+    vis_tag = " [VIS]" if prog_door_visible else (" [MEM]" if rem_door else "")
+    d_label = f"Puerta ({target_d[0]},{target_d[1]}){vis_tag}"
+    py = _render_target(surface, fonts, x, py, d_label, arrow, dist, mc)
 
     divider(surface, x, py, w - 4)
     py += 10
