@@ -86,3 +86,23 @@ Esto significa: BabyIA pisó la celda NEXT_LEVEL_DOOR (7,7) mientras llevaba la 
 BabyIA no tiene conciencia real. Cuando se hable de elegir, preferir, sobrevivir o
 buscar progreso, debe entenderse como cálculo funcional basado en recompensas,
 riesgos, memoria, utilidad y objetivos.
+
+## Que es el sistema de mision (0.4.4)
+
+A partir de 0.4.4, BabyIA tiene un "sistema de mision" implementado en `brain/mission.py`.
+Este sistema:
+
+- **Calcula** la prioridad funcional del paso actual: FIND_KEY > GO_TO_NEXT_LEVEL_DOOR > AVOID_DANGER
+- **No controla el DQN**: la red neuronal sigue eligiendo acciones por Q-values, no por misiones
+- **Produce datos** para reward shaping (senales debiles < 1 pt), UI y metricas
+- **No implica deseo ni intencion**: "objetivo funcional" es el estado con mayor utilidad esperada
+
+El reward shaping de mision (total < 10 pts/episodio) es mucho menor que REWARD_LEVEL_COMPLETED (120 pts).
+El DQN sigue aprendiendo a completar niveles, no a seguir misiones declarativamente.
+
+Cuando la interfaz muestra "Mision: FIND_KEY", significa:
+> El calculo de prioridad determina que la accion con mayor utilidad esperada
+> es moverse hacia la celda (1,6) donde esta la llave.
+
+No significa que BabyIA "quiera" la llave, "sepa" que la necesita, o "decida" buscarla.
+Son multiplicaciones matriciales optimizando una funcion de recompensa.

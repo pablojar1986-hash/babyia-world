@@ -40,7 +40,10 @@ BabyIA World/
 |   |-- network_inspector.py <- Inspeccion de arquitectura DQN (0.2.1).
 |   |-- world_memory.py  <- Historial de visitas a mundos (0.3).
 |   |-- preferences.py   <- Preferencia simulada por mundos (0.3).
-|   `-- home_drive.py    <- Impulso de regreso a casa (0.3).
+|   |-- home_drive.py    <- Impulso de regreso a casa (0.3).
+|   |-- mission.py       <- MissionState; MissionTracker.compute() prioridad funcional (0.4.4).
+|   |-- decision_context.py <- DecisionContext.build() — resumen por paso para UI/reward (0.4.4).
+|   `-- mission_reward.py <- Reward shaping por mision; magnitudes << REWARD_LEVEL_COMPLETED (0.4.4).
 |
 |-- worlds/              <- Sistema de mundos multiples (0.3). No sabe nada del cerebro.
 |   |-- world_definition.py <- Dataclass: id, perfil, riesgo, nivel minimo, descripcion.
@@ -53,13 +56,16 @@ BabyIA World/
 │   ├── pygame_view.py      ← Coordinador: ventana, grid, log inferior (0.4.1).
 │   ├── layout.py           ← Constantes de geometria: areas, tamanios, pestanas (0.4.1).
 │   ├── ui_components.py    ← Paleta de colores y primitivas de dibujo (0.4.1).
-│   ├── panel_renderer.py   ← Sistema de 5 pestanas con scroll y navegacion (0.4.1).
+│   ├── panel_renderer.py   ← Sistema de 6 pestanas con scroll y navegacion (0.4.4).
 │   ├── status_view.py      ← Pestana Estado: episodio, emociones, epsilon (0.4.1).
 │   ├── world_info_view.py  ← Pestana Mundo: portales, retorno, historial (0.4.1).
 │   ├── body_view.py        ← Pestana Cuerpo: size, speed, shield, energia, supervivencia (0.4.2).
-│   ├── brain_view.py       ← Pestana Cerebro: Q-values, arquitectura DQN (0.4.1).
+│   ├── brain_view.py       ← Pestana Cerebro: Q-values, arquitectura DQN + mision funcional (0.4.4).
 │   ├── memory_view.py      ← Pestana Memoria: conceptos, relaciones causales, inventario (0.4.2).
-│   ├── avatar_renderer.py  ← Avatar visual de BabyIA segun nivel y senales (0.3).
+│   ├── mission_view.py     ← Pestana Mision (tecla 6): objetivo, distancias, reward shaping (0.4.4).
+│   ├── minimap_view.py     ← Brujula textual de navegacion hacia llave/puerta/amenazas (0.4.4).
+│   ├── visual_theme.py     ← Paleta de colores centralizada por mision y estado (0.4.4).
+│   ├── avatar_renderer.py  ← Avatar con indicadores de objetivo funcional por mision (0.4.4).
 │   └── console_panel.py    ← Logs con Rich para la consola.
 │
 ├── data/                ← Persistencia en JSON. No contiene código.

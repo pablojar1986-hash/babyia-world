@@ -60,6 +60,12 @@ class TrainingMetrics:
         self.optional_rooms_entered: int = 0
         self.treasure_rooms_entered: int = 0
         self.episodes_without_progress: int = 0
+        # 0.4.4 — metricas de mision
+        self.mission_reward_total: float = 0.0
+        self.mission_progress_steps: int = 0
+        self.mission_regression_steps: int = 0
+        self.mission_switches: int = 0
+        self.mission_goal_counts: dict[str, int] = {}
         self._successes = deque(maxlen=WINDOW)
         self._rewards = deque(maxlen=WINDOW)
         self._steps = deque(maxlen=WINDOW)
@@ -100,6 +106,12 @@ class TrainingMetrics:
         optional_rooms: int = 0,
         treasure_rooms: int = 0,
         episodes_without_progress: int = 0,
+        # 0.4.4 — mision
+        mission_reward: float = 0.0,
+        mission_progress_steps: int = 0,
+        mission_regression_steps: int = 0,
+        mission_switches: int = 0,
+        mission_goal: str = "",
     ):
         self.total_episodes += 1
         if reached_goal:
@@ -153,6 +165,16 @@ class TrainingMetrics:
         self.optional_rooms_entered += optional_rooms
         self.treasure_rooms_entered += treasure_rooms
         self.episodes_without_progress = episodes_without_progress  # ultimo valor
+
+        # 0.4.4
+        self.mission_reward_total += mission_reward
+        self.mission_progress_steps += mission_progress_steps
+        self.mission_regression_steps += mission_regression_steps
+        self.mission_switches += mission_switches
+        if mission_goal:
+            self.mission_goal_counts[mission_goal] = (
+                self.mission_goal_counts.get(mission_goal, 0) + 1
+            )
 
         rate = self.recent_success_rate
         if rate > self.best_success_rate:

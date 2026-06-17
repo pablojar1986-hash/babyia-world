@@ -5,6 +5,9 @@ from brain.body_state import BodyState
 from brain.causal_memory import CausalMemory
 from brain.neural_debugger import get_brain_snapshot
 from brain.concepts import ConceptMemory
+from brain.decision_context import DecisionContext
+from brain.mission import MissionState, MissionTracker
+from brain.mission_reward import MissionReward
 from brain.survival import SurvivalEvaluator
 from brain.curriculum import Curriculum
 from brain.emotions import Emotions
@@ -63,6 +66,13 @@ class Trainer:
         self.survival = SurvivalEvaluator()
         self._last_survival: dict = {}
 
+        # 0.4.4 — sistema de mision funcional
+        self.mission_tracker = MissionTracker()
+        self.mission_reward_tracker = MissionReward()
+        self._dec_ctx_builder = DecisionContext()
+        self._current_mission: MissionState = MissionState()
+        self._current_decision_context: dict = {}
+
         # 0.4.1 — diagnóstico de red neuronal (actualizado cada 5 pasos)
         self._last_brain_debug: dict = {}
 
@@ -118,6 +128,10 @@ class Trainer:
         self._ep_training_rooms = 0
         self._ep_next_door_blocked = 0
         self._ep_optional_rooms_visited = set()
+        # 0.4.4
+        self.mission_reward_tracker.reset_episode()
+        self._current_mission = MissionState()
+        self._current_decision_context = {}
         self.inventory.reset()
         self.world_manager.reset()
         self.home_drive.reset_episode()
@@ -125,6 +139,14 @@ class Trainer:
         self.utility.reset_episode()
         base_obs = self.world.reset()
         self._current_state = self._full_obs(base_obs)
+        # Construir contexto inicial para que get_status() sea valido antes del primer step
+        self._current_decision_context = self._dec_ctx_builder.build(
+            self.world,
+            self.inventory,
+            self.body_state,
+            self.world_manager,
+            self._current_mission,
+        )
 
     def step(self):
         """Ejecuta un paso: accion -> mundo -> interacciones -> entrenamiento -> memoria."""
@@ -135,6 +157,9 @@ class Trainer:
         base_next, base_reward, done, info = self.world.step(
             action, has_key=self.inventory.has_key
         )
+
+        # 0.4.4: contexto previo antes de actualizar estado
+        prev_context = dict(self._current_decision_context)
 
         # Aplicar interacciones de objetos y calcular delta de recompensa
         obj_delta = self._apply_interactions(info)
@@ -151,6 +176,32 @@ class Trainer:
             self._ep_events.update(w_events)
 
         reward = base_reward + obj_delta + w_delta
+
+        # 0.4.4: mision y reward shaping (pequeno, no dominante)
+        self._current_mission = self.mission_tracker.compute(
+            has_key=self.inventory.has_key,
+            level_completed=self._ep_level_completed,
+            energy=self.inventory.energy,
+            danger_nearby=bool(self.world.danger_nearby()),
+            has_shield=self.body_state.to_dict().get("shield", 0.0) > 0.05,
+            is_at_home=self.world_manager.is_at_home,
+            step_count=self.world.steps,
+            baby_pos=tuple(self.world.baby_pos),
+            key_present=self.world.key_present,
+        )
+        curr_context = self._dec_ctx_builder.build(
+            self.world,
+            self.inventory,
+            self.body_state,
+            self.world_manager,
+            self._current_mission,
+        )
+        self._current_decision_context = curr_context
+        if prev_context:
+            mission_delta = self.mission_reward_tracker.compute(
+                prev_context, curr_context, info
+            )
+            reward += mission_delta
 
         # 0.4: tick de efectos corporales
         self.body_state.tick_effects()
@@ -323,6 +374,10 @@ class Trainer:
             # 0.4.3
             "has_key": self.inventory.has_key,
             "current_objective": current_objective,
+            # 0.4.4
+            "mission": self._current_mission.to_dict(),
+            "decision_context": dict(self._current_decision_context),
+            "mission_reward": self.mission_reward_tracker.to_dict(),
             "ep_level_completed": self._ep_level_completed,
             "ep_optional_rooms": self._ep_optional_rooms,
             "ep_treasure_rooms": self._ep_treasure_rooms,
@@ -353,16 +408,19 @@ class Trainer:
         dist_key_x = (kx - bx) / n if obj["key_present"] else 0.0
         dist_key_y = (ky - by) / n if obj["key_present"] else 0.0
 
+        # 0.4.4: sustituir distancia a puerta normal (3,6) por distancia a
+        # puerta de progreso (7,7) y señal de proximidad. STATE_SIZE sigue = 34.
+        pdx, pdy = 7, 7  # PROGRESS_DOOR_POS
         extra = np.array(
             [
-                float(inv.has_key),  # 11
-                inv.energy,  # 12
-                dist_key_x,  # 13
-                dist_key_y,  # 14
-                (dx - bx) / n,  # 15
-                (dy - by) / n,  # 16
-                float(world.door_open),  # 17
-                float(world.danger_nearby()),  # 18
+                float(inv.has_key),  # 10
+                inv.energy,  # 11
+                dist_key_x,  # 12
+                dist_key_y,  # 13
+                (pdx - bx) / n,  # 14 — dist_x a puerta de progreso (7,7)
+                (pdy - by) / n,  # 15 — dist_y a puerta de progreso (7,7)
+                float(world.get_nearby_progress_door()),  # 16 — prog. door cercana
+                float(world.danger_nearby()),  # 17
             ],
             dtype=np.float32,
         )

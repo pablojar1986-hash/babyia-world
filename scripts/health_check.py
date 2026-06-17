@@ -68,6 +68,13 @@ REQUIRED_FILES = [
     "brain/survival.py",
     # 0.4.3
     "world/level_doors.py",
+    # 0.4.4
+    "brain/mission.py",
+    "brain/decision_context.py",
+    "brain/mission_reward.py",
+    "interface/visual_theme.py",
+    "interface/mission_view.py",
+    "interface/minimap_view.py",
 ]
 REQUIRED_TESTS = [
     "tests/test_world.py",
@@ -114,6 +121,13 @@ REQUIRED_TESTS = [
     "tests/test_reward_balance.py",
     "tests/test_optional_rooms.py",
     "tests/test_progress_ui_payload.py",
+    # 0.4.4
+    "tests/test_mission_state.py",
+    "tests/test_decision_context.py",
+    "tests/test_mission_reward.py",
+    "tests/test_strategy_progress.py",
+    "tests/test_mission_ui_payload.py",
+    "tests/test_visual_theme.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -660,6 +674,119 @@ def check_043_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_044_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica correcciones e integridad especificas de BabyIA 0.4.4."""
+    results = []
+    import sys as _sys
+
+    _sys.path.insert(0, str(root))
+
+    # 1. Nuevos modulos de mision existen e importan
+    for mod, cls_name in [
+        ("brain.mission", "MissionTracker"),
+        ("brain.decision_context", "DecisionContext"),
+        ("brain.mission_reward", "MissionReward"),
+    ]:
+        try:
+            m = __import__(mod, fromlist=[cls_name])
+            getattr(m, cls_name)
+            results.append({"status": "ok", "message": f"{mod}.{cls_name} importable"})
+        except Exception as e:
+            results.append({"status": "fail", "message": f"{mod}: {e}"})
+
+    # 2. Archivos de interfaz existen
+    for iface_file in [
+        "interface/visual_theme.py",
+        "interface/mission_view.py",
+        "interface/minimap_view.py",
+    ]:
+        exists = (root / iface_file).is_file()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{iface_file}" + (" existe" if exists else " FALTA"),
+            }
+        )
+
+    # 3. Mission reward < REWARD_LEVEL_COMPLETED
+    try:
+        from brain.mission_reward import (
+            APPROACH_KEY_BONUS,
+            APPROACH_DOOR_BONUS,
+            MISSION_SWITCH_BONUS,
+        )
+        from world.rewards import REWARD_LEVEL_COMPLETED
+
+        max_mission_single = max(
+            APPROACH_KEY_BONUS, APPROACH_DOOR_BONUS, MISSION_SWITCH_BONUS
+        )
+        if max_mission_single < REWARD_LEVEL_COMPLETED:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": (
+                        f"Max mission reward ({max_mission_single}) "
+                        f"< REWARD_LEVEL_COMPLETED ({REWARD_LEVEL_COMPLETED})"
+                    ),
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": (
+                        f"Mission reward ({max_mission_single}) >= "
+                        f"REWARD_LEVEL_COMPLETED ({REWARD_LEVEL_COMPLETED}) — posible reward hacking"
+                    ),
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar mission reward: {e}"}
+        )
+
+    # 4. _full_obs() usa puerta de progreso (7,7) no puerta normal
+    try:
+        trainer_path = root / "brain" / "trainer.py"
+        text = trainer_path.read_text(encoding="utf-8")
+        uses_progress_door = "pdx, pdy = 7, 7" in text or "PROGRESS_DOOR_POS" in text
+        uses_old_normal_door = "(3, 6)" in text and "dist to normal door" in text
+        if uses_progress_door and not uses_old_normal_door:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "trainer._full_obs() apunta a puerta de progreso (7,7)",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "trainer._full_obs() puede estar usando puerta normal (3,6) en vez de (7,7)",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar _full_obs: {e}"}
+        )
+
+    # 5. README menciona version 0.4.4
+    try:
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        if "0.4.4" in readme:
+            results.append(
+                {"status": "ok", "message": "README.md menciona version 0.4.4"}
+            )
+        else:
+            results.append(
+                {"status": "warn", "message": "README.md no menciona version 0.4.4"}
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo leer README: {e}"})
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -674,6 +801,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_worlds_have_return(root))  # 0.3
     checks.extend(check_042_integrity(root))  # 0.4.2
     checks.extend(check_043_integrity(root))  # 0.4.3
+    checks.extend(check_044_integrity(root))  # 0.4.4
     return checks
 
 

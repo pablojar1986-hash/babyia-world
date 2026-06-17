@@ -148,6 +148,36 @@
   opened_door (la llave persiste para next_level_door); status actualizado tras end_episode;
   1 nuevo archivo de test; 495 tests pasando
 
+### 0.4.4 — Inteligencia orientada a misiones, mejor diseno visual y senales de decision mas claras (actual)
+- brain/mission.py (NUEVO): MissionState dataclass; MissionTracker.compute() calcula funcionalmente
+  FIND_KEY / GO_TO_NEXT_LEVEL_DOOR / AVOID_DANGER / LEVEL_COMPLETED por prioridad funcional
+- brain/decision_context.py (NUEVO): DecisionContext.build() sintetiza estado por paso en dict
+  con distancias, amenazas, estado de inventario y objetivo de mision
+- brain/mission_reward.py (NUEVO): MissionReward con APPROACH bonuses (0.3), MOVE_AWAY penalty (-0.2),
+  MISSION_SWITCH_BONUS (1.0), OPTIONAL_DISTRACTION_PENALTY (-0.3); todo < REWARD_LEVEL_COMPLETED (120)
+- interface/visual_theme.py (NUEVO): paleta de colores centralizada por mision, distancia y energia
+- interface/mission_view.py (NUEVO): pestana "Mision" (tecla 6) — objetivo, razon, distancias,
+  reward shaping, llave SI/NO, puerta cerca, episodios sin progreso
+- interface/minimap_view.py (NUEVO): brujula textual de navegacion — direcciones a llave, puerta
+  dorada, amenazas y powerups
+- brain/trainer.py: importa y usa MissionTracker/DecisionContext/MissionReward en step();
+  CRITICAL FIX: _full_obs() indices 14-15-16 ahora apuntan a puerta de progreso (7,7),
+  no a puerta normal (3,6) — el DQN ya tiene senal correcta hacia el objetivo real;
+  start_episode() inicializa contexto inicial para que get_status() sea valido antes del primer step
+- brain/strategy.py: 4 nuevas estrategias de progreso de nivel
+- brain/metrics.py: 5 nuevos campos de mision (reward, progress_steps, regression_steps,
+  mission_switches, mission_goal_counts)
+- interface/avatar_renderer.py: indicadores de objetivo funcional segun mision
+  (punto K=FIND_KEY, anillo=GO_TO_NEXT_LEVEL_DOOR, borde rojo=AVOID_DANGER, aura=LEVEL_COMPLETED)
+- interface/brain_view.py: seccion de objetivo funcional de mision con reward y pasos
+- interface/layout.py: "Mision" como 6a pestana; TAB_COUNT=6
+- interface/panel_renderer.py: ruta de vista a mission_view; tecla K_6→pestana 5
+- main.py: pasa 5 campos de mision a metrics.record_episode()
+- scripts/health_check.py: check_044_integrity() — 5 verificaciones especificas 0.4.4
+- 6 nuevos archivos de test; 582 tests pasando
+- NOTA: _full_obs() cambio en indices 14-16 — los pesos .pt guardados son incompatibles.
+  Usar --reset-model para empezar desde cero con la nueva observacion.
+
 ### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas
 - Vocabulario basico de navegacion y objetos

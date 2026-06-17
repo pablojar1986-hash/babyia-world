@@ -329,6 +329,20 @@ def main():
                 optional_rooms=status.get("ep_optional_rooms", 0),
                 treasure_rooms=status.get("ep_treasure_rooms", 0),
                 episodes_without_progress=status.get("episodes_without_progress", 0),
+                # 0.4.4 — mision
+                mission_reward=status.get("mission_reward", {}).get(
+                    "total_mission_reward", 0.0
+                ),
+                mission_progress_steps=status.get("mission_reward", {}).get(
+                    "progress_steps", 0
+                ),
+                mission_regression_steps=status.get("mission_reward", {}).get(
+                    "regression_steps", 0
+                ),
+                mission_switches=status.get("mission_reward", {}).get(
+                    "mission_switches", 0
+                ),
+                mission_goal=status.get("mission", {}).get("current_goal", ""),
             )
 
             if is_training:

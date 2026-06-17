@@ -1,14 +1,14 @@
-# BabyIA World 0.4.3
+# BabyIA World 0.4.4
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.4.3 implementa progresion real por puertas de nivel, curriculo anti-estancamiento
-> y recompensa orientada a completar niveles.**
-> La puerta de siguiente nivel (7,7) ahora requiere llave. BabyIA debe aprender a
-> recoger la llave Y usarla en la puerta correcta para avanzar al nivel 1.
-> El curriculo sube de nivel por `level_completed`, no por `reached_goal`.
-> Si BabyIA se estanca 100 episodios sin completar nivel, el sistema eleva epsilon.
-> BabyIA todavia no tiene conciencia real. "Elegir" o "buscar" son calculos funcionales.
+> **0.4.4 introduce inteligencia orientada a misiones, mejor diseno visual y senales de decision mas claras.**
+> El sistema de mision calcula funcionalmente FIND_KEY → GO_TO_NEXT_LEVEL_DOOR → LEVEL_COMPLETED.
+> Nuevo reward shaping por mision (< 1.0 pt, no domina sobre completar nivel = 120 pts).
+> Nueva pestaña "Mision" (tecla 6) y brujula de navegacion en el panel lateral.
+> El avatar muestra indicadores de objetivo funcional (punto K, anillo dorado, borde rojo).
+> BabyIA no tiene conciencia real. "Misiones", "objetivos" y "decidir" son calculos funcionales
+> basados en observacion, recompensa, utilidad, memoria, riesgo y progreso.
 
 ---
 

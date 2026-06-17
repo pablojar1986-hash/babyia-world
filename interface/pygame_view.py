@@ -165,6 +165,7 @@ class PygameView:
             status.get("level", 0),
             status.get("emotions", {}),
             status.get("body_state", {}),
+            mission_goal=status.get("mission", {}).get("current_goal", ""),
         )
 
     def _draw_world_border(self, status: dict):

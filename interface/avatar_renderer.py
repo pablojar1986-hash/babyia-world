@@ -39,11 +39,13 @@ class AvatarRenderer:
         level: int,
         emotions: dict,
         body_state: dict | None = None,
+        mission_goal: str = "",
     ):
         """
         Dibuja el avatar en la posicion central (cx, cy).
         emotions: dict con curiosity, confidence, frustration, energy.
         body_state (0.4): dict con size, speed, shield, fire_immunity, poison_immunity.
+        mission_goal (0.4.4): objetivo funcional actual — FIND_KEY, GO_TO_NEXT_LEVEL_DOOR, etc.
         """
         self._init_fonts()
         bs = body_state or {}
@@ -112,6 +114,26 @@ class AvatarRenderer:
         if level >= 7:
             # Estrella de explorador
             pygame.draw.circle(surface, (255, 220, 50), (cx, cy - r - 5), 3)
+
+        # 0.4.4: indicadores de mision funcional
+        if mission_goal == "FIND_KEY":
+            # Punto amarillo: buscar llave
+            pygame.draw.circle(surface, (255, 220, 60), (cx + r + 2, cy + r + 2), 4)
+        elif mission_goal == "GO_TO_NEXT_LEVEL_DOOR":
+            # Anillo dorado: ir a puerta de progreso
+            pygame.draw.circle(surface, (255, 185, 0), (cx, cy), r + 5, 2)
+        elif mission_goal == "AVOID_DANGER":
+            # Borde rojo: modo peligro
+            pygame.draw.circle(surface, (220, 60, 60), (cx, cy), r + 3, 3)
+        elif mission_goal == "LEVEL_COMPLETED":
+            # Aura dorada: nivel completado
+            for angle_pt in [
+                (cx, cy - r - 6),
+                (cx - r - 6, cy),
+                (cx, cy + r + 6),
+                (cx + r + 6, cy),
+            ]:
+                pygame.draw.circle(surface, (255, 215, 0), angle_pt, 3)
 
     @staticmethod
     def _tint(base: tuple, energy: float, curiosity: float) -> tuple:
