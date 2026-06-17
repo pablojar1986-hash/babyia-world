@@ -80,7 +80,7 @@
 - brain/trainer.py: end_episode aplica penalizacion de world_manager.on_episode_end() si fuera de casa
 - tests/test_world_integration_031.py: 9 tests de integracion verifican el comportamiento
 
-### 0.4.0 — Recompensas evolutivas: tamano, velocidad, energia, escudo e inmunidades (actual)
+### 0.4.0 — Recompensas evolutivas: tamano, velocidad, energia, escudo e inmunidades (completado)
 - brain/body_state.py — BodyState: size, speed, shield, fire_immunity, poison_immunity, vision_range
 - world/powerups.py — 8 tipos de powerup: GROWTH_CRYSTAL, SPEED_BOOTS, SHIELD_ORB, etc.
 - world/hazards.py — 8 peligros: FIRE_ZONE, POISON_ZONE, MUD, SHRINK_TRAP, SLOW_TRAP, etc.
@@ -90,17 +90,29 @@
 - STATE_SIZE 26 -> 34 (+8 features: size, speed, shield, immunities, proximidades)
 - 6 nuevos archivos de test
 
-### 0.4.1 — Peligros y supervivencia
+### 0.4.1 — Interfaz avanzada y red neuronal visible (actual)
+- interface/ dividido en 8 modulos: layout.py, ui_components.py, panel_renderer.py,
+  status_view.py, world_info_view.py, body_view.py, brain_view.py, memory_view.py
+- Panel de 5 pestanas (1-5 / TAB / flechas): Estado, Mundo, Cuerpo, Cerebro, Memoria
+- brain/neural_debugger.py — inspeccion diagnostica del DQN sin efectos secundarios:
+  Q-values por accion, activaciones por capa via forward hooks, snapshot completo
+- brain/baby_brain.py — last_decision con tracking exploration/exploitation
+- brain/trainer.py — get_status() incluye brain_debug calculado cada 5 pasos
+- Panel Cerebro: arquitectura 34->128->64->5, barras Q-values, epsilon, loss, replay buffer
+- Bitacora separada en panel inferior; borde de color por mundo en el grid
+- Ventana 860x618px (antes 810x490); 3 nuevos archivos de test; 351 tests pasando
+
+### 0.4.2 — Peligros y supervivencia
 - Peligros colocados en el grid (FIRE_ZONE, POISON_ZONE, MUD, etc.)
 - BabyIA aprende a evitar peligros segun su estado corporal
 - Interacciones con hazards en tiempo real
 
-### 0.4.2 — Puertas con requisitos
+### 0.4.3 — Puertas con requisitos
 - Puertas especiales colocadas en el grid con requisitos de acceso
 - BabyIA aprende que necesita para abrir cada puerta
 - Registro de intentos fallidos y exitosos
 
-### 0.4.3 — Evaluador de utilidad y aprendizaje causa-efecto avanzado
+### 0.4.4 — Evaluador de utilidad y aprendizaje causa-efecto avanzado
 - Utilidad integrada en toma de decisiones del agente
 - Memoria causal completa con actualizacion por experiencia
 

@@ -28,6 +28,12 @@ REQUIRED_FILES = [
     # 0.4
     "brain/body_state.py", "brain/causal_memory.py", "brain/utility_evaluator.py",
     "world/powerups.py", "world/hazards.py", "world/doors.py",
+    # 0.4.1
+    "brain/neural_debugger.py",
+    "interface/layout.py", "interface/ui_components.py",
+    "interface/panel_renderer.py", "interface/brain_view.py",
+    "interface/status_view.py", "interface/world_info_view.py",
+    "interface/body_view.py", "interface/memory_view.py",
 ]
 REQUIRED_TESTS = [
     "tests/test_world.py", "tests/test_rewards.py", "tests/test_memory.py",
@@ -45,6 +51,10 @@ REQUIRED_TESTS = [
     "tests/test_body_state.py", "tests/test_powerups.py", "tests/test_hazards.py",
     "tests/test_doors_requirements.py", "tests/test_causal_memory.py",
     "tests/test_utility_evaluator.py",
+    # 0.4.1
+    "tests/test_neural_debugger.py",
+    "tests/test_brain_decision_debug.py",
+    "tests/test_ui_layout.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -154,7 +164,7 @@ def check_interface_purity(root: Path = ROOT) -> list[dict]:
     iface   = root / "interface"
     if not iface.is_dir():
         return [{"status": "warn", "message": "Carpeta interface/ no encontrada"}]
-    training_keywords = ["brain.train(", "remember(", "replay_buffer", "optimizer.step"]
+    training_keywords = ["brain.train(", ".remember(", "buffer.append(", "optimizer.step("]
     for py in iface.glob("*.py"):
         try:
             text = py.read_text(encoding="utf-8")

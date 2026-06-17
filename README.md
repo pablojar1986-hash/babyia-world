@@ -1,11 +1,11 @@
-# BabyIA World 0.4
+# BabyIA World 0.4.1
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.4 introduce estado corporal evolutivo (tamano, velocidad, escudo, inmunidades),
-> memoria causal causa→efecto, y un evaluador de utilidad explicativo.**
+> **0.4.1 redisena la interfaz en modulos especializados y visualiza la red neuronal en tiempo real.**
+> El Panel Cerebro muestra Q-values, arquitectura, activaciones por capa, epsilon y loss.
 > BabyIA todavia no tiene conciencia real.
-> Todos los atributos corporales son mecanismos de juego, no indicadores biologicos.
+> Los Q-values son calculos matematicos, no pensamientos.
 
 ---
 
@@ -98,7 +98,8 @@ BabyIA World/
 |-- main.py                 <- Argparse, modos, bucle de episodios
 |
 |-- brain/
-|   |-- baby_brain.py       <- DQN con PyTorch (STATE_SIZE=34)
+|   |-- baby_brain.py       <- DQN con PyTorch (STATE_SIZE=34); last_decision (0.4.1)
+|   |-- neural_debugger.py  <- Inspeccion diagnostica: Q-values, activaciones (0.4.1)
 |   |-- trainer.py          <- Orquesta mundo <-> cerebro <-> memoria
 |   |-- body_state.py       <- Estado corporal evolutivo (0.4)
 |   |-- causal_memory.py    <- Memoria causa->efecto persistente (0.4)
@@ -126,7 +127,16 @@ BabyIA World/
 |   `-- level_factory.py    <- Laberintos por nivel 0-6 con BFS (0.2.1)
 |
 |-- interface/
-|   |-- pygame_view.py      <- Ventana grafica con panel de estado
+|   |-- pygame_view.py      <- Coordinador: ventana, grid, log inferior (0.4.1)
+|   |-- layout.py           <- Geometria: areas, tamanios, pestanas (0.4.1)
+|   |-- ui_components.py    <- Paleta de colores y primitivas de dibujo (0.4.1)
+|   |-- panel_renderer.py   <- 5 pestanas con scroll y navegacion (0.4.1)
+|   |-- status_view.py      <- Pestana Estado (0.4.1)
+|   |-- world_info_view.py  <- Pestana Mundo (0.4.1)
+|   |-- body_view.py        <- Pestana Cuerpo (0.4.1)
+|   |-- brain_view.py       <- Pestana Cerebro: Q-values y DQN (0.4.1)
+|   |-- memory_view.py      <- Pestana Memoria (0.4.1)
+|   |-- avatar_renderer.py  <- Avatar visual de BabyIA (0.3)
 |   `-- console_panel.py    <- Logs con Rich
 |
 |-- scripts/
@@ -135,7 +145,7 @@ BabyIA World/
 |-- docs/                   <- Documentacion interna
 |-- data/                   <- Memorias, estadisticas y conceptos en JSON
 |-- models/                 <- Pesos del cerebro (.pt)
-|-- tests/                  <- 307 tests con pytest
+|-- tests/                  <- 351 tests con pytest
 `-- godot/                  <- Reservado para fase futura
 ```
 
@@ -211,6 +221,19 @@ Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 - STATE_SIZE 10 -> 18 (8 features nuevas: llave, energia, distancias, puerta, peligro)
 - Metricas de interacciones (llaves, puertas, comida, peligro, conceptos)
 
+## Novedades en 0.4.1
+
+- `interface/` dividido en 8 modulos: layout.py, ui_components.py, panel_renderer.py,
+  status_view.py, world_info_view.py, body_view.py, brain_view.py, memory_view.py
+- Panel de 5 pestanas navegables con teclado (1-5 / TAB / flechas) y scroll
+- `brain/neural_debugger.py` — inspeccion diagnostica del DQN:
+  Q-values por accion, activaciones intermedias via forward hooks, snapshot completo
+- `brain/baby_brain.py` — `last_decision` registra tipo de decision (exploration/exploitation)
+- `brain/trainer.py` — `get_status()` incluye `brain_debug` (calculado cada 5 pasos)
+- Panel Cerebro: arquitectura 34→128→64→5, barras Q-values, epsilon, loss, replay buffer
+- Bitacora en panel inferior separado; borde de color por mundo en el grid
+- Ventana 860×618 px; 3 nuevos archivos de test; 351 tests totales pasando
+
 ## Novedades en 0.4.0
 
 - `brain/body_state.py` — BodyState: size, speed, shield, fire_immunity, poison_immunity, vision_range, memory_focus
@@ -235,7 +258,7 @@ Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 - STATE_SIZE 18 → 26 (+8 features de contexto de mundo); modelo v0.3 incompatible con v0.2
 - 5 nuevos archivos de tests
 
-## Que queda para 0.4.1+
+## Que queda para 0.4.2+
 
 - Peligros y powerups colocados fisicamente en el grid
 - Puertas especiales con requisitos en posiciones del laberinto

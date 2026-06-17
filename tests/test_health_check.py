@@ -1,4 +1,5 @@
 """Tests del health check del proyecto."""
+
 from pathlib import Path
 
 import pytest
@@ -63,8 +64,9 @@ def test_detects_long_file(tmp_path):
 
 
 def test_detects_network_call(tmp_path):
-    (tmp_path / "bad.py").write_text("import requests\nrequests.get('http://x.com')",
-                                     encoding="utf-8")
+    (tmp_path / "bad.py").write_text(
+        "import requests\nrequests.get('http://x.com')", encoding="utf-8"
+    )
     results = check_network_calls(tmp_path)
     assert any(r["status"] == "fail" for r in results)
 
@@ -78,8 +80,5 @@ def test_detects_missing_structure(tmp_path):
 def test_tests_found_in_project():
     results = check_tests(ROOT)
     ok = [r for r in results if "encontrados" in r["message"]]
-    # Acepta cualquier cantidad >= 7 (0.1.x tenia 7, 0.2 anade 4, 0.2.1 anade 4 mas)
-    assert any(
-        any(str(n) in r["message"] for n in range(7, 25))
-        for r in ok
-    )
+    # Acepta cualquier cantidad >= 7 (crece con cada version)
+    assert any(any(str(n) in r["message"] for n in range(7, 100)) for r in ok)

@@ -7,11 +7,13 @@ console = Console()
 
 
 def log_start():
-    console.print(Panel(
-        "[bold cyan]BabyIA World 0.1[/bold cyan]\n"
-        "[dim]IA que aprende desde cero · sin APIs externas · solo experiencia[/dim]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            "[bold cyan]BabyIA World 0.1[/bold cyan]\n"
+            "[dim]IA que aprende desde cero · sin APIs externas · solo experiencia[/dim]",
+            border_style="cyan",
+        )
+    )
 
 
 def log_episode_start(episode, level):
@@ -33,13 +35,15 @@ def log_episode_end(status):
     em = status["emotions"]
     t.add_row("Recompensa ep", f"{status['episode_reward']:+.2f}")
     t.add_row("ε exploración", f"{status['epsilon']:.3f}")
-    t.add_row("Éxito 20ep",    f"{status['success_rate']*100:.0f}%")
-    t.add_row("Curiosidad",    f"{em['curiosity']:.2f}")
-    t.add_row("Confianza",     f"{em['confidence']:.2f}")
-    t.add_row("Frustración",   f"{em['frustration']:.2f}")
-    t.add_row("Loss",          f"{status['loss']:.4f}")
+    t.add_row("Éxito 20ep", f"{status['success_rate']*100:.0f}%")
+    t.add_row("Curiosidad", f"{em['curiosity']:.2f}")
+    t.add_row("Confianza", f"{em['confidence']:.2f}")
+    t.add_row("Frustración", f"{em['frustration']:.2f}")
+    t.add_row("Loss", f"{status['loss']:.4f}")
 
-    console.print(Panel(t, title=f"[bold]Ep {status['episode']}[/bold]", border_style="blue"))
+    console.print(
+        Panel(t, title=f"[bold]Ep {status['episode']}[/bold]", border_style="blue")
+    )
 
     if status["last_log"]:
         console.print(f"[italic dim]{status['last_log'][-1]}[/italic dim]")
@@ -51,8 +55,10 @@ def log_level_up(new_level):
         2: "Aprende a evitar paredes",
         3: "Empieza a formar conceptos",
     }
-    console.print(Panel(
-        f"[bold green]¡BabyIA subió al Nivel {new_level}![/bold green]\n"
-        f"[dim]{msgs.get(new_level, '')}[/dim]",
-        border_style="green",
-    ))
+    console.print(
+        Panel(
+            f"[bold green]¡BabyIA subió al Nivel {new_level}![/bold green]\n"
+            f"[dim]{msgs.get(new_level, '')}[/dim]",
+            border_style="green",
+        )
+    )

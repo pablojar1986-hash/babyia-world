@@ -1,83 +1,82 @@
+"""
+BabyIA World 0.4.1 — Coordinador de la interfaz gráfica.
+Gestiona la ventana y delega dibujo a módulos especializados.
+No contiene lógica de aprendizaje.
+"""
+
 import pygame
 from interface.avatar_renderer import AvatarRenderer
-from world.objects import Cell, ACTION_NAMES, GRID_SIZE
+from interface.layout import WINDOW_W, WINDOW_H, GRID_AREA, LOG_AREA, CELL_SIZE
+from interface.panel_renderer import PanelRenderer
+from interface.ui_components import BG, LOG_BG, TEXT_DIM, ACCENT, divider
+from world.objects import Cell, GRID_SIZE
 
-# ── Paleta de colores ─────────────────────────────────────────────────────────
-BG           = (22,  24,  33)
-CELL_EMPTY   = (42,  44,  56)
-CELL_VISIT   = (55,  80, 130)
-CELL_WALL    = (90,  90, 100)
-CELL_GOAL    = (50, 200,  90)
-CELL_BABY    = (255, 200,  50)
-CELL_KEY     = (255, 220,  80)
-CELL_DOOR_C  = (160,  80,  40)
-CELL_DOOR_O  = (100, 160,  80)
-CELL_FOOD    = (80,  200, 120)
-CELL_DANGER  = (200,  60,  60)
-CELL_UNKNOWN = (140,  80, 200)
-GRID_LINE    = (15,  17,  25)
-PANEL_BG     = (16,  18,  26)
-TEXT         = (220, 220, 230)
-TEXT_DIM     = (110, 115, 135)
-ACCENT       = ( 90, 170, 255)
-BAR_BG       = ( 35,  38,  52)
-BAR_OK       = ( 90, 170, 255)
-BAR_WARN     = (255, 165,  50)
-BAR_DANGER   = (220,  70,  70)
-COLOR_POS    = (100, 220, 100)
-COLOR_NEG    = (220,  90,  90)
+# ── Colores específicos del grid ───────────────────────────────────────────────
+_EMPTY = (42, 44, 56)
+_VISIT = (55, 80, 130)
+_WALL = (90, 90, 100)
+_GOAL = (50, 200, 90)
+_KEY = (255, 220, 80)
+_DOOR_C = (160, 80, 40)
+_DOOR_O = (100, 160, 80)
+_FOOD = (80, 200, 120)
+_DANGER = (200, 60, 60)
+_UNKNWN = (140, 80, 200)
 
-# Colores de portales (0.3)
 PORTAL_COLORS = {
-    (7, 2): ( 50, 130, 220),   # blue_door  → food_world
-    (7, 4): (210,  50,  50),   # red_door   → danger_world
-    (7, 6): ( 50, 200,  80),   # green_door → curiosity_world
-    (6, 7): (255, 200,   0),   # gold_door  → challenge_world
-    (0, 0): (200, 200, 255),   # home_door  → return home
-}
-
-# ── Etiquetas de celda ────────────────────────────────────────────────────────
-CELL_LABELS = {
-    Cell.GOAL         : ("META", (10,  40, 20)),
-    Cell.KEY          : ("K",    (80,  60, 10)),
-    Cell.DOOR_CLOSED  : ("D",    (60,  30, 10)),
-    Cell.DOOR_OPEN    : ("O",    (30,  60, 20)),
-    Cell.FOOD         : ("F",    (20,  60, 30)),
-    Cell.DANGER       : ("X",    (80,  20, 20)),
-    Cell.UNKNOWN_OBJECT: ("?",   (50,  20, 80)),
+    (7, 2): (50, 130, 220),
+    (7, 4): (210, 50, 50),
+    (7, 6): (50, 200, 80),
+    (6, 7): (255, 200, 0),
+    (0, 0): (200, 200, 255),
 }
 
 CELL_COLORS = {
-    int(Cell.WALL)         : CELL_WALL,
-    int(Cell.GOAL)         : CELL_GOAL,
-    int(Cell.KEY)          : CELL_KEY,
-    int(Cell.DOOR_CLOSED)  : CELL_DOOR_C,
-    int(Cell.DOOR_OPEN)    : CELL_DOOR_O,
-    int(Cell.FOOD)         : CELL_FOOD,
-    int(Cell.DANGER)       : CELL_DANGER,
-    int(Cell.UNKNOWN_OBJECT): CELL_UNKNOWN,
+    int(Cell.WALL): _WALL,
+    int(Cell.GOAL): _GOAL,
+    int(Cell.KEY): _KEY,
+    int(Cell.DOOR_CLOSED): _DOOR_C,
+    int(Cell.DOOR_OPEN): _DOOR_O,
+    int(Cell.FOOD): _FOOD,
+    int(Cell.DANGER): _DANGER,
+    int(Cell.UNKNOWN_OBJECT): _UNKNWN,
 }
 
-# ── Geometria ─────────────────────────────────────────────────────────────────
-CELL_SIZE = 58
-MARGIN    = 14
-PANEL_W   = 300
-GRID_W    = GRID_SIZE * CELL_SIZE
-WINDOW_W  = MARGIN + GRID_W + MARGIN + PANEL_W + MARGIN
-WINDOW_H  = MARGIN + GRID_W + MARGIN
+CELL_LABELS = {
+    Cell.GOAL: ("META", (10, 40, 20)),
+    Cell.KEY: ("K", (80, 60, 10)),
+    Cell.DOOR_CLOSED: ("D", (60, 30, 10)),
+    Cell.DOOR_OPEN: ("O", (30, 60, 20)),
+    Cell.FOOD: ("F", (20, 60, 30)),
+    Cell.DANGER: ("X", (80, 20, 20)),
+    Cell.UNKNOWN_OBJECT: ("?", (50, 20, 80)),
+}
+
+_LEGEND = [
+    ("P", "Portal"),
+    ("F", "Comida"),
+    ("X", "Peligro"),
+    ("K", "Llave"),
+    ("D", "Puerta"),
+    ("?", "Desc."),
+]
 
 
 class PygameView:
-    def __init__(self, title="BabyIA World 0.4"):
+    def __init__(self, title: str = "BabyIA World 0.4.1"):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
         pygame.display.set_caption(title)
-        self.clock   = pygame.time.Clock()
-        self.f_big   = pygame.font.SysFont("consolas", 17, bold=True)
-        self.f_med   = pygame.font.SysFont("consolas", 14)
-        self.f_sm    = pygame.font.SysFont("consolas", 12)
-        self.f_xs    = pygame.font.SysFont("consolas", 11)
-        self.avatar  = AvatarRenderer()
+        self.clock = pygame.time.Clock()
+        self.fonts = {
+            "big": pygame.font.SysFont("consolas", 17, bold=True),
+            "med": pygame.font.SysFont("consolas", 14),
+            "sm": pygame.font.SysFont("consolas", 12),
+            "xs": pygame.font.SysFont("consolas", 11),
+        }
+        self.avatar = AvatarRenderer()
+        self.panels = PanelRenderer()
+        self.panels.set_fonts(self.fonts)
         self.running = True
 
     # ── Bucle principal ───────────────────────────────────────────────────────
@@ -86,14 +85,19 @@ class PygameView:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
+                else:
+                    self.panels.handle_key(event.key, pygame.key.get_mods())
         return self.running
 
-    def render(self, world, status):
+    def render(self, world, status: dict):
         self.screen.fill(BG)
+        self._draw_world_border(status)
         self._draw_grid(world, status)
-        self._draw_panel(status)
+        self.panels.render(self.screen, status)
+        self._draw_log(status)
         pygame.display.flip()
         self.clock.tick(60)
 
@@ -102,209 +106,100 @@ class PygameView:
 
     # ── Grid ──────────────────────────────────────────────────────────────────
 
-    def _draw_grid(self, world, status=None):
-        grid    = world.get_grid()
+    def _draw_grid(self, world, status: dict):
+        grid = world.get_grid()
         visited = world.visited
-        bx, by  = world.baby_pos
-        ox, oy  = MARGIN, MARGIN
+        bx, by = world.baby_pos
+        ox, oy = GRID_AREA[0], GRID_AREA[1]
+        gs = CELL_SIZE
 
         for row in range(GRID_SIZE):
             for col in range(GRID_SIZE):
-                x    = ox + col * CELL_SIZE
-                y    = oy + row * CELL_SIZE
-                rect = pygame.Rect(x, y, CELL_SIZE - 2, CELL_SIZE - 2)
-                val  = grid[row][col]
+                cx = ox + col * gs
+                cy_ = oy + row * gs
+                rect = pygame.Rect(cx, cy_, gs - 2, gs - 2)
+                val = grid[row][col]
 
-                # Portales 0.3 — dibujados como marco de color sobre celda vacia
-                portal_color = PORTAL_COLORS.get((col, row))
-                base_color   = CELL_COLORS.get(val,
-                               CELL_VISIT if (col, row) in visited else CELL_EMPTY)
-                pygame.draw.rect(self.screen, base_color, rect, border_radius=5)
-                if portal_color:
-                    pygame.draw.rect(self.screen, portal_color, rect,
-                                     width=3, border_radius=5)
-                    p_lbl = self.f_xs.render("P", True, portal_color)
-                    self.screen.blit(p_lbl, (x + CELL_SIZE // 2 - 4, y + 4))
+                portal_c = PORTAL_COLORS.get((col, row))
+                base_color = CELL_COLORS.get(
+                    val, _VISIT if (col, row) in visited else _EMPTY
+                )
+                pygame.draw.rect(self.screen, base_color, rect, border_radius=4)
 
-                # Etiqueta de celda
-                cell_enum = Cell(val) if val in [c.value for c in Cell] else None
-                if cell_enum and cell_enum in CELL_LABELS:
-                    lbl_text, lbl_color = CELL_LABELS[cell_enum]
-                    lbl = self.f_xs.render(lbl_text, True, lbl_color)
-                    self.screen.blit(lbl, (x + CELL_SIZE // 2 - 6, y + CELL_SIZE // 2 - 6))
+                if portal_c:
+                    pygame.draw.rect(
+                        self.screen, portal_c, rect, width=3, border_radius=4
+                    )
+                    p = self.fonts["xs"].render("P", True, portal_c)
+                    self.screen.blit(p, (cx + gs // 2 - 4, cy_ + 3))
 
-        # BabyIA — avatar con AvatarRenderer (0.3)
-        cx = ox + bx * CELL_SIZE + CELL_SIZE // 2 - 1
-        cy = oy + by * CELL_SIZE + CELL_SIZE // 2 - 1
-        emotions   = status.get("emotions", {}) if status else {}
-        level      = status.get("level", 0) if status else 0
-        body_state = status.get("body_state", {}) if status else {}
-        self.avatar.draw(self.screen, cx, cy, CELL_SIZE, level, emotions, body_state)
+                cell_e = Cell(val) if val in [c.value for c in Cell] else None
+                if cell_e and cell_e in CELL_LABELS:
+                    lbl_txt, lbl_clr = CELL_LABELS[cell_e]
+                    lbl = self.fonts["xs"].render(lbl_txt, True, lbl_clr)
+                    self.screen.blit(lbl, (cx + gs // 2 - 6, cy_ + gs // 2 - 6))
 
-    # ── Panel lateral ─────────────────────────────────────────────────────────
+        # Avatar
+        av_cx = ox + bx * gs + gs // 2
+        av_cy = oy + by * gs + gs // 2
+        self.avatar.draw(
+            self.screen,
+            av_cx,
+            av_cy,
+            gs,
+            status.get("level", 0),
+            status.get("emotions", {}),
+            status.get("body_state", {}),
+        )
 
-    def _draw_panel(self, status):
-        px = MARGIN + GRID_W + MARGIN
-        py = MARGIN
-        panel_h = WINDOW_H - 2 * MARGIN
-        pygame.draw.rect(self.screen, PANEL_BG,
-                         (px - 6, py - 6, PANEL_W + 6, panel_h + 12), border_radius=8)
-
-        # Titulo + modo
-        self._txt("BabyIA World 0.4", px, py, self.f_big, ACCENT)
-        py += 22
-        mode_str   = status.get("mode", "train").upper()
-        mode_color = {"TRAIN": (100,200,100), "WATCH": (100,170,255),
-                      "EVALUATE": (255,180,50)}.get(mode_str, ACCENT)
-        self._txt(f"● {mode_str}", px, py, self.f_xs, mode_color)
-        py += 14
-        self._divider(px, py, PANEL_W - 8); py += 10
-
-        # Episodio / nivel
-        self._txt(f"Episodio : {status['episode']}", px, py, self.f_med, TEXT); py += 19
-        self._txt(f"Nivel    : {status['level']}",   px, py, self.f_med, TEXT); py += 19
-        self._txt(f"e explor : {status['epsilon']:.3f}", px, py, self.f_sm, TEXT_DIM); py += 16
-        ep_r = status["episode_reward"]
-        self._txt(f"Recomp.  : {ep_r:+.2f}", px, py, self.f_sm,
-                  COLOR_POS if ep_r >= 0 else COLOR_NEG); py += 16
-        self._txt(f"Exito 20ep: {status['success_rate']*100:.0f}%", px, py, self.f_sm, TEXT); py += 16
-        avg_r = status.get("avg_reward")
-        avg_s = status.get("avg_steps")
-        if avg_r is not None:
-            self._txt(f"Prom recomp: {avg_r:+.2f}", px, py, self.f_xs, TEXT_DIM); py += 14
-        if avg_s is not None:
-            self._txt(f"Prom pasos : {avg_s:.0f}", px, py, self.f_xs, TEXT_DIM); py += 14
-        py += 4
-        self._divider(px, py, PANEL_W - 8); py += 10
-
-        # Laberinto (0.2.1)
-        self._txt("Laberinto", px, py, self.f_med, ACCENT); py += 20
-        maze = status.get("maze_info", {})
-        diff = maze.get("difficulty", "Basico")
-        seed = maze.get("seed", 0)
-        solv = maze.get("solvable", True)
-        solv_color = (100, 220, 100) if solv else (220, 90, 90)
-        self._txt(f"Nivel:    {diff}", px, py, self.f_sm, TEXT); py += 16
-        self._txt(f"Semilla:  {seed}", px, py, self.f_xs, TEXT_DIM); py += 14
-        self._txt(f"Solucion: {'OK' if solv else 'NO'}", px, py, self.f_xs, solv_color)
-        py += 14
-        py += 4
-        self._divider(px, py, PANEL_W - 8); py += 10
-
-        # Mundo actual (0.3)
-        self._txt("Mundo", px, py, self.f_med, ACCENT); py += 20
+    def _draw_world_border(self, status: dict):
+        """Marco de color según el mundo actual."""
         wi = status.get("world_info", {})
-        wname = wi.get("world_id", "home").replace("_", " ")
-        home_c = (100, 220, 100) if wi.get("is_at_home", True) else (255, 180, 50)
-        self._txt(f"Mundo: {wname[:18]}", px, py, self.f_sm, home_c); py += 16
-        at_home = "SI" if wi.get("is_at_home", True) else "NO"
-        self._txt(f"En casa: {at_home}", px, py, self.f_xs, home_c); py += 14
-        portal = wi.get("last_portal") or "-"
-        self._txt(f"Portal: {portal[:18]}", px, py, self.f_xs, TEXT_DIM); py += 14
-        hd = status.get("home_drive", {})
-        rhr = hd.get("return_home_rate", 0.0)
-        self._txt(f"Retorno: {rhr*100:.0f}%", px, py, self.f_xs, TEXT_DIM); py += 14
-        py += 4
-        self._divider(px, py, PANEL_W - 8); py += 10
+        wid = wi.get("world_id", "home")
+        colors = {
+            "home": (50, 60, 80),
+            "food_world": (40, 100, 60),
+            "danger_world": (120, 40, 40),
+            "curiosity_world": (60, 40, 120),
+            "challenge_world": (120, 100, 20),
+        }
+        clr = colors.get(wid, (50, 60, 80))
+        gx, gy, gw, gh = GRID_AREA
+        pygame.draw.rect(
+            self.screen, clr, (gx - 3, gy - 3, gw + 6, gh + 6), width=3, border_radius=4
+        )
 
-        # Estado corporal (0.4)
-        bs = status.get("body_state", {})
-        if bs:
-            self._txt("Cuerpo", px, py, self.f_med, ACCENT); py += 20
-            size  = bs.get("size",  1.0)
-            speed = bs.get("speed", 1.0)
-            shld  = bs.get("shield", 0.0)
-            f_imm = bs.get("fire_immunity",   False)
-            p_imm = bs.get("poison_immunity", False)
-            size_c  = (100, 220, 100) if size  >= 1.5 else TEXT_DIM
-            speed_c = (100, 200, 255) if speed >= 1.5 else TEXT_DIM
-            self._txt(f"Tam: {size:.1f}  Vel: {speed:.1f}", px, py, self.f_sm, TEXT); py += 16
-            self._bar(px, py, PANEL_W - 8, "Escudo", shld); py += 22
-            fi = "[F]" if f_imm else "[ ]"
-            pi = "[P]" if p_imm else "[ ]"
-            fi_c = (255, 140, 50) if f_imm else TEXT_DIM
-            pi_c = (100, 220, 80) if p_imm else TEXT_DIM
-            self._txt(f"Fuego:{fi}", px, py, self.f_xs, fi_c)
-            self._txt(f"Veneno:{pi}", px + 90, py, self.f_xs, pi_c); py += 14
-            util = status.get("utility", {})
-            if util:
-                u = util.get("last_utility", 0.0)
-                u_c = COLOR_POS if u >= 0 else COLOR_NEG
-                self._txt(f"Utilidad: {u:+.2f}", px, py, self.f_xs, u_c); py += 14
-            py += 4
-            self._divider(px, py, PANEL_W - 8); py += 10
+    # ── Panel inferior de bitácora ─────────────────────────────────────────────
 
-        # Inventario (0.2)
-        self._txt("Inventario", px, py, self.f_med, ACCENT); py += 20
-        inv = status.get("inventory", {})
-        key_color = (255, 220, 80) if inv.get("has_key") else TEXT_DIM
-        self._txt(f"Llave: {'SI' if inv.get('has_key') else 'NO'}", px, py, self.f_sm, key_color)
-        py += 16
-        energy = inv.get("energy", 1.0)
-        self._bar(px, py, PANEL_W - 8, "Energia", energy, warn_at=0.3); py += 22
-        self._txt(f"Comida: {inv.get('food_count', 0)}", px, py, self.f_xs, TEXT_DIM); py += 14
-        py += 4
-        self._divider(px, py, PANEL_W - 8); py += 10
+    def _draw_log(self, status: dict):
+        lx, ly, lw, lh = LOG_AREA
+        pygame.draw.rect(
+            self.screen, LOG_BG, (lx - 4, ly, lw + 8, lh + 8), border_radius=4
+        )
+        py = ly + 6
+        self.screen.blit(
+            self.fonts["sm"].render("Bitacora", True, ACCENT), (lx + 4, py)
+        )
+        py += 18
+        divider(self.screen, lx + 4, py, lw - 8)
+        py += 8
+        entries = self._format_log(status)
+        for entry in entries[:4]:
+            self.screen.blit(
+                self.fonts["xs"].render(entry[:110], True, TEXT_DIM), (lx + 4, py)
+            )
+            py += 15
 
-        # Senales internas
-        self._txt("Senales internas", px, py, self.f_med, ACCENT); py += 22
-        em = status["emotions"]
-        for label, key, warn in [
-            ("Curiosidad",   "curiosity",   None),
-            ("Confianza",    "confidence",  None),
-            ("Frustracion",  "frustration", 0.6),
-            ("Energia int.", "energy",      None),
-        ]:
-            self._bar(px, py, PANEL_W - 8, label, em[key], warn); py += 22
-        py += 4
-        self._divider(px, py, PANEL_W - 8); py += 10
-
-        # Conceptos descubiertos (0.2)
-        self._txt("Conceptos", px, py, self.f_med, ACCENT); py += 20
-        top_c = status.get("concepts", [])
-        if top_c:
-            for c in top_c[:2]:
-                rel = f"{c['relation']}:{c['value']}"[:28]
-                conf = c["confidence"]
-                self._txt(f"  {rel}", px, py, self.f_xs, (130, 210, 140)); py += 14
-                self._txt(f"    conf={conf:.2f}", px, py, self.f_xs, TEXT_DIM); py += 14
-        else:
-            self._txt("  Ninguno aun", px, py, self.f_xs, TEXT_DIM); py += 14
-        py += 4
-        self._divider(px, py, PANEL_W - 8); py += 10
-
-        # Bitacora
-        self._txt("Bitacora", px, py, self.f_med, ACCENT); py += 20
-        for entry in status["last_log"][-3:]:
-            if len(entry) > 40:
-                mid = entry[:40].rfind(" ")
-                mid = mid if mid > 20 else 40
-                self._txt(entry[:mid], px, py, self.f_xs, TEXT_DIM); py += 14
-                self._txt(entry[mid:].strip()[:40], px + 6, py, self.f_xs, TEXT_DIM)
-            else:
-                self._txt(entry, px, py, self.f_xs, TEXT_DIM)
-            py += 18
-
-    # ── Helpers ───────────────────────────────────────────────────────────────
-
-    def _bar(self, x, y, width, label, value, warn_at=None):
-        lbl = self.f_sm.render(f"{label}:", True, TEXT_DIM)
-        self.screen.blit(lbl, (x, y))
-        bar_x = x + 108
-        bar_w = width - 150
-        bar_h = 12
-        pygame.draw.rect(self.screen, BAR_BG, (bar_x, y + 2, bar_w, bar_h), border_radius=4)
-        fill = max(1, int(bar_w * value))
-        if warn_at and value <= warn_at:
-            color = BAR_DANGER if value <= warn_at * 0.5 else BAR_WARN
-        else:
-            color = BAR_OK
-        pygame.draw.rect(self.screen, color, (bar_x, y + 2, fill, bar_h), border_radius=4)
-        val_s = self.f_xs.render(f"{value:.2f}", True, TEXT)
-        self.screen.blit(val_s, (bar_x + bar_w + 4, y + 1))
-
-    def _divider(self, x, y, width):
-        pygame.draw.line(self.screen, (40, 44, 60), (x, y), (x + width, y))
-
-    def _txt(self, text, x, y, font, color):
-        self.screen.blit(font.render(str(text), True, color), (x, y))
+    def _format_log(self, status: dict) -> list[str]:
+        lines = list(status.get("last_log", []))
+        ep = status.get("episode", 0)
+        ev = status.get("ep_events", {})
+        if ev.get("picked_key"):
+            lines.append(f"E{ep}: Recogida llave")
+        if ev.get("ate_food"):
+            lines.append(f"E{ep}: Comio alimento")
+        if ev.get("in_danger"):
+            lines.append(f"E{ep}: En zona de peligro")
+        if ev.get("returned_home"):
+            lines.append(f"E{ep}: Regreso a casa")
+        return lines[-6:]

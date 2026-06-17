@@ -7,7 +7,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-STATE_SIZE = 34  # 0.4: 10 base + 8 inventario/objetos + 8 contexto-mundo + 8 estado-corporal
+STATE_SIZE = (
+    34  # 0.4: 10 base + 8 inventario/objetos + 8 contexto-mundo + 8 estado-corporal
+)
 ACTION_SIZE = 5
 REPLAY_CAPACITY = 10_000
 BATCH_SIZE = 64
@@ -53,16 +55,38 @@ class BabyBrain:
         self.epsilon = EPSILON_START
         self.train_steps = 0
         self.last_loss = 0.0
+        # 0.4.1: diagnóstico de la última decisión (solo lectura desde afuera)
+        self.last_decision: dict = {
+            "action": 0,
+            "decision_type": "unknown",
+            "effective_epsilon": 0.0,
+            "q_values": [],
+        }
 
     # ── Selección de acción ───────────────────────────────────────────────
 
     def select_action(self, state: np.ndarray, extra_exploration: float = 0.0) -> int:
         effective_eps = min(1.0, self.epsilon + extra_exploration)
         if random.random() < effective_eps:
-            return random.randrange(ACTION_SIZE)
+            action = random.randrange(ACTION_SIZE)
+            self.last_decision = {
+                "action": action,
+                "decision_type": "exploration",
+                "effective_epsilon": round(effective_eps, 4),
+                "q_values": [],
+            }
+            return action
         with torch.no_grad():
             t = torch.FloatTensor(state).unsqueeze(0)
-            return int(self.q_net(t).argmax().item())
+            qs = self.q_net(t).squeeze(0)
+            action = int(qs.argmax().item())
+        self.last_decision = {
+            "action": action,
+            "decision_type": "exploitation",
+            "effective_epsilon": round(effective_eps, 4),
+            "q_values": qs.tolist(),
+        }
+        return action
 
     # ── Memoria de experiencias (replay buffer) ───────────────────────────
 

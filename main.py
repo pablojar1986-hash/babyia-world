@@ -193,7 +193,7 @@ def main():
     metrics = TrainingMetrics()
     store   = ModelStore(trainer.brain,
                          model_latest=MODEL_V4_LATEST, model_best=MODEL_V4_BEST)
-    view    = PygameView(title="BabyIA World 0.4")
+    view    = PygameView(title="BabyIA World 0.4.1")
 
     # 0.2.2: guardar y mostrar metadatos de arquitectura al iniciar
     net_info = save_network_stats(trainer.brain.q_net)
