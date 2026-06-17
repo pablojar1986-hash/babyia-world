@@ -86,3 +86,15 @@ class TestProgressUIPayload:
         t = _make_trainer()
         s = t.get_status()
         assert s["episodes_without_progress"] == 0
+
+    def test_status_has_has_key(self):
+        t = _make_trainer()
+        s = t.get_status()
+        assert "has_key" in s
+        assert s["has_key"] is False
+
+    def test_has_key_true_after_pick_key(self):
+        t = _make_trainer()
+        t.inventory.pick_key()
+        s = t.get_status()
+        assert s["has_key"] is True

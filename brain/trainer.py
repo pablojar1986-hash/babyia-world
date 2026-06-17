@@ -87,6 +87,7 @@ class Trainer:
         self._ep_treasure_rooms = 0
         self._ep_training_rooms = 0
         self._ep_next_door_blocked = 0
+        self._ep_optional_rooms_visited: set = set()  # evita reward farming
         self._current_state: np.ndarray | None = None
         self._maze_info: dict = {
             "difficulty": "Basico",
@@ -115,6 +116,7 @@ class Trainer:
         self._ep_treasure_rooms = 0
         self._ep_training_rooms = 0
         self._ep_next_door_blocked = 0
+        self._ep_optional_rooms_visited = set()
         self.inventory.reset()
         self.world_manager.reset()
         self.home_drive.reset_episode()
@@ -318,6 +320,7 @@ class Trainer:
             "ep_door_attempts": self._ep_door_attempts,
             "ep_door_successes": self._ep_door_successes,
             # 0.4.3
+            "has_key": self.inventory.has_key,
             "current_objective": current_objective,
             "ep_level_completed": self._ep_level_completed,
             "ep_optional_rooms": self._ep_optional_rooms,
@@ -456,18 +459,22 @@ class Trainer:
 
             delta += REWARD_NEXT_LEVEL_DOOR
         if info.get("entered_treasure_room"):
-            from world.rewards import REWARD_TREASURE_ROOM
+            if "treasure" not in self._ep_optional_rooms_visited:
+                from world.rewards import REWARD_TREASURE_ROOM
 
-            delta += REWARD_TREASURE_ROOM
-            self._ep_optional_rooms += 1
-            self._ep_treasure_rooms += 1
+                delta += REWARD_TREASURE_ROOM
+                self._ep_optional_rooms_visited.add("treasure")
+                self._ep_optional_rooms += 1
+                self._ep_treasure_rooms += 1
             self._ep_events["entered_treasure_room"] = True
         if info.get("entered_training_room"):
-            from world.rewards import REWARD_TRAINING_ROOM
+            if "training" not in self._ep_optional_rooms_visited:
+                from world.rewards import REWARD_TRAINING_ROOM
 
-            delta += REWARD_TRAINING_ROOM
-            self._ep_optional_rooms += 1
-            self._ep_training_rooms += 1
+                delta += REWARD_TRAINING_ROOM
+                self._ep_optional_rooms_visited.add("training")
+                self._ep_optional_rooms += 1
+                self._ep_training_rooms += 1
             self._ep_events["entered_training_room"] = True
         if info.get("hit_next_level_door"):
             from world.rewards import REWARD_NEXT_DOOR_WITHOUT_KEY

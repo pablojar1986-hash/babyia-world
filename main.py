@@ -273,12 +273,24 @@ def main():
                 reached_goal, level_completed=level_completed
             )
 
-            # 0.4.3: anti-estancamiento — elevar epsilon si BabyIA se estanca
+            # 0.4.3: anti-estancamiento progresivo — fija un piso de epsilon
+            # proporcional a la gravedad (el decay no puede bajar de ese piso)
             if is_training and status.get("stagnation_active"):
-                trainer.brain.epsilon = min(trainer.brain.epsilon + 0.1, 0.9)
-                console.print(
-                    "[yellow]Anti-estancamiento: epsilon aumentado temporalmente.[/yellow]"
-                )
+                ewp = status.get("episodes_without_progress", 0)
+                if ewp > 500:
+                    stag_floor, stag_label = 0.85, "CRITICO"
+                elif ewp > 300:
+                    stag_floor, stag_label = 0.65, "severo"
+                elif ewp > 200:
+                    stag_floor, stag_label = 0.45, "moderado"
+                else:
+                    stag_floor, stag_label = 0.25, "leve"
+                if trainer.brain.epsilon < stag_floor:
+                    trainer.brain.epsilon = stag_floor
+                    console.print(
+                        f"[yellow]Anti-estancamiento {stag_label} "
+                        f"({ewp}ep): epsilon={stag_floor}[/yellow]"
+                    )
 
             ev = status.get("ep_events", {})
             inv = status.get("inventory", {})

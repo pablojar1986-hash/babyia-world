@@ -198,12 +198,23 @@ class PygameView:
         py += 18
         divider(self.screen, lx + 4, py, lw - 8)
         py += 8
-        entries = self._format_log(status)
+        entries = self._dedup_log(self._format_log(status))
         for entry in entries[:4]:
             self.screen.blit(
                 self.fonts["xs"].render(entry[:110], True, TEXT_DIM), (lx + 4, py)
             )
             py += 15
+
+    def _dedup_log(self, lines: list[str]) -> list[str]:
+        """Colapsa consecutivos idénticos en 'mensaje ×N'."""
+        out: list[str] = []
+        for line in lines:
+            if out and out[-1].split(" ×")[0] == line:
+                base, _, count = out[-1].partition(" ×")
+                out[-1] = f"{base} ×{int(count or 1) + 1}"
+            else:
+                out.append(line)
+        return out
 
     def _format_log(self, status: dict) -> list[str]:
         lines = list(status.get("last_log", []))

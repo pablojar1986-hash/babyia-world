@@ -53,7 +53,7 @@ def render(surface, fonts, area, status):
     )
     py += 16
 
-    # 0.4.3: objetivo actual y anti-estancamiento
+    # 0.4.3: objetivo actual, llave e inventario
     obj = status.get("current_objective", "")
     if obj:
         obj_c = (
@@ -61,11 +61,27 @@ def render(surface, fonts, area, status):
         )
         txt(surface, f"Obj: {obj[:28]}", x, py, fonts["xs"], obj_c)
         py += 14
+    has_key = status.get("has_key", False)
+    key_c = (80, 220, 80) if has_key else (180, 60, 60)
+    key_label = "Llave: SI" if has_key else "Llave: NO"
+    txt(surface, key_label, x, py, fonts["xs"], key_c)
+    py += 14
+
     ewp = status.get("episodes_without_progress", 0)
     lc = status.get("level_completions", 0)
     stag = status.get("stagnation_active", False)
-    stag_c = (220, 70, 70) if stag else TEXT_DIM
-    txt(surface, f"Sin progreso: {ewp} ep.", x, py, fonts["xs"], stag_c)
+    if stag:
+        if ewp > 500:
+            stag_label, stag_c = f"CRITICO {ewp}ep", (255, 60, 60)
+        elif ewp > 300:
+            stag_label, stag_c = f"Severo {ewp}ep", (240, 100, 40)
+        elif ewp > 200:
+            stag_label, stag_c = f"Moderado {ewp}ep", (220, 160, 30)
+        else:
+            stag_label, stag_c = f"Leve {ewp}ep", (180, 180, 60)
+        txt(surface, f"Estancado: {stag_label}", x, py, fonts["xs"], stag_c)
+    else:
+        txt(surface, f"Sin progreso: {ewp} ep.", x, py, fonts["xs"], TEXT_DIM)
     py += 14
     cur = status.get("curriculum", {})
     req = cur.get("required", 0)
