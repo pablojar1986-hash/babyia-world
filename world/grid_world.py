@@ -18,6 +18,27 @@ OBJECT_POSITIONS: dict[tuple, Cell] = {
     (7, 1): Cell.UNKNOWN_OBJECT,
 }
 
+# 0.4.2: powerups recogibles (se agotan al pisar). Coordenadas (col, row).
+POWERUP_POSITIONS: dict[tuple, str] = {
+    (0, 3): "growth_crystal",
+    (4, 0): "shield_orb",
+    (6, 5): "energy_food",
+    (1, 5): "speed_boots",
+}
+
+# 0.4.2: hazards persistentes (siempre activos). Coordenadas (col, row).
+HAZARD_POSITIONS: dict[tuple, str] = {
+    (1, 2): "fire_zone",
+    (0, 6): "spikes",
+    (6, 3): "mud",
+}
+
+# 0.4.2: puertas especiales con requisito corporal. Coordenadas (col, row).
+SPECIAL_DOOR_POSITIONS: dict[tuple, str] = {
+    (3, 0): "heavy_door",
+    (5, 2): "small_door",
+}
+
 GOAL_POS  = (7, 7)
 START_POS = (0, 0)
 MAX_STEPS = 200
@@ -48,6 +69,8 @@ class GridWorld:
         self.door_open      = False
         self.food_present   = (6, 2) in OBJECT_POSITIONS
         self.unknown_touched = False
+        # 0.4.2: powerups restantes (se consumen al recoger)
+        self._remaining_powerups: dict[tuple, str] = dict(POWERUP_POSITIONS)
         return self._get_observation()
 
     # ── Paso de simulacion ────────────────────────────────────────────────────
@@ -69,16 +92,19 @@ class GridWorld:
         visited_new  = False
         reached_goal = False
         info_obj: dict = {
-            "hit_wall"       : False,
-            "reached_goal"   : False,
-            "visited_new"    : False,
-            "steps"          : self.steps,
-            "hit_door_closed": False,
-            "picked_key"     : False,
-            "opened_door"    : False,
-            "ate_food"       : False,
-            "in_danger"      : False,
-            "found_unknown"  : False,
+            "hit_wall"        : False,
+            "reached_goal"    : False,
+            "visited_new"     : False,
+            "steps"           : self.steps,
+            "hit_door_closed" : False,
+            "picked_key"      : False,
+            "opened_door"     : False,
+            "ate_food"        : False,
+            "in_danger"       : False,
+            "found_unknown"   : False,
+            "hit_powerup"     : None,   # 0.4.2: str o None
+            "hit_hazard"      : None,   # 0.4.2: str o None
+            "hit_special_door": None,   # 0.4.2: str o None
         }
 
         cell_at = self._cell_at(new_pos)
@@ -106,6 +132,18 @@ class GridWorld:
             elif cell_at == Cell.UNKNOWN_OBJECT and not self.unknown_touched:
                 self.unknown_touched = True
                 info_obj["found_unknown"] = True
+
+            # 0.4.2: powerups recogibles, hazards y puertas especiales
+            pu = self._remaining_powerups.get(pos_t)
+            if pu:
+                del self._remaining_powerups[pos_t]
+                info_obj["hit_powerup"] = pu
+            hz = HAZARD_POSITIONS.get(pos_t)
+            if hz:
+                info_obj["hit_hazard"] = hz
+            sd = SPECIAL_DOOR_POSITIONS.get(pos_t)
+            if sd:
+                info_obj["hit_special_door"] = sd
 
             if tuple(self.baby_pos) == self.goal:
                 reached_goal = True
@@ -157,7 +195,7 @@ class GridWorld:
             grid[wy][wx] = int(Cell.WALL)
         gx, gy = self.goal
         grid[gy][gx] = int(Cell.GOAL)
-        # Objetos dinamicos
+        # Objetos dinamicos basicos (0.2)
         if self.key_present:
             grid[6][1] = int(Cell.KEY)
         door_state = Cell.DOOR_OPEN if self.door_open else Cell.DOOR_CLOSED
@@ -166,7 +204,50 @@ class GridWorld:
             grid[2][6] = int(Cell.FOOD)
         grid[5][3] = int(Cell.DANGER)
         grid[1][7] = int(Cell.UNKNOWN_OBJECT)
+        # 0.4.2: powerups restantes, hazards y puertas especiales
+        for (px, py) in self._remaining_powerups:
+            grid[py][px] = int(Cell.POWERUP)
+        for (hx, hy) in HAZARD_POSITIONS:
+            grid[hy][hx] = int(Cell.HAZARD)
+        for (sdx, sdy) in SPECIAL_DOOR_POSITIONS:
+            grid[sdy][sdx] = int(Cell.SPECIAL_DOOR)
         return grid
+
+    def get_nearby_powerup(self) -> str | None:
+        """Devuelve el id del powerup adyacente (8 vecinos), o None."""
+        bx, by = self.baby_pos
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                p = (bx + dx, by + dy)
+                if p in self._remaining_powerups:
+                    return self._remaining_powerups[p]
+        return None
+
+    def get_nearby_hazard(self) -> str | None:
+        """Devuelve el id del hazard adyacente (8 vecinos), o None."""
+        bx, by = self.baby_pos
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                p = (bx + dx, by + dy)
+                if p in HAZARD_POSITIONS:
+                    return HAZARD_POSITIONS[p]
+        return None
+
+    def get_nearby_special_door(self) -> str | None:
+        """Devuelve el id de la puerta especial adyacente, o None."""
+        bx, by = self.baby_pos
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                p = (bx + dx, by + dy)
+                if p in SPECIAL_DOOR_POSITIONS:
+                    return SPECIAL_DOOR_POSITIONS[p]
+        return None
 
     # ── Internos ──────────────────────────────────────────────────────────────
 

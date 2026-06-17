@@ -9,18 +9,25 @@ BabyIA World/
 ├── main.py              ← Argparse, loop de episodios, orquestación.
 |
 |-- world/               <- Reglas fisicas del mundo. No sabe nada del cerebro.
-|   |-- objects.py       <- Enumeraciones: Cell, Action, STATE_SIZE=18.
+|   |-- objects.py       <- Enumeraciones: Cell (incl. POWERUP/HAZARD/SPECIAL_DOOR 0.4.2), Action, STATE_SIZE=34.
 |   |-- rewards.py       <- Calculo de recompensas base + objetos (0.2).
-|   |-- grid_world.py    <- Cuadricula 8x8, objetos, step(has_key), set_walls (0.2.1).
-|   |-- inventory.py     <- Inventario de BabyIA por episodio (0.2).
+|   |-- grid_world.py    <- Cuadricula 8x8; posiciones POWERUP/HAZARD/SPECIAL_DOOR; proximidad (0.4.2).
+|   |-- inventory.py     <- Inventario: energy, take_damage_by(), restore_energy() (0.4.2).
 |   |-- interactions.py  <- Reglas causa-efecto puras (0.2).
+|   |-- powerups.py      <- 8 powerups; apply_powerup_effect() ruteado a Inventory o BodyState (0.4.2).
+|   |-- hazards.py       <- 8 hazards; apply_hazard_to_body() con bloqueo por estado corporal.
+|   |-- doors.py         <- DoorRequirement.max_size; small_door max_size=1.2 (0.4.2).
 |   |-- maze_generator.py <- BFS simple y BFS por etapas llave-puerta (0.2.2).
 |   `-- level_factory.py  <- Laberintos por nivel: 0=vacio, 1=base, 4-6=llave-puerta (0.2.2).
 |
 |-- brain/               <- Todo lo relacionado con el aprendizaje.
 |   |-- baby_brain.py    <- DQN: red neuronal 34->128->64->5, replay buffer; last_decision (0.4.1).
 |   |-- neural_debugger.py <- Inspeccion diagnostica: Q-values, activaciones por capa (0.4.1).
-|   |-- trainer.py       <- Orquesta mundo <-> cerebro <-> memoria; _full_obs 34 features.
+|   |-- survival.py      <- SurvivalEvaluator: risk_level, recommendation, diagnostico funcional (0.4.2).
+|   |-- trainer.py       <- Orquesta mundo <-> cerebro <-> memoria; handlers powerup/hazard/door (0.4.2).
+|   |-- body_state.py    <- BodyState: size, speed, shield, immunities; get_state_features() 8 features.
+|   |-- causal_memory.py <- Relaciones causa-efecto con confianza; wired con eventos reales (0.4.2).
+|   |-- utility_evaluator.py <- Utilidad heuristica; usa inventory.energy (fix 0.4.2).
 |   |-- memory.py        <- Experiencias y autobiografia en JSON.
 |   |-- emotions.py      <- Senales internas de control (no emociones reales).
 |   |-- self_model.py    <- Modelo del yo: nivel, habilidades, objetivo.
@@ -48,9 +55,9 @@ BabyIA World/
 │   ├── panel_renderer.py   ← Sistema de 5 pestanas con scroll y navegacion (0.4.1).
 │   ├── status_view.py      ← Pestana Estado: episodio, emociones, epsilon (0.4.1).
 │   ├── world_info_view.py  ← Pestana Mundo: portales, retorno, historial (0.4.1).
-│   ├── body_view.py        ← Pestana Cuerpo: size, speed, shield, efectos (0.4.1).
+│   ├── body_view.py        ← Pestana Cuerpo: size, speed, shield, energia, supervivencia (0.4.2).
 │   ├── brain_view.py       ← Pestana Cerebro: Q-values, arquitectura DQN (0.4.1).
-│   ├── memory_view.py      ← Pestana Memoria: conceptos, inventario, bitacora (0.4.1).
+│   ├── memory_view.py      ← Pestana Memoria: conceptos, relaciones causales, inventario (0.4.2).
 │   ├── avatar_renderer.py  ← Avatar visual de BabyIA segun nivel y senales (0.3).
 │   └── console_panel.py    ← Logs con Rich para la consola.
 │
@@ -94,3 +101,6 @@ BabyIA World/
 14. **neural_debugger no tiene efectos secundarios**: usa forward hooks temporales; no modifica pesos, epsilon ni buffer.
 15. **panel_renderer orquesta las pestanas**: delega en los *_view.py, aplica scroll con set_clip().
 16. **layout.py es importable sin pygame**: define geometria pura (constantes); util en tests.
+17. **SurvivalEvaluator es solo diagnostico**: no influye en el DQN ni en el replay buffer; informa paneles y get_status().
+18. **Powerups/hazards/puertas son pasables**: el grid no bloquea movimiento; las interacciones ocurren despues del paso.
+19. **apply_powerup_effect() enruta por tipo de efecto**: energy_restore -> Inventory; resto -> BodyState.

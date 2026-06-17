@@ -56,14 +56,15 @@ class UtilityEvaluator:
         causal_memory,
         base_reward   : float = 0.0,
         step_count    : int   = 0,
+        inventory     = None,
     ) -> float:
         """
         Calcula utilidad a partir de objetos del sistema.
         Resumen heuristico — no usa inferencia profunda.
         """
-        # Penalizacion por energia baja
-        energy = getattr(body_state, "shield", 0.0)
-        energy_cost = max(0.0, (1.0 - body_state.size) * 0.5)
+        # Costo por energia baja (usa Inventory.energy; 0.4.2 fix)
+        energy = inventory.energy if inventory is not None else 1.0
+        energy_cost = max(0.0, 1.0 - energy) * 0.5
 
         # Costo de tiempo creciente si lleva muchos pasos fuera
         time_cost = min(1.0, step_count / 200.0)

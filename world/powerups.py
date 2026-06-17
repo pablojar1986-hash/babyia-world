@@ -94,3 +94,19 @@ def apply_powerup_to_body(powerup_id: str, body_state) -> float:
         return 0.0
     body_state.apply_powerup(pu.powerup_id, pu.effect, pu.value, pu.duration)
     return pu.reward_delta
+
+
+def apply_powerup_effect(powerup_id: str, body_state, inventory) -> float:
+    """
+    Aplica el efecto completo de un powerup a BodyState e Inventory.
+    energy_restore afecta inventory.energy; el resto afectan body_state.
+    Devuelve reward_delta.
+    """
+    pu = POWERUP_TYPES.get(powerup_id)
+    if not pu:
+        return 0.0
+    if pu.effect == "energy_restore":
+        inventory.restore_energy(pu.value)
+    else:
+        body_state.apply_powerup(pu.powerup_id, pu.effect, pu.value, pu.duration)
+    return pu.reward_delta

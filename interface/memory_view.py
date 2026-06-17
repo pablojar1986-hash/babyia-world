@@ -38,6 +38,20 @@ def render(surface, fonts, area, status):
     py += 16
     txt(surface, "(conf >= 60%,  min 3 obs)", x, py, fonts["xs"], TEXT_DIM)
     py += 14
+
+    # Ultimas relaciones causales (0.4.2)
+    causal_rels = status.get("causal_relations", [])
+    if causal_rels:
+        py += 4
+        txt(surface, "Ultimas relaciones:", x, py, fonts["xs"], TEXT_DIM)
+        py += 13
+        for rel in causal_rels[-4:]:
+            cause = str(rel.get("cause", ""))[:14]
+            effect = str(rel.get("effect", ""))[:14]
+            conf = rel.get("confidence", 0.0)
+            line = f"  {cause}->{effect} {conf:.0%}"[:38]
+            txt(surface, line, x, py, fonts["xs"], (140, 190, 220))
+            py += 12
     py += 6
     divider(surface, x, py, w - 4)
     py += 10

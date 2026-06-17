@@ -6,6 +6,9 @@
 - Ajustar señales internas (curiosidad, confianza, frustración, energía)
 - Aprender estrategias de navegación mediante DQN
 - Mejorar su política de movimiento con el tiempo
+- Recoger powerups del grid que modifican su estado corporal (mecanica de juego)
+- Recibir daño de hazards y ser bloqueado por su estado corporal (mecanica de juego)
+- Intentar cruzar puertas especiales con requisitos corporales (mecanica de juego)
 - Subir de nivel al cumplir métricas de éxito sostenidas
 - Registrar frases autobiográficas generadas por reglas simples
 - Mantener un modelo del yo con nivel, habilidades y objetivo

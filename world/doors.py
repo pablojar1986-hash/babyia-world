@@ -14,6 +14,7 @@ class DoorRequirement:
     required_speed   : float = 1.0
     required_powerup : str | None = None
     required_concept : str | None = None
+    max_size         : float = 999.0   # 0.4.2: limite superior de tamano (small_door)
     reward_on_open   : float = 5.0
     penalty_on_fail  : float = -1.0
     description      : str = ""
@@ -21,6 +22,8 @@ class DoorRequirement:
     def can_pass(self, body_state, known_concepts: set | None = None) -> bool:
         """True si el estado corporal cumple todos los requisitos."""
         if body_state.size < self.required_size:
+            return False
+        if body_state.size > self.max_size:
             return False
         if body_state.speed < self.required_speed:
             return False
@@ -36,6 +39,8 @@ class DoorRequirement:
     def get_fail_reason(self, body_state) -> str:
         if body_state.size < self.required_size:
             return f"tamano insuficiente ({body_state.size:.1f} < {self.required_size})"
+        if body_state.size > self.max_size:
+            return f"tamano excesivo ({body_state.size:.1f} > {self.max_size})"
         if body_state.speed < self.required_speed:
             return f"velocidad insuficiente ({body_state.speed:.1f} < {self.required_speed})"
         if self.required_powerup == "fire_immunity" and not body_state.fire_immunity:
@@ -82,7 +87,8 @@ DOOR_TYPES: dict[str, DoorRequirement] = {
     ),
     "small_door": DoorRequirement(
         door_id="small_door",         name="Puerta Pequena",
-        required_size=0.0,    # cualquier tamano pasa
+        required_size=0.0,
+        max_size=1.2,          # 0.4.2: solo pasa si size <= 1.2
         description="Solo cabe BabyIA si no es demasiado grande (size <= 1.2).",
         reward_on_open=6.0,
     ),

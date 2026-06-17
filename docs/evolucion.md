@@ -90,7 +90,7 @@
 - STATE_SIZE 26 -> 34 (+8 features: size, speed, shield, immunities, proximidades)
 - 6 nuevos archivos de test
 
-### 0.4.1 — Interfaz avanzada y red neuronal visible (actual)
+### 0.4.1 — Interfaz avanzada y red neuronal visible (completado)
 - interface/ dividido en 8 modulos: layout.py, ui_components.py, panel_renderer.py,
   status_view.py, world_info_view.py, body_view.py, brain_view.py, memory_view.py
 - Panel de 5 pestanas (1-5 / TAB / flechas): Estado, Mundo, Cuerpo, Cerebro, Memoria
@@ -102,17 +102,27 @@
 - Bitacora separada en panel inferior; borde de color por mundo en el grid
 - Ventana 860x618px (antes 810x490); 3 nuevos archivos de test; 351 tests pasando
 
-### 0.4.2 — Peligros y supervivencia
-- Peligros colocados en el grid (FIRE_ZONE, POISON_ZONE, MUD, etc.)
-- BabyIA aprende a evitar peligros segun su estado corporal
-- Interacciones con hazards en tiempo real
+### 0.4.2 — Integracion jugable real de powerups, hazards, puertas especiales y supervivencia (actual)
+- world/objects.py: Cell.POWERUP=9, Cell.HAZARD=10, Cell.SPECIAL_DOOR=11
+- world/grid_world.py: posiciones estaticas de 4 powerups, 3 hazards y 2 puertas especiales en grid;
+  step() registra interacciones; get_grid() renderiza nuevas celdas; 3 metodos de proximidad
+- world/powerups.py: apply_powerup_effect() — energy_food ruteada a Inventory.restore_energy()
+- world/hazards.py: apply_hazard_to_body() — daño variable por tipo
+- world/doors.py: DoorRequirement.max_size — small_door solo pasa size <= 1.2
+- world/inventory.py: take_damage_by(), restore_energy() — daño y recarga variables
+- brain/survival.py (NUEVO): SurvivalEvaluator.evaluate() — calcula risk_level, recommendation,
+  needs_food, danger_without_protection. Solo diagnostico; no influye en DQN.
+- brain/trainer.py: _handle_powerup/hazard/special_door(), 5 contadores de episodio,
+  survival calculado cada 5 pasos, causal_memory.observe() con eventos reales
+- brain/utility_evaluator.py: bug fix — usa inventory.energy (no body_state.shield)
+- brain/body_state.py: get_state_features() acepta powerup_nearby/hazard_nearby/door_req_nearby
+- interface/body_view.py: muestra energia de inventario, supervivencia funcional, ultimo evento
+- interface/memory_view.py: muestra ultimas relaciones causales aprendidas
+- interface/pygame_view.py: colores/etiquetas para Cell.POWERUP/HAZARD/SPECIAL_DOOR; log de eventos
+- scripts/health_check.py: check_042_integrity() — 5 nuevas verificaciones de integridad
+- 7 nuevos archivos de test; 413 tests pasando
 
-### 0.4.3 — Puertas con requisitos
-- Puertas especiales colocadas en el grid con requisitos de acceso
-- BabyIA aprende que necesita para abrir cada puerta
-- Registro de intentos fallidos y exitosos
-
-### 0.4.4 — Evaluador de utilidad y aprendizaje causa-efecto avanzado
+### 0.4.3 — Evaluador de utilidad y aprendizaje causa-efecto avanzado
 - Utilidad integrada en toma de decisiones del agente
 - Memoria causal completa con actualizacion por experiencia
 

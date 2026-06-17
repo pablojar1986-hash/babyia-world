@@ -16,8 +16,7 @@ Modos:
 
 import argparse
 import random
-import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import torch
@@ -58,45 +57,73 @@ class RunConfig:
     reset_model: bool = False
     reset_stats: bool = False
     reset_concepts: bool = False
-    yes: bool = False   # 0.2.2: confirmar operaciones destructivas
+    yes: bool = False  # 0.2.2: confirmar operaciones destructivas
 
 
 # ── Argumentos ────────────────────────────────────────────────────────────────
+
 
 def parse_args() -> RunConfig:
     parser = argparse.ArgumentParser(
         description="BabyIA World — IA que aprende desde cero",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--mode", choices=[MODE_TRAIN, MODE_WATCH, MODE_EVALUATE],
-                        default=MODE_TRAIN, help="Modo de ejecucion")
-    parser.add_argument("--episodes", type=int, default=None,
-                        help="Cantidad de episodios a ejecutar (0 = solo reset)")
-    parser.add_argument("--seed", type=int, default=None,
-                        help="Semilla para reproducibilidad")
-    parser.add_argument("--reset-memory", action="store_true",
-                        help="Borra memorias JSON antes de iniciar")
-    parser.add_argument("--reset-model", action="store_true",
-                        help="Borra pesos .pt antes de iniciar (nace desde cero)")
-    parser.add_argument("--reset-stats", action="store_true",
-                        help="Borra estadisticas de entrenamiento")
-    parser.add_argument("--reset-concepts", action="store_true",
-                        help="Borra conceptos aprendidos (data/concepts.json)")
-    parser.add_argument("--reset-all", action="store_true",
-                        help="Borra memorias, modelo, estadisticas y conceptos")
-    parser.add_argument("--yes", action="store_true",
-                        help="Confirma operaciones destructivas sin advertencia")
+    parser.add_argument(
+        "--mode",
+        choices=[MODE_TRAIN, MODE_WATCH, MODE_EVALUATE],
+        default=MODE_TRAIN,
+        help="Modo de ejecucion",
+    )
+    parser.add_argument(
+        "--episodes",
+        type=int,
+        default=None,
+        help="Cantidad de episodios a ejecutar (0 = solo reset)",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=None, help="Semilla para reproducibilidad"
+    )
+    parser.add_argument(
+        "--reset-memory",
+        action="store_true",
+        help="Borra memorias JSON antes de iniciar",
+    )
+    parser.add_argument(
+        "--reset-model",
+        action="store_true",
+        help="Borra pesos .pt antes de iniciar (nace desde cero)",
+    )
+    parser.add_argument(
+        "--reset-stats", action="store_true", help="Borra estadisticas de entrenamiento"
+    )
+    parser.add_argument(
+        "--reset-concepts",
+        action="store_true",
+        help="Borra conceptos aprendidos (data/concepts.json)",
+    )
+    parser.add_argument(
+        "--reset-all",
+        action="store_true",
+        help="Borra memorias, modelo, estadisticas y conceptos",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Confirma operaciones destructivas sin advertencia",
+    )
 
     args = parser.parse_args()
 
     if args.reset_all:
-        args.reset_memory   = True
-        args.reset_model    = True
-        args.reset_stats    = True
+        args.reset_memory = True
+        args.reset_model = True
+        args.reset_stats = True
         args.reset_concepts = True
 
     # 0.2.2: usar is not None para que --episodes 0 no sea ignorado
-    episodes = args.episodes if args.episodes is not None else DEFAULT_EPISODES[args.mode]
+    episodes = (
+        args.episodes if args.episodes is not None else DEFAULT_EPISODES[args.mode]
+    )
 
     return RunConfig(
         mode=args.mode,
@@ -112,15 +139,19 @@ def parse_args() -> RunConfig:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def set_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
-def handle_resets(cfg: RunConfig, trainer: Trainer,
-                  metrics: TrainingMetrics, store: ModelStore):
-    any_reset = cfg.reset_memory or cfg.reset_model or cfg.reset_stats or cfg.reset_concepts
+def handle_resets(
+    cfg: RunConfig, trainer: Trainer, metrics: TrainingMetrics, store: ModelStore
+):
+    any_reset = (
+        cfg.reset_memory or cfg.reset_model or cfg.reset_stats or cfg.reset_concepts
+    )
     if any_reset and not cfg.yes:
         console.print(
             "[bold red]ADVERTENCIA: operacion destructiva en curso. "
@@ -146,16 +177,18 @@ def build_status(trainer: Trainer, metrics: TrainingMetrics, mode: str) -> dict:
     """Combina estado del trainer con metricas agregadas para la vista."""
     return {
         **trainer.get_status(),
-        "mode":       mode,
+        "mode": mode,
         "avg_reward": metrics.average_reward,
-        "avg_steps":  metrics.average_steps,
+        "avg_steps": metrics.average_steps,
     }
 
 
 # ── Bucle de episodio ─────────────────────────────────────────────────────────
 
-def run_episode(trainer: Trainer, view: PygameView,
-                metrics: TrainingMetrics, mode: str) -> tuple[bool, dict]:
+
+def run_episode(
+    trainer: Trainer, view: PygameView, metrics: TrainingMetrics, mode: str
+) -> tuple[bool, dict]:
     trainer.start_episode()
     log_episode_start(trainer.episode, trainer.self_model.level)
 
@@ -177,6 +210,7 @@ def run_episode(trainer: Trainer, view: PygameView,
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
 def main():
     cfg = parse_args()
 
@@ -186,14 +220,18 @@ def main():
     is_training = cfg.mode == MODE_TRAIN
 
     log_start()
-    console.print(f"[dim]Modo: {cfg.mode.upper()}  Episodios: {cfg.episodes}"
-                  + (f"  Seed: {cfg.seed}" if cfg.seed else "") + "[/dim]")
+    console.print(
+        f"[dim]Modo: {cfg.mode.upper()}  Episodios: {cfg.episodes}"
+        + (f"  Seed: {cfg.seed}" if cfg.seed else "")
+        + "[/dim]"
+    )
 
     trainer = Trainer(training=is_training)
     metrics = TrainingMetrics()
-    store   = ModelStore(trainer.brain,
-                         model_latest=MODEL_V4_LATEST, model_best=MODEL_V4_BEST)
-    view    = PygameView(title="BabyIA World 0.4.1")
+    store = ModelStore(
+        trainer.brain, model_latest=MODEL_V4_LATEST, model_best=MODEL_V4_BEST
+    )
+    view = PygameView(title="BabyIA World 0.4.2")
 
     # 0.2.2: guardar y mostrar metadatos de arquitectura al iniciar
     net_info = save_network_stats(trainer.brain.q_net)
@@ -248,6 +286,13 @@ def main():
                 fail=0,
                 world_id=world_info.get("world_id", "home"),
                 returned_home=world_info.get("is_at_home", True),
+                # 0.4.2 — powerups, hazards y puertas especiales
+                powerups=status.get("ep_powerups", 0),
+                hazards=status.get("ep_hazards", 0),
+                hazards_blocked=status.get("ep_hazards_blocked", 0),
+                door_attempts=status.get("ep_door_attempts", 0),
+                door_successes=status.get("ep_door_successes", 0),
+                causal_learned=status.get("causal_learned", 0),
             )
 
             if is_training:
@@ -274,7 +319,9 @@ def main():
         if is_training:
             store.save_latest()
         view.quit()
-        console.print("[bold green]BabyIA guardo su progreso. Hasta pronto.[/bold green]")
+        console.print(
+            "[bold green]BabyIA guardo su progreso. Hasta pronto.[/bold green]"
+        )
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from brain.body_state import BodyState
 from brain.causal_memory import CausalMemory
 from brain.neural_debugger import get_brain_snapshot
 from brain.concepts import ConceptMemory
+from brain.survival import SurvivalEvaluator
 from brain.curriculum import Curriculum
 from brain.emotions import Emotions
 from brain.home_drive import HomeDrive
@@ -58,6 +59,10 @@ class Trainer:
         self.causal_memory = CausalMemory(CAUSAL_MEMORY_FILE)
         self.utility = UtilityEvaluator()
 
+        # 0.4.2 — supervivencia funcional
+        self.survival = SurvivalEvaluator()
+        self._last_survival: dict = {}
+
         # 0.4.1 — diagnóstico de red neuronal (actualizado cada 5 pasos)
         self._last_brain_debug: dict = {}
 
@@ -70,6 +75,12 @@ class Trainer:
         self._ep_events: dict = {}  # eventos acumulados del episodio
         self._ep_ok = 0
         self._ep_fail = 0
+        # 0.4.2 — contadores episódicos de powerups/hazards/puertas
+        self._ep_powerups = 0
+        self._ep_hazards = 0
+        self._ep_hazards_blocked = 0
+        self._ep_door_attempts = 0
+        self._ep_door_successes = 0
         self._current_state: np.ndarray | None = None
         self._maze_info: dict = {
             "difficulty": "Basico",
@@ -88,6 +99,11 @@ class Trainer:
         self._ep_events = {}
         self._ep_ok = 0
         self._ep_fail = 0
+        self._ep_powerups = 0
+        self._ep_hazards = 0
+        self._ep_hazards_blocked = 0
+        self._ep_door_attempts = 0
+        self._ep_door_successes = 0
         self.inventory.reset()
         self.world_manager.reset()
         self.home_drive.reset_episode()
@@ -132,15 +148,22 @@ class Trainer:
                 self.brain, state, action, exploration
             )
 
-        # 0.4: registrar utilidad del paso
+        # 0.4: registrar utilidad del paso (0.4.2: pasa inventory para fix energy bug)
         u = self.utility.evaluate_from_context(
             self.body_state,
             self.world_manager,
             self.causal_memory,
             base_reward=reward,
             step_count=self.world.steps,
+            inventory=self.inventory,
         )
         self.utility.record_step_utility(u)
+
+        # 0.4.2: supervivencia funcional (actualizado cada 5 pasos)
+        if self.total_steps % 5 == 0:
+            self._last_survival = self.survival.evaluate(
+                self.body_state, self.inventory, self.world_manager
+            )
 
         # Construir siguiente estado completo (con inventario ya actualizado)
         next_state = self._full_obs(base_next)
@@ -259,6 +282,17 @@ class Trainer:
             "causal_learned": self.causal_memory.count_learned(),
             # 0.4.1
             "brain_debug": self._last_brain_debug,
+            # 0.4.2
+            "survival": dict(self._last_survival),
+            "causal_relations": [
+                r.to_dict()
+                for r in self.causal_memory.all_relations()[-6:]
+            ],
+            "ep_powerups": self._ep_powerups,
+            "ep_hazards": self._ep_hazards,
+            "ep_hazards_blocked": self._ep_hazards_blocked,
+            "ep_door_attempts": self._ep_door_attempts,
+            "ep_door_successes": self._ep_door_successes,
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────
@@ -296,8 +330,11 @@ class Trainer:
 
         # 0.3: 8 features de contexto de mundo (indices 18-25)
         world_feats = self.world_manager.get_state_features(tuple(self.world.baby_pos))
-        # 0.4: 8 features de estado corporal (indices 26-33)
-        body_feats = self.body_state.get_state_features()
+        # 0.4.2: features corporales con proximidad real (indices 26-33)
+        pu_near = 1.0 if self.world.get_nearby_powerup() else 0.0
+        hz_near = 1.0 if self.world.get_nearby_hazard() else 0.0
+        sd_near = 1.0 if self.world.get_nearby_special_door() else 0.0
+        body_feats = self.body_state.get_state_features(pu_near, hz_near, sd_near)
         return np.concatenate([base_obs, extra, world_feats, body_feats])
 
     def _apply_interactions(self, info: dict) -> float:
@@ -364,4 +401,58 @@ class Trainer:
             self._ep_events["found_unknown"] = True
             self._ep_ok += 1
 
+        # 0.4.2: powerups, hazards y puertas especiales
+        if info.get("hit_powerup"):
+            delta += self._handle_powerup(info["hit_powerup"])
+        if info.get("hit_hazard"):
+            delta += self._handle_hazard(info["hit_hazard"])
+        if info.get("hit_special_door"):
+            delta += self._handle_special_door(info["hit_special_door"])
+
         return delta
+
+    # ── Handlers 0.4.2 ───────────────────────────────────────────────────────
+
+    def _handle_powerup(self, powerup_id: str) -> float:
+        from world.powerups import POWERUP_TYPES, apply_powerup_effect
+
+        pu = POWERUP_TYPES.get(powerup_id)
+        if not pu:
+            return 0.0
+        apply_powerup_effect(powerup_id, self.body_state, self.inventory)
+        self.concepts.observe(pu.get_concept_signal(), True, self.episode)
+        self.causal_memory.observe(powerup_id, pu.effect, True, self.episode)
+        self._ep_events["last_powerup"] = powerup_id
+        self._ep_powerups += 1
+        return pu.reward_delta
+
+    def _handle_hazard(self, hazard_id: str) -> float:
+        from world.hazards import HAZARD_TYPES, apply_hazard_to_body
+
+        hz = HAZARD_TYPES.get(hazard_id)
+        if not hz:
+            return 0.0
+        energy_damage, blocked = apply_hazard_to_body(hazard_id, self.body_state)
+        if energy_damage > 0 and not blocked:
+            self.inventory.take_damage_by(energy_damage)
+        self.causal_memory.observe(hazard_id, hz.effect, not blocked, self.episode)
+        self._ep_events["last_hazard"] = hazard_id
+        self._ep_events["last_hazard_blocked"] = blocked
+        self._ep_hazards += 1
+        if blocked:
+            self._ep_hazards_blocked += 1
+        return 0.0 if blocked else hz.reward_delta
+
+    def _handle_special_door(self, door_id: str) -> float:
+        from world.doors import DOOR_TYPES, attempt_door
+
+        result = attempt_door(door_id, self.body_state, known_concepts=None)
+        outcome = "opened" if result["success"] else "blocked"
+        self.causal_memory.observe(door_id, outcome, result["success"], self.episode)
+        self._ep_door_attempts += 1
+        if result["success"]:
+            self._ep_door_successes += 1
+            self._ep_events[f"door_{door_id}"] = "ok"
+        else:
+            self._ep_events["last_door_fail"] = result["fail_reason"]
+        return result["reward_delta"]

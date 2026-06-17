@@ -1,10 +1,11 @@
-"""Panel Cuerpo: BodyState y evaluador de utilidad."""
+"""Panel Cuerpo: BodyState, energia, supervivencia funcional y utilidad."""
 
 from interface.ui_components import (
     txt,
     bar,
     divider,
     ACCENT,
+    TEXT,
     TEXT_DIM,
     COLOR_POS,
     COLOR_NEG,
@@ -97,9 +98,89 @@ def render(surface, fonts, area, status):
     py += 14
     txt(surface, f"Efectos activos: {fx}", x, py, fonts["xs"], TEXT_DIM)
     py += 14
+
+    # Energia del inventario (0.4.2)
+    energy = status.get("inventory", {}).get("energy", 1.0)
+    e_warn = 0.3
+    bar(
+        surface,
+        x,
+        py,
+        w - 4,
+        "Energia",
+        energy,
+        fonts["sm"],
+        fonts["xs"],
+        warn_at=e_warn,
+        label_w=90,
+    )
+    py += 22
     py += 6
     divider(surface, x, py, w - 4)
     py += 10
+
+    # Supervivencia funcional (0.4.2)
+    sv = status.get("survival", {})
+    if sv:
+        txt(surface, "Supervivencia funcional", x, py, fonts["med"], ACCENT)
+        py += 20
+        rl = sv.get("risk_level", 0.0)
+        rl_c = (
+            (220, 70, 70) if rl > 0.6 else ((255, 165, 50) if rl > 0.3 else COLOR_POS)
+        )
+        txt(surface, f"Riesgo:    {rl:.2f}", x, py, fonts["sm"], rl_c)
+        py += 16
+        rec = sv.get("recommendation", "continuar")
+        txt(surface, f"Accion:    {rec}", x, py, fonts["xs"], TEXT_DIM)
+        py += 14
+        nf = sv.get("needs_food", False)
+        dp = sv.get("danger_without_protection", False)
+        if nf:
+            txt(
+                surface,
+                "  [!] Energia baja — buscar comida",
+                x,
+                py,
+                fonts["xs"],
+                (255, 165, 50),
+            )
+            py += 14
+        if dp:
+            txt(
+                surface,
+                "  [!] Peligro sin proteccion",
+                x,
+                py,
+                fonts["xs"],
+                (220, 70, 70),
+            )
+            py += 14
+        py += 4
+        divider(surface, x, py, w - 4)
+        py += 10
+
+    # Ultimo powerup / hazard / puerta (0.4.2)
+    ev = status.get("ep_events", {})
+    pu = ev.get("last_powerup")
+    hz = ev.get("last_hazard")
+    df = ev.get("last_door_fail")
+    if pu or hz or df:
+        txt(surface, "Ultimo evento corporal", x, py, fonts["med"], ACCENT)
+        py += 20
+        if pu:
+            txt(surface, f"  Powerup: {pu}", x, py, fonts["xs"], (60, 200, 240))
+            py += 14
+        if hz:
+            blk = ev.get("last_hazard_blocked", False)
+            lbl = f"  Hazard: {hz} ({'bloqueado' if blk else 'afectado'})"
+            txt(surface, lbl, x, py, fonts["xs"], TEXT if blk else (240, 110, 30))
+            py += 14
+        if df:
+            txt(surface, f"  Puerta: {df}", x, py, fonts["xs"], (220, 70, 70))
+            py += 14
+        py += 4
+        divider(surface, x, py, w - 4)
+        py += 10
 
     util = status.get("utility", {})
     txt(surface, "Evaluador de Utilidad", x, py, fonts["med"], ACCENT)

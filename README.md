@@ -1,11 +1,11 @@
-# BabyIA World 0.4.1
+# BabyIA World 0.4.2
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
-> **0.4.1 redisena la interfaz en modulos especializados y visualiza la red neuronal en tiempo real.**
-> El Panel Cerebro muestra Q-values, arquitectura, activaciones por capa, epsilon y loss.
-> BabyIA todavia no tiene conciencia real.
-> Los Q-values son calculos matematicos, no pensamientos.
+> **0.4.2 integra powerups, hazards y puertas especiales jugables en el grid.**
+> BabyIA recoge cristales, recibe dano de zonas de fuego y aprende que puertas puede cruzar.
+> BabyIA todavia no tiene conciencia real. No siente miedo ni hambre.
+> El "riesgo de supervivencia" es un calculo funcional, no un estado mental.
 
 ---
 
@@ -102,8 +102,9 @@ BabyIA World/
 |   |-- neural_debugger.py  <- Inspeccion diagnostica: Q-values, activaciones (0.4.1)
 |   |-- trainer.py          <- Orquesta mundo <-> cerebro <-> memoria
 |   |-- body_state.py       <- Estado corporal evolutivo (0.4)
-|   |-- causal_memory.py    <- Memoria causa->efecto persistente (0.4)
-|   |-- utility_evaluator.py <- Capa explicativa de utilidad (0.4)
+|   |-- survival.py         <- SurvivalEvaluator: risk_level, diagnostico funcional (0.4.2)
+|   |-- causal_memory.py    <- Memoria causa->efecto persistente; wired con eventos reales (0.4.2)
+|   |-- utility_evaluator.py <- Capa explicativa de utilidad; usa inventory.energy (fix 0.4.2)
 |   |-- memory.py           <- Memorias episodicas y autobiografia
 |   |-- emotions.py         <- Senales internas de control
 |   |-- self_model.py       <- Modelo del yo (nivel, habilidades)
@@ -115,14 +116,14 @@ BabyIA World/
 |   `-- network_inspector.py <- Observabilidad de arquitectura DQN (0.2.1)
 |
 |-- world/
-|   |-- grid_world.py       <- Mundo 8x8 con objetos interactivos
-|   |-- objects.py          <- Enumeraciones y constantes
+|   |-- grid_world.py       <- Mundo 8x8; posiciones POWERUP/HAZARD/SPECIAL_DOOR; proximidad (0.4.2)
+|   |-- objects.py          <- Cell.POWERUP=9, Cell.HAZARD=10, Cell.SPECIAL_DOOR=11 (0.4.2)
 |   |-- rewards.py          <- Calculo de recompensas
-|   |-- inventory.py        <- Inventario de BabyIA (0.2)
+|   |-- inventory.py        <- take_damage_by(), restore_energy() (0.4.2)
 |   |-- interactions.py     <- Reglas causa-efecto (0.2)
-|   |-- powerups.py         <- 8 tipos de powerup (0.4)
+|   |-- powerups.py         <- 8 powerups; apply_powerup_effect() (0.4.2)
 |   |-- hazards.py          <- 8 peligros bloqueables (0.4)
-|   |-- doors.py            <- 6 puertas con requisitos (0.4)
+|   |-- doors.py            <- DoorRequirement.max_size; small_door max_size=1.2 (0.4.2)
 |   |-- maze_generator.py   <- Generacion procedural de laberintos (0.2.1)
 |   `-- level_factory.py    <- Laberintos por nivel 0-6 con BFS (0.2.1)
 |
@@ -133,9 +134,9 @@ BabyIA World/
 |   |-- panel_renderer.py   <- 5 pestanas con scroll y navegacion (0.4.1)
 |   |-- status_view.py      <- Pestana Estado (0.4.1)
 |   |-- world_info_view.py  <- Pestana Mundo (0.4.1)
-|   |-- body_view.py        <- Pestana Cuerpo (0.4.1)
+|   |-- body_view.py        <- Pestana Cuerpo: energia, supervivencia, eventos (0.4.2)
 |   |-- brain_view.py       <- Pestana Cerebro: Q-values y DQN (0.4.1)
-|   |-- memory_view.py      <- Pestana Memoria (0.4.1)
+|   |-- memory_view.py      <- Pestana Memoria: relaciones causales, inventario (0.4.2)
 |   |-- avatar_renderer.py  <- Avatar visual de BabyIA (0.3)
 |   `-- console_panel.py    <- Logs con Rich
 |
@@ -145,7 +146,7 @@ BabyIA World/
 |-- docs/                   <- Documentacion interna
 |-- data/                   <- Memorias, estadisticas y conceptos en JSON
 |-- models/                 <- Pesos del cerebro (.pt)
-|-- tests/                  <- 351 tests con pytest
+|-- tests/                  <- 413 tests con pytest
 `-- godot/                  <- Reservado para fase futura
 ```
 
@@ -220,6 +221,26 @@ Ver: [docs/no-conciencia-real.md](docs/no-conciencia-real.md)
 - `brain/strategy.py` — registro de estrategias emergentes
 - STATE_SIZE 10 -> 18 (8 features nuevas: llave, energia, distancias, puerta, peligro)
 - Metricas de interacciones (llaves, puertas, comida, peligro, conceptos)
+
+## Novedades en 0.4.2
+
+- `world/objects.py` — `Cell.POWERUP=9`, `Cell.HAZARD=10`, `Cell.SPECIAL_DOOR=11`
+- `world/grid_world.py` — 4 powerups, 3 hazards y 2 puertas especiales colocados en el grid;
+  `step()` detecta y registra interacciones; 3 metodos de proximidad (8-vecinos)
+- `world/powerups.py` — `apply_powerup_effect()` — `energy_food` ruteado a `Inventory.restore_energy()`
+- `world/doors.py` — `DoorRequirement.max_size`; `small_door` usa `max_size=1.2`
+- `world/inventory.py` — `take_damage_by(amount)`, `restore_energy(amount)`
+- `brain/survival.py` (NUEVO) — `SurvivalEvaluator.evaluate()` → `risk_level`, `recommendation`,
+  `needs_food`, `danger_without_protection`. Solo diagnostico, no afecta al DQN.
+- `brain/trainer.py` — `_handle_powerup/hazard/special_door()`, 5 contadores de episodio,
+  `causal_memory.observe()` con eventos reales, `get_status()` incluye `survival` y `causal_relations`
+- `brain/utility_evaluator.py` — bug fix: usaba `body_state.shield` como proxy de energia; ahora usa `inventory.energy`
+- `interface/body_view.py` — muestra energia del inventario, supervivencia funcional, ultimo evento corporal
+- `interface/memory_view.py` — muestra las ultimas relaciones causales con confianza
+- `interface/pygame_view.py` — colores (cian/naranja/violeta) y etiquetas para nuevas celdas
+- `scripts/health_check.py` — `check_042_integrity()`: small_door.max_size, energy_food.effect,
+  utility_evaluator sin shield-as-energy, survival importable, get_status con survival+causal_relations
+- 7 nuevos archivos de test; 413 tests totales pasando
 
 ## Novedades en 0.4.1
 

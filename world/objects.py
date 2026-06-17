@@ -11,6 +11,9 @@ class Cell(IntEnum):
     FOOD           = 6
     DANGER         = 7
     UNKNOWN_OBJECT = 8
+    POWERUP        = 9    # 0.4.2: powerup recogible
+    HAZARD         = 10   # 0.4.2: peligro especial con efecto corporal
+    SPECIAL_DOOR   = 11   # 0.4.2: puerta con requisito corporal
 
 
 class Action(IntEnum):

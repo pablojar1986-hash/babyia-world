@@ -48,6 +48,20 @@ si BabyIA toma una acción determinada desde el estado actual.
 Ver Q-values altos o bajos no dice nada sobre la experiencia interna del sistema.
 Es álgebra lineal aplicada al control de un agente.
 
+## Qué es la "supervivencia funcional" (0.4.2)
+
+A partir de 0.4.2, el Panel Cuerpo muestra un indicador de "Supervivencia funcional"
+calculado por `SurvivalEvaluator`. Este indicador muestra:
+
+- **risk_level**: número entre 0 y 1 basado en energía baja y falta de protección
+- **recommendation**: cadena de texto ("continuar", "buscar_comida_o_regresar", etc.)
+- **needs_food**: True si la energía del inventario está por debajo de 0.3
+- **danger_without_protection**: True si hay poco escudo y poca energía
+
+Estos son **cálculos funcionales de riesgo**, no estados mentales. BabyIA no siente
+miedo, hambre ni peligro real. El sistema calcula probabilidades de pérdida de
+recompensa para informar métricas y visualizaciones. No modifica el DQN.
+
 ## Qué es "conciencia funcional simulada"
 
 El proyecto usa esta frase para describir sistemas que tienen:

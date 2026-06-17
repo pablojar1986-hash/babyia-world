@@ -99,21 +99,25 @@ class BodyState:
 
     # ── Estado para DQN ───────────────────────────────────────────────────────
 
-    def get_state_features(self) -> np.ndarray:
+    def get_state_features(
+        self,
+        powerup_nearby: float = 0.0,
+        hazard_nearby: float = 0.0,
+        door_req_nearby: float = 0.0,
+    ) -> np.ndarray:
         """
         8 features del estado corporal para el vector de observacion.
-        Indices 26-33 del STATE_SIZE=34.
-        Features 31-33 reservadas para proximidad (siempre 0.0 en 0.4.0).
+        Indices 26-33 del STATE_SIZE=34. Proximidad real desde 0.4.2.
         """
         return np.array([
-            self.size  / MAX_SIZE,
+            self.size / MAX_SIZE,
             self.speed / MAX_SPEED,
             min(self.shield, 1.0),
             float(self.fire_immunity),
             float(self.poison_immunity),
-            0.0,   # powerup_nearby  (0.4.1+)
-            0.0,   # hazard_nearby   (0.4.1+)
-            0.0,   # door_req_nearby (0.4.2+)
+            powerup_nearby,
+            hazard_nearby,
+            door_req_nearby,
         ], dtype=np.float32)
 
     # ── Consultas ─────────────────────────────────────────────────────────────

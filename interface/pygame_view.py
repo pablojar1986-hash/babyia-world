@@ -1,5 +1,5 @@
 """
-BabyIA World 0.4.1 — Coordinador de la interfaz gráfica.
+BabyIA World 0.4.2 — Coordinador de la interfaz gráfica.
 Gestiona la ventana y delega dibujo a módulos especializados.
 No contiene lógica de aprendizaje.
 """
@@ -22,6 +22,9 @@ _DOOR_O = (100, 160, 80)
 _FOOD = (80, 200, 120)
 _DANGER = (200, 60, 60)
 _UNKNWN = (140, 80, 200)
+_POWERUP = (60, 200, 240)    # 0.4.2: cian
+_HAZARD = (240, 110, 30)     # 0.4.2: naranja
+_SPDOOR = (180, 90, 200)     # 0.4.2: violeta
 
 PORTAL_COLORS = {
     (7, 2): (50, 130, 220),
@@ -40,6 +43,9 @@ CELL_COLORS = {
     int(Cell.FOOD): _FOOD,
     int(Cell.DANGER): _DANGER,
     int(Cell.UNKNOWN_OBJECT): _UNKNWN,
+    int(Cell.POWERUP): _POWERUP,      # 0.4.2
+    int(Cell.HAZARD): _HAZARD,        # 0.4.2
+    int(Cell.SPECIAL_DOOR): _SPDOOR,  # 0.4.2
 }
 
 CELL_LABELS = {
@@ -50,6 +56,9 @@ CELL_LABELS = {
     Cell.FOOD: ("F", (20, 60, 30)),
     Cell.DANGER: ("X", (80, 20, 20)),
     Cell.UNKNOWN_OBJECT: ("?", (50, 20, 80)),
+    Cell.POWERUP: ("+", (10, 70, 90)),     # 0.4.2
+    Cell.HAZARD: ("!", (90, 30, 10)),      # 0.4.2
+    Cell.SPECIAL_DOOR: ("S", (60, 20, 70)),  # 0.4.2
 }
 
 _LEGEND = [
@@ -63,7 +72,7 @@ _LEGEND = [
 
 
 class PygameView:
-    def __init__(self, title: str = "BabyIA World 0.4.1"):
+    def __init__(self, title: str = "BabyIA World 0.4.2"):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_W, WINDOW_H))
         pygame.display.set_caption(title)
@@ -202,4 +211,15 @@ class PygameView:
             lines.append(f"E{ep}: En zona de peligro")
         if ev.get("returned_home"):
             lines.append(f"E{ep}: Regreso a casa")
+        # 0.4.2: eventos de powerup/hazard/puerta especial
+        pu = ev.get("last_powerup")
+        if pu:
+            lines.append(f"E{ep}: Recogido {pu}")
+        hz = ev.get("last_hazard")
+        if hz:
+            blk = ev.get("last_hazard_blocked", False)
+            lines.append(f"E{ep}: {'Bloqueado' if blk else 'Afectado'} {hz}")
+        door_fail = ev.get("last_door_fail")
+        if door_fail:
+            lines.append(f"E{ep}: Puerta: {door_fail}")
         return lines[-6:]

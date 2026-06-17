@@ -45,6 +45,18 @@ class Inventory:
         self.energy = max(0.0, self.energy - ENERGY_COST_DANGER)
         return lost
 
+    def take_damage_by(self, amount: float) -> float:
+        """Aplica dano variable (hazards 0.4.2). Devuelve perdida real."""
+        lost = min(amount, self.energy)
+        self.energy = max(0.0, self.energy - amount)
+        return lost
+
+    def restore_energy(self, amount: float) -> float:
+        """Restaura energia (energy_food 0.4.2). Devuelve ganancia real."""
+        gain = min(amount, MAX_ENERGY - self.energy)
+        self.energy = min(MAX_ENERGY, self.energy + amount)
+        return gain
+
     def touch(self, obj_name: str):
         """Registra contacto con un objeto (sin efecto de estado)."""
         self._touch(obj_name)
