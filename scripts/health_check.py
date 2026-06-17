@@ -745,17 +745,22 @@ def check_044_integrity(root: Path = ROOT) -> list[dict]:
             {"status": "warn", "message": f"No se pudo verificar mission reward: {e}"}
         )
 
-    # 4. _full_obs() usa puerta de progreso (7,7) no puerta normal
+    # 4. _full_obs() usa puerta de progreso dinamica (no hardcodeada)
     try:
         trainer_path = root / "brain" / "trainer.py"
         text = trainer_path.read_text(encoding="utf-8")
-        uses_progress_door = "pdx, pdy = 7, 7" in text or "PROGRESS_DOOR_POS" in text
+        # 0.4.4: usaba "pdx, pdy = 7, 7"; 0.4.5: usa "world.progress_door_pos"
+        uses_progress_door = (
+            "pdx, pdy = 7, 7" in text
+            or "PROGRESS_DOOR_POS" in text
+            or "world.progress_door_pos" in text
+        )
         uses_old_normal_door = "(3, 6)" in text and "dist to normal door" in text
         if uses_progress_door and not uses_old_normal_door:
             results.append(
                 {
                     "status": "ok",
-                    "message": "trainer._full_obs() apunta a puerta de progreso (7,7)",
+                    "message": "trainer._full_obs() apunta a puerta de progreso (dinamica 0.4.5)",
                 }
             )
         else:
@@ -787,6 +792,120 @@ def check_044_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_045_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica integridad especifica de BabyIA 0.4.5 (mundo escalable, percepcion)."""
+    results = []
+    import sys as _sys
+
+    _sys.path.insert(0, str(root))
+
+    # 1. Archivos nuevos de 0.4.5 presentes
+    new_files = [
+        "world/world_config.py",
+        "interface/camera.py",
+        "interface/effects.py",
+        "interface/perception_view.py",
+        "brain/perception.py",
+        "brain/semantic_map.py",
+        "brain/visual_memory.py",
+    ]
+    for f in new_files:
+        exists = (root / f).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{f} {'existe' if exists else 'FALTA (0.4.5)'}",
+            }
+        )
+
+    # 2. Tests nuevos de 0.4.5 presentes
+    new_tests = [
+        "tests/test_world_config.py",
+        "tests/test_grid_world_scaling.py",
+        "tests/test_camera.py",
+        "tests/test_perception.py",
+        "tests/test_semantic_map.py",
+        "tests/test_visual_memory.py",
+        "tests/test_large_world_mission.py",
+        "tests/test_minimap_large_world.py",
+    ]
+    for t in new_tests:
+        exists = (root / t).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{t} {'existe' if exists else 'FALTA (0.4.5)'}",
+            }
+        )
+
+    # 3. get_grid_size_for_level devuelve valores correctos
+    try:
+        from world.world_config import get_grid_size_for_level
+
+        assert get_grid_size_for_level(0) == 8
+        assert get_grid_size_for_level(1) == 10
+        assert get_grid_size_for_level(4) == 16
+        results.append(
+            {
+                "status": "ok",
+                "message": "get_grid_size_for_level() escala correctamente",
+            }
+        )
+    except Exception as e:
+        results.append(
+            {"status": "fail", "message": f"get_grid_size_for_level error: {e}"}
+        )
+
+    # 4. GridWorld acepta grid_size y expone key_pos y progress_door_pos dinamicos
+    try:
+        from world.grid_world import GridWorld
+
+        w8 = GridWorld(grid_size=8)
+        w16 = GridWorld(grid_size=16)
+        assert w8.key_pos == (1, 6)
+        assert w16.progress_door_pos == (15, 15)
+        results.append(
+            {"status": "ok", "message": "GridWorld.grid_size escala correctamente"}
+        )
+    except Exception as e:
+        results.append({"status": "fail", "message": f"GridWorld scaling error: {e}"})
+
+    # 5. PerceptionSystem importable y funcional
+    try:
+        from brain.perception import PerceptionSystem
+        from world.grid_world import GridWorld
+
+        p = PerceptionSystem()
+        w = GridWorld()
+        r = p.observe(w, (0, 0))
+        assert "vision_range" in r
+        results.append(
+            {"status": "ok", "message": "PerceptionSystem.observe() funciona"}
+        )
+    except Exception as e:
+        results.append({"status": "fail", "message": f"PerceptionSystem error: {e}"})
+
+    # 6. Trainer.get_status() incluye perception y visual_memory
+    try:
+        from brain.trainer import Trainer
+
+        tr = Trainer(training=False)
+        tr.start_episode()
+        status = tr.get_status()
+        assert "perception" in status
+        assert "visual_memory" in status
+        assert "grid_size" in status
+        results.append(
+            {"status": "ok", "message": "Trainer.get_status() incluye 0.4.5 fields"}
+        )
+    except Exception as e:
+        results.append(
+            {"status": "fail", "message": f"Trainer 0.4.5 status error: {e}"}
+        )
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -802,6 +921,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_042_integrity(root))  # 0.4.2
     checks.extend(check_043_integrity(root))  # 0.4.3
     checks.extend(check_044_integrity(root))  # 0.4.4
+    checks.extend(check_045_integrity(root))  # 0.4.5
     return checks
 
 

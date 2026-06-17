@@ -8,6 +8,9 @@ from brain.concepts import ConceptMemory
 from brain.decision_context import DecisionContext
 from brain.mission import MissionState, MissionTracker
 from brain.mission_reward import MissionReward
+from brain.perception import PerceptionSystem
+from brain.semantic_map import SemanticMap
+from brain.visual_memory import VisualMemory
 from brain.survival import SurvivalEvaluator
 from brain.curriculum import Curriculum
 from brain.emotions import Emotions
@@ -19,7 +22,7 @@ from brain.strategy import StrategyTracker
 from brain.utility_evaluator import UtilityEvaluator
 from brain.world_memory import WorldMemory
 from config import CAUSAL_MEMORY_FILE
-from world.grid_world import GRID_SIZE, GridWorld
+from world.grid_world import GridWorld
 from world.interactions import (
     interact_danger,
     interact_door_closed,
@@ -72,6 +75,13 @@ class Trainer:
         self._dec_ctx_builder = DecisionContext()
         self._current_mission: MissionState = MissionState()
         self._current_decision_context: dict = {}
+
+        # 0.4.5 — percepcion funcional y memoria visual
+        self._perception = PerceptionSystem()
+        self._semantic_map = SemanticMap()
+        self._visual_memory = VisualMemory()
+        self._last_perception: dict = {}
+        self._last_semantic: list = []
 
         # 0.4.1 — diagnóstico de red neuronal (actualizado cada 5 pasos)
         self._last_brain_debug: dict = {}
@@ -132,6 +142,10 @@ class Trainer:
         self.mission_reward_tracker.reset_episode()
         self._current_mission = MissionState()
         self._current_decision_context = {}
+        # 0.4.5
+        self._visual_memory.reset_episode()
+        self._last_perception = {}
+        self._last_semantic = []
         self.inventory.reset()
         self.world_manager.reset()
         self.home_drive.reset_episode()
@@ -177,6 +191,15 @@ class Trainer:
 
         reward = base_reward + obj_delta + w_delta
 
+        # 0.4.5: percepcion funcional tras el movimiento
+        self._last_perception = self._perception.observe(
+            self.world, tuple(self.world.baby_pos)
+        )
+        self._last_semantic = self._semantic_map.classify_all(
+            self._last_perception, self.causal_memory, self._current_mission
+        )
+        self._visual_memory.update(self._last_perception, tuple(self.world.baby_pos))
+
         # 0.4.4: mision y reward shaping (pequeno, no dominante)
         self._current_mission = self.mission_tracker.compute(
             has_key=self.inventory.has_key,
@@ -188,6 +211,8 @@ class Trainer:
             step_count=self.world.steps,
             baby_pos=tuple(self.world.baby_pos),
             key_present=self.world.key_present,
+            key_pos=self.world.key_pos,
+            progress_door_pos=self.world.progress_door_pos,
         )
         curr_context = self._dec_ctx_builder.build(
             self.world,
@@ -280,8 +305,12 @@ class Trainer:
         if new_level is not None:
             self.self_model.level_up(new_level)
             from world.level_factory import get_maze_for_level, save_level_stats
+            from world.world_config import get_grid_size_for_level
 
             maze = get_maze_for_level(new_level)
+            new_gs = get_grid_size_for_level(new_level)
+            if new_gs != self.world.size:
+                self.world = GridWorld(grid_size=new_gs)
             self.world.set_walls(maze["walls"])
             self._maze_info = maze
             save_level_stats(maze)
@@ -326,14 +355,16 @@ class Trainer:
         stats = self.curriculum.get_stats()
         top_c = self.concepts.top_concepts(2)
 
-        # Objetivo actual para la UI
+        # Objetivo actual para la UI (posiciones dinamicas)
         cur_stats = stats.get("curriculum", {})
+        _ppos = self.world.progress_door_pos
+        _kpos = self.world.key_pos
         if self._ep_level_completed:
             current_objective = "Nivel completado!"
         elif self.inventory.has_key:
-            current_objective = "Ve a la puerta dorada (7,7)"
+            current_objective = f"Ve a la puerta dorada {_ppos}"
         else:
-            current_objective = "Busca la llave (1,6)"
+            current_objective = f"Busca la llave {_kpos}"
 
         return {
             "episode": self.episode,
@@ -387,6 +418,11 @@ class Trainer:
             "stagnation_active": stats.get("stagnation_active", False),
             "level_completions": stats.get("level_completions", 0),
             "curriculum": cur_stats,
+            # 0.4.5
+            "perception": dict(self._last_perception),
+            "semantic_view": list(self._last_semantic),
+            "visual_memory": self._visual_memory.to_dict(),
+            "grid_size": self.world.size,
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────
@@ -399,26 +435,23 @@ class Trainer:
         inv = self.inventory
         world = self.world
         bx, by = world.baby_pos
-        n = float(GRID_SIZE - 1)
+        n = float(max(world.size - 1, 1))
         obj = world.get_object_state()
 
         kx, ky = obj["key_pos"]
-        dx, dy = obj["door_pos"]
-
         dist_key_x = (kx - bx) / n if obj["key_present"] else 0.0
         dist_key_y = (ky - by) / n if obj["key_present"] else 0.0
 
-        # 0.4.4: sustituir distancia a puerta normal (3,6) por distancia a
-        # puerta de progreso (7,7) y señal de proximidad. STATE_SIZE sigue = 34.
-        pdx, pdy = 7, 7  # PROGRESS_DOOR_POS
+        # 0.4.5: usar posicion dinamica de puerta de progreso (escala con grid)
+        pdx, pdy = world.progress_door_pos
         extra = np.array(
             [
                 float(inv.has_key),  # 10
                 inv.energy,  # 11
                 dist_key_x,  # 12
                 dist_key_y,  # 13
-                (pdx - bx) / n,  # 14 — dist_x a puerta de progreso (7,7)
-                (pdy - by) / n,  # 15 — dist_y a puerta de progreso (7,7)
+                (pdx - bx) / n,  # 14 — dist_x a puerta de progreso
+                (pdy - by) / n,  # 15 — dist_y a puerta de progreso
                 float(world.get_nearby_progress_door()),  # 16 — prog. door cercana
                 float(world.danger_nearby()),  # 17
             ],

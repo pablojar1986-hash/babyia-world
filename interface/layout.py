@@ -59,5 +59,5 @@ LOG_AREA = (
     WINDOW_H - _log_y - MARGIN,
 )
 
-TABS = ["Estado", "Mundo", "Cuerpo", "Cerebro", "Memoria", "Mision"]
+TABS = ["Estado", "Mundo", "Cuerpo", "Cerebro", "Memoria", "Mision", "Percep."]
 TAB_COUNT = len(TABS)

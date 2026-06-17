@@ -20,12 +20,11 @@ COLLECT_USEFUL_POWERUP = "COLLECT_USEFUL_POWERUP"
 RETURN_HOME = "RETURN_HOME"
 LEVEL_COMPLETED = "LEVEL_COMPLETED"
 
-# Posiciones objetivo del mapa nivel 0
+# Posiciones por defecto (8x8) — MissionTracker usa posiciones dinamicas del world
 KEY_POS = (1, 6)
 PROGRESS_DOOR_POS = (7, 7)
 
 LOW_ENERGY_THRESHOLD = 0.25
-_MAX_DIST = 14.0  # distancia Manhattan maxima en grid 8x8
 
 
 @dataclass
@@ -67,14 +66,18 @@ class MissionTracker:
         step_count: int,
         baby_pos: tuple,
         key_present: bool,
+        key_pos: tuple = KEY_POS,
+        progress_door_pos: tuple = PROGRESS_DOOR_POS,
     ) -> MissionState:
         bx, by = baby_pos
+        gs = max(key_pos[0], key_pos[1], progress_door_pos[0], progress_door_pos[1]) + 1
+        _max_dist = (gs - 1) * 2.0
 
         # 1. Nivel completado (terminal)
         if level_completed:
             return MissionState(
                 current_goal=LEVEL_COMPLETED,
-                target_position=PROGRESS_DOOR_POS,
+                target_position=progress_door_pos,
                 priority=1.0,
                 reason="Puerta dorada cruzada con llave",
                 progress_score=1.0,
@@ -92,21 +95,21 @@ class MissionTracker:
 
         # 3. Tiene llave -> ir a puerta de progreso
         if has_key:
-            px, py_ = PROGRESS_DOOR_POS
+            px, py_ = progress_door_pos
             dist = abs(bx - px) + abs(by - py_)
-            progress = max(0.0, 1.0 - dist / _MAX_DIST)
+            progress = max(0.0, 1.0 - dist / _max_dist)
             return MissionState(
                 current_goal=GO_TO_NEXT_LEVEL_DOOR,
-                target_position=PROGRESS_DOOR_POS,
+                target_position=progress_door_pos,
                 priority=1.0,
-                reason="Llave recogida. Ir a puerta dorada (7,7)",
+                reason=f"Llave recogida. Ir a puerta dorada {progress_door_pos}",
                 progress_score=progress,
             )
 
         # 4. Sin llave -> buscarla
-        kx, ky = KEY_POS
+        kx, ky = key_pos
         dist_key = abs(bx - kx) + abs(by - ky)
-        progress = max(0.0, 1.0 - dist_key / _MAX_DIST) if key_present else 0.5
+        progress = max(0.0, 1.0 - dist_key / _max_dist) if key_present else 0.5
         reason = (
             "La puerta dorada requiere llave"
             if key_present
@@ -114,7 +117,7 @@ class MissionTracker:
         )
         return MissionState(
             current_goal=FIND_KEY,
-            target_position=KEY_POS if key_present else None,
+            target_position=key_pos if key_present else None,
             priority=0.95,
             reason=reason,
             progress_score=progress,

@@ -19,8 +19,17 @@ import interface.body_view as _bv
 import interface.brain_view as _brv
 import interface.memory_view as _mv
 import interface.mission_view as _msv
+import interface.perception_view as _pv
 
-_VIEWS = [_sv.render, _wv.render, _bv.render, _brv.render, _mv.render, _msv.render]
+_VIEWS = [
+    _sv.render,
+    _wv.render,
+    _bv.render,
+    _brv.render,
+    _mv.render,
+    _msv.render,
+    _pv.render,
+]
 
 
 class PanelRenderer:
@@ -45,6 +54,7 @@ class PanelRenderer:
             pygame.K_4: 3,
             pygame.K_5: 4,
             pygame.K_6: 5,
+            pygame.K_7: 6,
         }
         if key in direct:
             self._switch(direct[key])
