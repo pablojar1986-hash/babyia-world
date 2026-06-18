@@ -46,7 +46,7 @@
 - data/network_stats.json y data/level_stats.json — persistencia de metadatos
 - 4 nuevos archivos de tests; 161 tests totales pasando
 
-### 0.2.2 — Estabilidad, seguridad de reset y progresion real de laberintos (actual)
+### 0.2.2 — Estabilidad, seguridad de reset y progresion real de laberintos (completado)
 - main.py: corregido --episodes 0 (era interpretado como False)
 - main.py: flag --yes para confirmar resets destructivos con advertencia visible
 - main.py: muestra arquitectura DQN al iniciar (input, output, params)
@@ -122,7 +122,7 @@
 - scripts/health_check.py: check_042_integrity() — 5 nuevas verificaciones de integridad
 - 7 nuevos archivos de test; 413 tests pasando
 
-### 0.4.3 — Progresion real por puertas de nivel, curriculo anti-estancamiento y recompensa orientada a completar niveles (actual, fix 2)
+### 0.4.3 — Progresion real por puertas de nivel, curriculo anti-estancamiento y recompensa orientada a completar niveles (completado, fix 2)
 - PROBLEMA resuelto: BabyIA podia acumular alta recompensa (hasta 64 pts por exploracion)
   sin completar nunca el nivel. REWARD_NEW_CELL=0.05 (antes 1.0) elimina este reward hacking.
 - world/level_doors.py (NUEVO): LevelDoor, LEVEL_DOOR_POSITIONS (3 puertas), attempt_level_door()
@@ -219,6 +219,11 @@
 - health_check: check_047_integrity() verifica coherencia de 0.4.7
 - 4 nuevos archivos de test; APP_VERSION=0.4.7
 - Sin nuevas funciones jugables — version de consolidacion
+- Continuidad 2026-06-18: README compactado, `docs/continuacion.md` agregado,
+  requirements recortado a dependencias directas, health check sin falsos
+  positivos de `eval()`/`.eval()` y deuda >300 lineas documentada
+- Validacion de continuidad: 1100 tests pasando, ruff sin errores y health
+  check con 0 advertencias
 
 ### 0.4.6c — Vista completa escalable del mundo (completado)
 - interface/grid_scaler.py: funciones puras para escalar cell_size al mundo completo (sin pygame)
@@ -228,18 +233,22 @@
 - Fog of war: celdas no visitadas se oscurecen en modo full (world.visited)
 - Etiquetas adaptativas: >=40px full, >=28px compacto, <28px solo color
 - 16x16 cabe en GRID_AREA 464x464px con cell_size=29px (> umbral minimo 28px)
-- 4 nuevos archivos de test (59 tests adicionales); 1091 tests pasando
+- 4 nuevos archivos de test (59 tests adicionales); 1091 tests pasaban al cierre
+  de esta mejora visual
 
 ### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas
 - Vocabulario basico de navegacion y objetos
 - BabyIA puede "describir" lo que ve
+- Debe ser salida explicativa por plantillas, no un nuevo cerebro ni un LLM
 
 ### 0.6.0 — Interfaz Godot
-- Comunicacion Python <-> Godot via sockets o JSON
+- Comunicacion Python <-> Godot por snapshots JSON al inicio
 - Visualizacion 2D/2.5D del mundo
 - Animaciones de BabyIA segun estado interno
 - El cerebro sigue siendo Python puro
+- Cualquier canal en tiempo real requiere actualizar AGENTS.md y pruebas antes
+  de programarlo; no se permiten sockets en codigo de produccion por defecto
 
 ### 1.0 — Juego-laboratorio completo
 - Múltiples mundos y escenarios

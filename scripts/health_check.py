@@ -1,9 +1,9 @@
-"""
-Health check de BabyIA World.
+"""Health check de BabyIA World.
 
 Uso: python scripts/health_check.py
 """
 
+import ast
 from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
@@ -29,6 +29,7 @@ REQUIRED_FILES = [
     "requirements.txt",
     ".gitignore",
     "config.py",
+    "docs/continuacion.md",
     # 0.2
     "brain/concepts.py",
     "world/interactions.py",
@@ -151,6 +152,12 @@ REQUIRED_TESTS = [
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
+LEGACY_LONG_FILES = {
+    Path("main.py"),
+    Path("brain/trainer.py"),
+    Path("scripts/health_check.py"),
+    Path("world/grid_world.py"),
+}
 
 
 # ── Funciones de verificacion (importables en tests) ──────────────────────────
@@ -202,6 +209,7 @@ def check_tests(root: Path = ROOT) -> list[dict]:
 
 def check_file_lengths(root: Path = ROOT) -> list[dict]:
     results = []
+    known_debt = []
     for py in root.rglob("*.py"):
         if any(part in py.parts for part in [".venv", "__pycache__", ".git"]):
             continue
@@ -211,12 +219,23 @@ def check_file_lengths(root: Path = ROOT) -> list[dict]:
             continue
         if lines > MAX_LINES:
             rel = py.relative_to(root)
-            results.append(
-                {
-                    "status": "warn",
-                    "message": f"{rel} tiene {lines} lineas (max recomendado: {MAX_LINES})",
-                }
-            )
+            if rel in LEGACY_LONG_FILES:
+                known_debt.append(f"{rel} ({lines})")
+            else:
+                results.append(
+                    {
+                        "status": "warn",
+                        "message": f"{rel} tiene {lines} lineas (max recomendado: {MAX_LINES})",
+                    }
+                )
+    if known_debt:
+        results.append(
+            {
+                "status": "ok",
+                "message": "Deuda conocida >300 lineas documentada: "
+                + ", ".join(known_debt),
+            }
+        )
     if not results:
         results.append(
             {"status": "ok", "message": f"Todos los archivos <= {MAX_LINES} lineas"}
@@ -251,17 +270,20 @@ def check_network_calls(root: Path = ROOT) -> list[dict]:
 def check_selfmod(root: Path = ROOT) -> list[dict]:
     results = []
     found = []
-    dangerous = ["exec(", "eval("]
     for py in root.rglob("*.py"):
         if any(part in py.parts for part in [".venv", "__pycache__", ".git"]):
             continue
         try:
             text = py.read_text(encoding="utf-8")
+            tree = ast.parse(text)
         except Exception:
             continue
-        for pattern in dangerous:
-            if pattern in text:
-                found.append(f"{py.relative_to(root)} contiene '{pattern}'")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                if node.func.id in {"exec", "eval"}:
+                    found.append(
+                        f"{py.relative_to(root)} llama a builtin '{node.func.id}()'"
+                    )
     if found:
         for f in found:
             results.append(

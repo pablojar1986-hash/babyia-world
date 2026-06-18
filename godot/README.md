@@ -1,36 +1,45 @@
-# Godot — Fase futura
+# Godot — fase futura
 
-Esta carpeta está reservada para la interfaz gráfica avanzada de BabyIA World.
+Esta carpeta esta reservada para una interfaz grafica avanzada de BabyIA World.
+No forma parte de la version actual 0.4.7.
 
-## Cuándo se usará
+## Cuándo se usara
 
-- Cuando el cerebro de BabyIA esté estable (Nivel 3 superado)
-- Cuando el sistema de memoria y conceptos esté consolidado
-- Cuando BabyIA demuestre conducta consistente en múltiples episodios
+- Cuando el cerebro Python este estable y medido con evaluaciones reproducibles.
+- Cuando la fase 0.5.0 de lenguaje por plantillas este cerrada.
+- Cuando exista una decision explicita sobre el canal Python <-> Godot.
 
-## Qué se construirá aquí
+## Objetivo inicial
 
-- Mundo 2D o 2.5D con objetos interactivos (llaves, puertas, NPCs)
-- Animaciones de BabyIA con estados visuales
-- Sistema de lenguaje visual (burbujas de pensamiento)
-- Comunicación en tiempo real entre Python (cerebro) y Godot (cuerpo)
+La primera integracion debe ser un visualizador, no un segundo motor de reglas:
 
-## Arquitectura planeada
+- Python conserva el cerebro, el mundo, las recompensas y el entrenamiento.
+- Godot renderiza snapshots exportados por Python.
+- Godot no modifica pesos, replay buffer, rewards ni memoria.
 
+## Canal permitido por defecto
+
+Usar archivos JSON compartidos o snapshots exportados. Esto respeta la regla
+actual de no usar `socket` en codigo de produccion.
+
+Cualquier comunicacion en tiempo real debe aprobarse antes en `AGENTS.md`,
+documentarse y tener tests especificos.
+
+## Posible arquitectura
+
+```text
+Python                           Godot
+------                           -----
+main.py / trainer.py      ->     SnapshotReader.gd
+data/*.json               ->     paneles de inspeccion
+world/grid_world.py       ->     WorldView.gd
+brain/status dict         ->     BabyIAView.gd
 ```
-Python (cerebro)          Godot (cuerpo)
-──────────────────        ──────────────────
-trainer.py          ←→   BabyIA.gd
-brain/baby_brain.py       World.gd
-data/*.json         ←→   MemoryReader.gd
-```
 
-**Canal de comunicación:** sockets TCP o archivos JSON compartidos con polling.
+## No implementar todavia
 
-## BabyIA 0.2 (siguiente versión Python)
-
-Antes de Godot, se añadirán en Python:
-- Objetos interactivos (llaves, puertas)
-- Sistema de lenguaje simple (frases generadas)
-- Memoria episódica más rica
-- Múltiples metas en el mismo episodio
+- Sockets TCP.
+- Control remoto del entrenamiento desde Godot.
+- Nuevos mundos jugables.
+- Voz, TTS o LLMs.
+- Reglas de recompensa duplicadas en GDScript.

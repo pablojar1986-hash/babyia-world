@@ -12,7 +12,7 @@ BabyIA World/
 |   |-- objects.py       <- Cell (incl. LEVEL_DOOR=12, OPTIONAL_DOOR=13 0.4.3); STATE_SIZE=40.
 |   |-- rewards.py       <- REWARD_LEVEL_COMPLETED=120; REWARD_NEW_CELL=0.05 (0.4.3).
 |   |-- level_doors.py   <- LevelDoor; LEVEL_DOOR_POSITIONS; attempt_level_door() (0.4.3).
-|   |-- grid_world.py    <- Cuadricula 8x8; NEXT_LEVEL_DOOR bloqueante; level_completed (0.4.3).
+|   |-- grid_world.py    <- Cuadricula escalable 8x8->16x16; NEXT_LEVEL_DOOR bloqueante.
 |   |-- inventory.py     <- Inventario: energy, take_damage_by(), restore_energy() (0.4.2).
 |   |-- interactions.py  <- Reglas causa-efecto puras (0.2).
 |   |-- powerups.py      <- 8 powerups; apply_powerup_effect() ruteado a Inventory o BodyState (0.4.2).
@@ -81,13 +81,17 @@ BabyIA World/
 │   ├── autobiography.json
 │   ├── training_stats.json
 │   ├── concepts.json
-│   ├── network_stats.json   (0.2.1)
-│   ├── level_stats.json     (0.2.1)
+│   ├── causal_memory.json
+│   ├── world_history.json
+│   ├── world_preferences.json
+│   ├── home_stats.json
+│   ├── network_stats.json
+│   ├── level_stats.json
 │   └── skills.json
 │
 ├── models/              ← Pesos del cerebro (.pt). No contiene código.
-│   ├── babyia_latest.pt
-│   ├── babyia_best.pt
+│   ├── babyia_v0_4_6_latest.pt
+│   ├── babyia_v0_4_6_best.pt
 │   └── checkpoints/
 │
 ├── scripts/             ← Herramientas auxiliares (no son el proyecto principal).
