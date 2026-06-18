@@ -1,11 +1,9 @@
 """Tests de interface/layout.py — geometría de la interfaz."""
 
-import pytest
 from interface.layout import (
     WINDOW_W,
     WINDOW_H,
     GRID_W,
-    GRID_H,
     GRID_AREA,
     PANEL_AREA,
     LOG_AREA,
@@ -14,8 +12,6 @@ from interface.layout import (
     CELL_SIZE,
     MARGIN,
     PANEL_W,
-    BOTTOM_H,
-    TAB_H,
     TABS,
     TAB_COUNT,
 )

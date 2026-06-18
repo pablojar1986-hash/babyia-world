@@ -1,10 +1,10 @@
 """Tests del WorldManager: transiciones de mundo, portales y estado."""
-import numpy as np
-import pytest
 
 from worlds.world_manager import WorldManager, RETURN_SIGNAL_STEPS
 from worlds.world_registry import (
-    HOME_WORLD_ID, FOOD_WORLD_ID, DANGER_WORLD_ID, HOME_PORTALS,
+    HOME_WORLD_ID,
+    FOOD_WORLD_ID,
+    HOME_PORTALS,
 )
 
 
@@ -22,8 +22,8 @@ def test_initial_state_is_home():
 def test_reset_clears_state():
     wm = make_wm()
     wm.current_world_id = FOOD_WORLD_ID
-    wm.is_at_home       = False
-    wm._steps_outside   = 10
+    wm.is_at_home = False
+    wm._steps_outside = 10
     wm.reset()
     assert wm.current_world_id == HOME_WORLD_ID
     assert wm.is_at_home is True
@@ -31,8 +31,8 @@ def test_reset_clears_state():
 
 
 def test_enter_portal_food_world():
-    wm     = make_wm()
-    portal = HOME_PORTALS["blue_door"]   # pos (7,2), level 0
+    wm = make_wm()
+    portal = HOME_PORTALS["blue_door"]  # pos (7,2), level 0
     delta, events = wm.process_step(portal.position, player_level=0)
     assert events.get("entered_world") == FOOD_WORLD_ID
     assert wm.is_at_home is False
@@ -40,8 +40,8 @@ def test_enter_portal_food_world():
 
 
 def test_cannot_enter_locked_portal_insufficient_level():
-    wm     = make_wm()
-    portal = HOME_PORTALS["red_door"]    # required_level=1
+    wm = make_wm()
+    portal = HOME_PORTALS["red_door"]  # required_level=1
     wm.process_step(portal.position, player_level=0)
     # Nivel 0 no puede entrar a danger_world (nivel minimo 1)
     assert wm.current_world_id == HOME_WORLD_ID
@@ -62,6 +62,7 @@ def test_return_home_gives_base_reward():
 
 def test_return_after_explore_gives_bigger_reward():
     from worlds.reward_profiles import REWARD_PROFILES
+
     wm = make_wm()
     wm.process_step((7, 2), player_level=0)
     # Simular que gano recompensa fuera
@@ -73,7 +74,7 @@ def test_return_after_explore_gives_bigger_reward():
 
 def test_should_return_home_after_threshold():
     wm = make_wm()
-    wm.process_step((7, 2), player_level=0)   # entra a food
+    wm.process_step((7, 2), player_level=0)  # entra a food
     assert not wm.should_return_home()
     wm._steps_outside = RETURN_SIGNAL_STEPS
     assert wm.should_return_home()
@@ -88,7 +89,7 @@ def test_get_state_features_shape_and_range():
 
 def test_worlds_visited_tracks_entries():
     wm = make_wm()
-    wm.process_step((7, 2), player_level=0)   # food
+    wm.process_step((7, 2), player_level=0)  # food
     assert FOOD_WORLD_ID in wm.worlds_visited
 
 

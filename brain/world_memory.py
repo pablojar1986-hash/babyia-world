@@ -2,6 +2,7 @@
 Memoria de visitas a mundos: que mundos visito BabyIA y con que resultado.
 Persiste en data/world_history.json.
 """
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -17,19 +18,28 @@ class WorldMemory:
         self.visits: list[dict] = []
         self._load()
 
-    def record_visit(self, episode: int, world_id: str, entered_from: str,
-                     reward_gained: float, risk_events: int,
-                     returned_home: bool, steps_spent: int):
-        self.visits.append({
-            "episode"      : episode,
-            "world_id"     : world_id,
-            "entered_from" : entered_from,
-            "reward_gained": round(reward_gained, 3),
-            "risk_events"  : risk_events,
-            "returned_home": returned_home,
-            "steps_spent"  : steps_spent,
-            "timestamp"    : datetime.now().isoformat(),
-        })
+    def record_visit(
+        self,
+        episode: int,
+        world_id: str,
+        entered_from: str,
+        reward_gained: float,
+        risk_events: int,
+        returned_home: bool,
+        steps_spent: int,
+    ):
+        self.visits.append(
+            {
+                "episode": episode,
+                "world_id": world_id,
+                "entered_from": entered_from,
+                "reward_gained": round(reward_gained, 3),
+                "risk_events": risk_events,
+                "returned_home": returned_home,
+                "steps_spent": steps_spent,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def get_visits_for(self, world_id: str) -> list[dict]:
         return [v for v in self.visits if v["world_id"] == world_id]
@@ -43,7 +53,9 @@ class WorldMemory:
 
     def return_home_rate(self, world_id: str) -> float:
         vs = self.get_visits_for(world_id)
-        return round(sum(1 for v in vs if v["returned_home"]) / len(vs), 3) if vs else 0.0
+        return (
+            round(sum(1 for v in vs if v["returned_home"]) / len(vs), 3) if vs else 0.0
+        )
 
     def average_risk(self, world_id: str) -> float:
         vs = self.get_visits_for(world_id)
@@ -53,10 +65,10 @@ class WorldMemory:
         worlds = {v["world_id"] for v in self.visits}
         return {
             wid: {
-                "visits"          : self.total_visits(wid),
-                "average_reward"  : self.average_reward(wid),
+                "visits": self.total_visits(wid),
+                "average_reward": self.average_reward(wid),
                 "return_home_rate": self.return_home_rate(wid),
-                "average_risk"    : self.average_risk(wid),
+                "average_risk": self.average_risk(wid),
             }
             for wid in worlds
         }

@@ -1,4 +1,5 @@
 """Tests de world/powerups.py."""
+
 import pytest
 from brain.body_state import BodyState
 from world.powerups import POWERUP_TYPES, PowerupDef, apply_powerup_to_body
@@ -6,9 +7,14 @@ from world.powerups import POWERUP_TYPES, PowerupDef, apply_powerup_to_body
 
 def test_all_powerup_ids_present():
     expected = {
-        "growth_crystal", "speed_boots", "shield_orb",
-        "fire_immunity", "poison_immunity", "vision_light",
-        "memory_crystal", "energy_food",
+        "growth_crystal",
+        "speed_boots",
+        "shield_orb",
+        "fire_immunity",
+        "poison_immunity",
+        "vision_light",
+        "memory_crystal",
+        "energy_food",
     }
     assert set(POWERUP_TYPES.keys()) == expected
 

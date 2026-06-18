@@ -3,7 +3,6 @@ from world.rewards import (
     REWARD_STEP,
     REWARD_WALL,
     REWARD_NEW_CELL,
-    REWARD_REPEAT,
     REPEAT_WINDOW,
     calculate_reward,
 )

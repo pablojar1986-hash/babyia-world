@@ -1,13 +1,13 @@
 """Tests de argumentos y configuración de modos de ejecución."""
+
 import random
 from unittest.mock import patch
-
-import pytest
 
 
 def _parse(args):
     with patch("sys.argv", ["main.py"] + args):
         from main import parse_args
+
         return parse_args()
 
 
@@ -62,6 +62,7 @@ def test_reset_memory_only():
 
 def test_set_seed_reproducible():
     from main import set_seed
+
     set_seed(42)
     a = random.random()
     set_seed(42)
@@ -71,6 +72,7 @@ def test_set_seed_reproducible():
 
 def test_set_seed_different_values():
     from main import set_seed
+
     set_seed(1)
     a = random.random()
     set_seed(2)

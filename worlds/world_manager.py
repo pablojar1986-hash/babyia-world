@@ -2,13 +2,18 @@
 Gestor de mundos: controla en que mundo esta BabyIA y gestiona transiciones.
 Capa logica independiente: no modifica GridWorld.
 """
+
 import numpy as np
 
 from worlds.portal import Portal
 from worlds.reward_profiles import REWARD_PROFILES, EPISODE_END_OUTSIDE_HOME
 from worlds.world_definition import WorldDefinition
 from worlds.world_registry import (
-    ALL_WORLDS, HOME_PORTALS, HOME_WORLD_ID, RETURN_HOME_PORTAL, WORLD_IDS,
+    ALL_WORLDS,
+    HOME_PORTALS,
+    HOME_WORLD_ID,
+    RETURN_HOME_PORTAL,
+    WORLD_IDS,
 )
 
 GRID_SIZE = 8
@@ -22,27 +27,27 @@ class WorldManager:
     """
 
     def __init__(self):
-        self.current_world_id  = HOME_WORLD_ID
-        self.is_at_home        = True
-        self.reward_outside    = 0.0          # recompensa acumulada fuera de casa
-        self.worlds_visited    : set[str] = {HOME_WORLD_ID}
-        self._steps_outside    = 0
-        self._explored         = False        # gano recompensa fuera antes de volver
-        self._last_portal      : str | None = None
-        self._pref_score       = 0.0
-        self._portal_map       : dict[tuple, Portal] = {}
+        self.current_world_id = HOME_WORLD_ID
+        self.is_at_home = True
+        self.reward_outside = 0.0  # recompensa acumulada fuera de casa
+        self.worlds_visited: set[str] = {HOME_WORLD_ID}
+        self._steps_outside = 0
+        self._explored = False  # gano recompensa fuera antes de volver
+        self._last_portal: str | None = None
+        self._pref_score = 0.0
+        self._portal_map: dict[tuple, Portal] = {}
         self._build_portal_map()
 
     # ── Reset ─────────────────────────────────────────────────────────────────
 
     def reset(self):
         self.current_world_id = HOME_WORLD_ID
-        self.is_at_home       = True
-        self.reward_outside   = 0.0
-        self.worlds_visited   = {HOME_WORLD_ID}
-        self._steps_outside   = 0
-        self._explored        = False
-        self._last_portal     = None
+        self.is_at_home = True
+        self.reward_outside = 0.0
+        self.worlds_visited = {HOME_WORLD_ID}
+        self._steps_outside = 0
+        self._explored = False
+        self._last_portal = None
 
     # ── Por paso ──────────────────────────────────────────────────────────────
 
@@ -51,9 +56,9 @@ class WorldManager:
         Procesa la posicion de BabyIA cada paso.
         Retorna (reward_delta, events).
         """
-        pos    = tuple(pos)
-        delta  = 0.0
-        events : dict = {}
+        pos = tuple(pos)
+        delta = 0.0
+        events: dict = {}
 
         portal = self._portal_map.get(pos)
         if portal and portal.can_enter(player_level):
@@ -64,12 +69,12 @@ class WorldManager:
                     events["return_reward"] = delta
             elif self.is_at_home and portal.target_world != self.current_world_id:
                 self.current_world_id = portal.target_world
-                self.is_at_home       = False
+                self.is_at_home = False
                 self.worlds_visited.add(portal.target_world)
-                self._last_portal     = portal.portal_id
-                self._explored        = False
+                self._last_portal = portal.portal_id
+                self._explored = False
                 events["entered_world"] = portal.target_world
-                events["portal_used"]   = portal.portal_id
+                events["portal_used"] = portal.portal_id
 
         # Recompensa de paso segun mundo actual
         if self.is_at_home:
@@ -83,12 +88,12 @@ class WorldManager:
     def on_object_event(self, event: str) -> float:
         """Ajusta recompensa de evento de objeto segun perfil del mundo actual."""
         mapping = {
-            "ate_food"       : "eat_food",
-            "in_danger"      : "danger_penalty",
-            "found_unknown"  : "discover_unknown",
-            "survive_danger" : "survive_danger_zone",
+            "ate_food": "eat_food",
+            "in_danger": "danger_penalty",
+            "found_unknown": "discover_unknown",
+            "survive_danger": "survive_danger_zone",
         }
-        key   = mapping.get(event, "")
+        key = mapping.get(event, "")
         delta = self._profile().get(key, 0.0)
         if delta > 0 and not self.is_at_home:
             self.reward_outside += delta
@@ -111,35 +116,38 @@ class WorldManager:
     def get_state_features(self, baby_pos: tuple) -> np.ndarray:
         """8 features de contexto de mundo para el vector de observacion del DQN."""
         bx, by = baby_pos
-        n      = float(GRID_SIZE - 1)
+        n = float(GRID_SIZE - 1)
         # Indice de mundo normalizado [0,1]
-        w_idx  = WORLD_IDS.index(self.current_world_id) / max(len(WORLD_IDS) - 1, 1)
+        w_idx = WORLD_IDS.index(self.current_world_id) / max(len(WORLD_IDS) - 1, 1)
         # Proximidad a casa (mayor = mas cerca)
         prox_home = 1.0 - (bx + by) / (2 * n)
-        pref  = min(max(self._pref_score / 20.0, 0.0), 1.0)
-        risk  = self.get_current_world().risk_level
-        return np.array([
-            w_idx,
-            float(self.is_at_home),
-            prox_home,
-            min(self.reward_outside / 20.0, 1.0),
-            pref,
-            risk,
-            len(self.worlds_visited) / len(ALL_WORLDS),
-            float(self.should_return_home()),
-        ], dtype=np.float32)
+        pref = min(max(self._pref_score / 20.0, 0.0), 1.0)
+        risk = self.get_current_world().risk_level
+        return np.array(
+            [
+                w_idx,
+                float(self.is_at_home),
+                prox_home,
+                min(self.reward_outside / 20.0, 1.0),
+                pref,
+                risk,
+                len(self.worlds_visited) / len(ALL_WORLDS),
+                float(self.should_return_home()),
+            ],
+            dtype=np.float32,
+        )
 
     def set_preference_score(self, score: float):
         self._pref_score = score
 
     def get_episode_summary(self) -> dict:
         return {
-            "world_id"     : self.current_world_id,
-            "is_at_home"   : self.is_at_home,
+            "world_id": self.current_world_id,
+            "is_at_home": self.is_at_home,
             "reward_outside": self.reward_outside,
             "worlds_visited": list(self.worlds_visited),
-            "steps_outside" : self._steps_outside,
-            "last_portal"   : self._last_portal,
+            "steps_outside": self._steps_outside,
+            "last_portal": self._last_portal,
         }
 
     def get_portals(self) -> list[Portal]:
@@ -154,8 +162,8 @@ class WorldManager:
 
     def _do_return_home(self) -> float:
         self.current_world_id = HOME_WORLD_ID
-        self.is_at_home       = True
-        self._steps_outside   = 0
+        self.is_at_home = True
+        self._steps_outside = 0
         profile = REWARD_PROFILES["home"]
         if self._explored:
             self._explored = False

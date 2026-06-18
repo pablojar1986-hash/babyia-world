@@ -1,12 +1,18 @@
 """Tests de world/doors.py — requisitos de puertas."""
-import pytest
+
 from brain.body_state import BodyState
 from world.doors import DOOR_TYPES, DoorRequirement, attempt_door
 
 
 def test_all_door_ids_present():
-    expected = {"heavy_door", "speed_door", "fire_door", "poison_door",
-                "small_door", "memory_door"}
+    expected = {
+        "heavy_door",
+        "speed_door",
+        "fire_door",
+        "poison_door",
+        "small_door",
+        "memory_door",
+    }
     assert set(DOOR_TYPES.keys()) == expected
 
 

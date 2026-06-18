@@ -1,8 +1,13 @@
 """Tests para world/maze_generator.py."""
+
 from world.maze_generator import (
-    generate_walls, is_solvable, generate_solvable_maze,
-    is_solvable_with_key_door, generate_solvable_maze_with_key_door,
-    GRID_SIZE, _RESERVED,
+    generate_walls,
+    is_solvable,
+    generate_solvable_maze,
+    is_solvable_with_key_door,
+    generate_solvable_maze_with_key_door,
+    GRID_SIZE,
+    _RESERVED,
 )
 
 
@@ -27,9 +32,8 @@ def test_is_solvable_empty_grid():
 
 def test_is_solvable_blocked_start():
     # Bloquear todos los vecinos de (0,0) para aislar el inicio
-    walls = (
-        frozenset((x, 0) for x in range(1, GRID_SIZE)) |
-        frozenset((0, y) for y in range(1, GRID_SIZE))
+    walls = frozenset((x, 0) for x in range(1, GRID_SIZE)) | frozenset(
+        (0, y) for y in range(1, GRID_SIZE)
     )
     assert is_solvable(walls) is False
 
@@ -45,7 +49,7 @@ def test_generate_solvable_returns_int_seed():
 
 
 def test_density_affects_wall_count():
-    low  = generate_walls(42, density=0.10)
+    low = generate_walls(42, density=0.10)
     high = generate_walls(42, density=0.30)
     assert len(high) > len(low)
 
@@ -70,15 +74,15 @@ def test_generate_multiple_levels_all_solvable():
 
 # 0.2.2 ── BFS por etapas llave-puerta ───────────────────────────────────────
 
+
 def test_key_door_solvable_on_empty_grid():
     assert is_solvable_with_key_door(frozenset()) is True
 
 
 def test_key_door_maze_requires_path_start_key_door_goal():
     # Aislar (0,0): sus vecinos (1,0) y (0,1) bloqueados -> no puede llegar a llave en (1,6)
-    walls = (
-        frozenset((x, 0) for x in range(1, GRID_SIZE)) |
-        frozenset((0, y) for y in range(1, GRID_SIZE))
+    walls = frozenset((x, 0) for x in range(1, GRID_SIZE)) | frozenset(
+        (0, y) for y in range(1, GRID_SIZE)
     )
     assert is_solvable_with_key_door(walls) is False
 

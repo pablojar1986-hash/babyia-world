@@ -40,7 +40,11 @@ def test_generate_phrase_goal(mem):
 
 def test_generate_phrase_wall(mem):
     phrase = mem.generate_phrase(5, -3.0, 12, False, 0.8)
-    assert "pared" in phrase.lower() or "choqué" in phrase.lower() or "estrategia" in phrase.lower()
+    assert (
+        "pared" in phrase.lower()
+        or "choqué" in phrase.lower()
+        or "estrategia" in phrase.lower()
+    )
 
 
 def test_ram_limit(mem):

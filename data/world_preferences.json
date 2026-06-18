@@ -1,0 +1,23 @@
+{
+  "home": {
+    "visits": 28,
+    "average_reward": 0.0,
+    "average_risk": 0.893,
+    "return_home_rate": 1.0,
+    "preference_score": 1.429
+  },
+  "food_world": {
+    "visits": 1,
+    "average_reward": 0.0,
+    "average_risk": 1.0,
+    "return_home_rate": 0.0,
+    "preference_score": -6.45
+  },
+  "danger_world": {
+    "visits": 1,
+    "average_reward": 0.0,
+    "average_risk": 1.0,
+    "return_home_rate": 0.0,
+    "preference_score": -12.95
+  }
+}

@@ -3,30 +3,32 @@ Estado corporal de BabyIA: atributos fisicos simulados.
 Estos son mecanismos de juego, no indicadores biologicos reales.
 Persiste dentro del episodio; se reinicia al comenzar uno nuevo.
 """
+
 import numpy as np
 
-MAX_SIZE  = 3.0
+MAX_SIZE = 3.0
 MAX_SPEED = 3.0
-MIN_SIZE  = 0.5
+MIN_SIZE = 0.5
 MIN_SPEED = 0.5
-SHIELD_DECAY = 0.02   # escudo se reduce por paso
+SHIELD_DECAY = 0.02  # escudo se reduce por paso
 
 
 class BodyState:
     def __init__(self):
-        self.size            : float = 1.0
-        self.speed           : float = 1.0
-        self.shield          : float = 0.0   # 0-1, proteccion temporal
-        self.fire_immunity   : bool  = False
-        self.poison_immunity : bool  = False
-        self.vision_range    : int   = 3
-        self.memory_focus    : float = 1.0
-        self._effects        : list[dict] = []  # efectos temporales activos
+        self.size: float = 1.0
+        self.speed: float = 1.0
+        self.shield: float = 0.0  # 0-1, proteccion temporal
+        self.fire_immunity: bool = False
+        self.poison_immunity: bool = False
+        self.vision_range: int = 3
+        self.memory_focus: float = 1.0
+        self._effects: list[dict] = []  # efectos temporales activos
 
     # ── Aplicar cambios ───────────────────────────────────────────────────────
 
-    def apply_powerup(self, powerup_id: str, effect: str, value: float,
-                      duration: int = 0):
+    def apply_powerup(
+        self, powerup_id: str, effect: str, value: float, duration: int = 0
+    ):
         """Aplica un powerup al estado corporal."""
         if effect == "increase_size":
             self.size = min(MAX_SIZE, self.size + value)
@@ -44,13 +46,18 @@ class BodyState:
             self.memory_focus = min(2.0, self.memory_focus + value)
 
         if duration > 0:
-            self._effects.append({
-                "powerup_id": powerup_id, "effect": effect,
-                "value": value, "remaining": duration,
-            })
+            self._effects.append(
+                {
+                    "powerup_id": powerup_id,
+                    "effect": effect,
+                    "value": value,
+                    "remaining": duration,
+                }
+            )
 
-    def apply_hazard(self, hazard_id: str, effect: str, value: float,
-                     blocked: bool = False) -> float:
+    def apply_hazard(
+        self, hazard_id: str, effect: str, value: float, blocked: bool = False
+    ) -> float:
         """
         Aplica un hazard al estado corporal.
         Devuelve danio de energia causado (0 si bloqueado).
@@ -66,7 +73,7 @@ class BodyState:
         elif effect == "reduce_vision":
             self.vision_range = max(1, self.vision_range - int(value))
         elif effect == "energy_damage":
-            return value   # el trainer lo aplica sobre Inventory
+            return value  # el trainer lo aplica sobre Inventory
         return 0.0
 
     # ── Tick por paso ─────────────────────────────────────────────────────────
@@ -88,14 +95,14 @@ class BodyState:
     # ── Episodio ──────────────────────────────────────────────────────────────
 
     def reset_for_episode(self):
-        self.size            = 1.0
-        self.speed           = 1.0
-        self.shield          = 0.0
-        self.fire_immunity   = False
+        self.size = 1.0
+        self.speed = 1.0
+        self.shield = 0.0
+        self.fire_immunity = False
         self.poison_immunity = False
-        self.vision_range    = 3
-        self.memory_focus    = 1.0
-        self._effects        = []
+        self.vision_range = 3
+        self.memory_focus = 1.0
+        self._effects = []
 
     # ── Estado para DQN ───────────────────────────────────────────────────────
 
@@ -109,16 +116,19 @@ class BodyState:
         8 features del estado corporal para el vector de observacion.
         Indices 26-33 del STATE_SIZE=34. Proximidad real desde 0.4.2.
         """
-        return np.array([
-            self.size / MAX_SIZE,
-            self.speed / MAX_SPEED,
-            min(self.shield, 1.0),
-            float(self.fire_immunity),
-            float(self.poison_immunity),
-            powerup_nearby,
-            hazard_nearby,
-            door_req_nearby,
-        ], dtype=np.float32)
+        return np.array(
+            [
+                self.size / MAX_SIZE,
+                self.speed / MAX_SPEED,
+                min(self.shield, 1.0),
+                float(self.fire_immunity),
+                float(self.poison_immunity),
+                powerup_nearby,
+                hazard_nearby,
+                door_req_nearby,
+            ],
+            dtype=np.float32,
+        )
 
     # ── Consultas ─────────────────────────────────────────────────────────────
 
@@ -133,14 +143,14 @@ class BodyState:
 
     def to_dict(self) -> dict:
         return {
-            "size"           : round(self.size, 2),
-            "speed"          : round(self.speed, 2),
-            "shield"         : round(self.shield, 2),
-            "fire_immunity"  : self.fire_immunity,
+            "size": round(self.size, 2),
+            "speed": round(self.speed, 2),
+            "shield": round(self.shield, 2),
+            "fire_immunity": self.fire_immunity,
             "poison_immunity": self.poison_immunity,
-            "vision_range"   : self.vision_range,
-            "memory_focus"   : round(self.memory_focus, 2),
-            "active_effects" : len(self._effects),
+            "vision_range": self.vision_range,
+            "memory_focus": round(self.memory_focus, 2),
+            "active_effects": len(self._effects),
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────

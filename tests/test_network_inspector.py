@@ -1,15 +1,21 @@
 """Tests para brain/network_inspector.py."""
+
 import torch.nn as nn
 
 from brain.network_inspector import (
-    inspect_network, is_compatible, save_network_stats, load_network_stats,
+    inspect_network,
+    is_compatible,
+    save_network_stats,
+    load_network_stats,
 )
 
 
 def _make_model():
     return nn.Sequential(
-        nn.Linear(18, 128), nn.ReLU(),
-        nn.Linear(128, 64), nn.ReLU(),
+        nn.Linear(18, 128),
+        nn.ReLU(),
+        nn.Linear(128, 64),
+        nn.ReLU(),
         nn.Linear(64, 5),
     )
 
@@ -84,6 +90,7 @@ def test_load_missing_returns_empty(tmp_path):
 
 
 # 0.2.2 ── test requerido por spec ───────────────────────────────────────────
+
 
 def test_network_stats_file_created(tmp_path):
     """save_network_stats crea el archivo y usa version 0.2.2."""

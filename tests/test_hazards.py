@@ -1,13 +1,25 @@
 """Tests de world/hazards.py."""
+
 import pytest
 from brain.body_state import BodyState
-from world.hazards import HAZARD_TYPES, HazardDef, apply_hazard_to_body, is_blocked_by_body
+from world.hazards import (
+    HAZARD_TYPES,
+    HazardDef,
+    apply_hazard_to_body,
+    is_blocked_by_body,
+)
 
 
 def test_all_hazard_ids_present():
     expected = {
-        "fire_zone", "poison_zone", "mud", "shrink_trap",
-        "slow_trap", "darkness", "spikes", "energy_drain",
+        "fire_zone",
+        "poison_zone",
+        "mud",
+        "shrink_trap",
+        "slow_trap",
+        "darkness",
+        "spikes",
+        "energy_drain",
     }
     assert set(HAZARD_TYPES.keys()) == expected
 

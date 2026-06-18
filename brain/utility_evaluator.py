@@ -14,20 +14,20 @@ Formula:
 
 class UtilityEvaluator:
     def __init__(self):
-        self._last_utility     : float = 0.0
-        self._last_breakdown   : dict  = {}
+        self._last_utility: float = 0.0
+        self._last_breakdown: dict = {}
         self._episode_utilities: list[float] = []
 
     # ── Calculo principal ─────────────────────────────────────────────────────
 
     def evaluate(
         self,
-        expected_reward   : float = 0.0,
+        expected_reward: float = 0.0,
         usefulness_for_goal: float = 0.0,
-        return_home_bonus : float = 0.0,
-        expected_risk     : float = 0.0,
-        energy_cost       : float = 0.0,
-        time_cost         : float = 0.0,
+        return_home_bonus: float = 0.0,
+        expected_risk: float = 0.0,
+        energy_cost: float = 0.0,
+        time_cost: float = 0.0,
     ) -> float:
         utility = (
             expected_reward
@@ -37,15 +37,15 @@ class UtilityEvaluator:
             - energy_cost
             - time_cost
         )
-        self._last_utility   = round(utility, 4)
+        self._last_utility = round(utility, 4)
         self._last_breakdown = {
-            "expected_reward"   : expected_reward,
+            "expected_reward": expected_reward,
             "usefulness_for_goal": usefulness_for_goal,
-            "return_home_bonus" : return_home_bonus,
-            "expected_risk"     : expected_risk,
-            "energy_cost"       : energy_cost,
-            "time_cost"         : time_cost,
-            "total"             : self._last_utility,
+            "return_home_bonus": return_home_bonus,
+            "expected_risk": expected_risk,
+            "energy_cost": energy_cost,
+            "time_cost": time_cost,
+            "total": self._last_utility,
         }
         return self._last_utility
 
@@ -54,9 +54,9 @@ class UtilityEvaluator:
         body_state,
         world_manager,
         causal_memory,
-        base_reward   : float = 0.0,
-        step_count    : int   = 0,
-        inventory     = None,
+        base_reward: float = 0.0,
+        step_count: int = 0,
+        inventory=None,
     ) -> float:
         """
         Calcula utilidad a partir de objetos del sistema.
@@ -74,6 +74,7 @@ class UtilityEvaluator:
         if hasattr(world_manager, "current_world"):
             wid = world_manager.current_world
             from worlds.world_registry import ALL_WORLDS
+
             wdef = ALL_WORLDS.get(wid)
         expected_risk = wdef.risk_level if wdef else 0.0
 
@@ -89,12 +90,12 @@ class UtilityEvaluator:
             usefulness = min(1.0, causal_memory.count_learned() * 0.1)
 
         return self.evaluate(
-            expected_reward    = base_reward,
-            usefulness_for_goal= usefulness,
-            return_home_bonus  = return_home_bonus,
-            expected_risk      = expected_risk,
-            energy_cost        = energy_cost,
-            time_cost          = time_cost,
+            expected_reward=base_reward,
+            usefulness_for_goal=usefulness,
+            return_home_bonus=return_home_bonus,
+            expected_risk=expected_risk,
+            energy_cost=energy_cost,
+            time_cost=time_cost,
         )
 
     # ── Seguimiento episodico ─────────────────────────────────────────────────
@@ -104,8 +105,8 @@ class UtilityEvaluator:
 
     def reset_episode(self):
         self._episode_utilities = []
-        self._last_utility      = 0.0
-        self._last_breakdown    = {}
+        self._last_utility = 0.0
+        self._last_breakdown = {}
 
     def average_episode_utility(self) -> float:
         if not self._episode_utilities:
@@ -124,8 +125,8 @@ class UtilityEvaluator:
 
     def to_dict(self) -> dict:
         return {
-            "last_utility"          : self._last_utility,
-            "avg_episode_utility"   : self.average_episode_utility(),
-            "steps_evaluated"       : len(self._episode_utilities),
-            "last_breakdown"        : self._last_breakdown,
+            "last_utility": self._last_utility,
+            "avg_episode_utility": self.average_episode_utility(),
+            "steps_evaluated": len(self._episode_utilities),
+            "last_breakdown": self._last_breakdown,
         }

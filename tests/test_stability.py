@@ -2,6 +2,7 @@
 Tests de estabilidad para BabyIA World 0.2.2.
 Verifican correcciones criticas de comportamiento en main.py.
 """
+
 from unittest.mock import patch
 
 from main import parse_args, RunConfig

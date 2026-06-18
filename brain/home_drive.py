@@ -3,6 +3,7 @@ Impulso de regreso a casa: registra patron de retorno de BabyIA.
 No es miedo ni apego: es una regla de entrenamiento con metricas.
 Persiste en data/home_stats.json.
 """
+
 import json
 from pathlib import Path
 
@@ -15,20 +16,20 @@ EXTRA_STEP_PENALTY = 0.01  # penalizacion extra por cada paso tras superar el um
 
 class HomeDrive:
     def __init__(self, stats_file: Path | None = None):
-        self._file            = Path(stats_file) if stats_file else HOME_STATS_FILE
-        self.total_episodes   = 0
+        self._file = Path(stats_file) if stats_file else HOME_STATS_FILE
+        self.total_episodes = 0
         self.episodes_at_home = 0
-        self.episodes_away    = 0
-        self.total_returns    = 0
-        self._ep_steps_out    = 0
-        self._ep_returned     = False
+        self.episodes_away = 0
+        self.total_returns = 0
+        self._ep_steps_out = 0
+        self._ep_returned = False
         self._load()
 
     # ── Por episodio ──────────────────────────────────────────────────────────
 
     def reset_episode(self):
         self._ep_steps_out = 0
-        self._ep_returned  = False
+        self._ep_returned = False
 
     def step_outside(self):
         self._ep_steps_out += 1
@@ -44,7 +45,7 @@ class HomeDrive:
         else:
             self.episodes_away += 1
         self._ep_steps_out = 0
-        self._ep_returned  = False
+        self._ep_returned = False
 
     # ── Senales ───────────────────────────────────────────────────────────────
 
@@ -65,10 +66,10 @@ class HomeDrive:
 
     def to_dict(self) -> dict:
         return {
-            "total_episodes"  : self.total_episodes,
+            "total_episodes": self.total_episodes,
             "episodes_at_home": self.episodes_at_home,
-            "episodes_away"   : self.episodes_away,
-            "total_returns"   : self.total_returns,
+            "episodes_away": self.episodes_away,
+            "total_returns": self.total_returns,
             "return_home_rate": self.return_home_rate,
         }
 
@@ -79,8 +80,8 @@ class HomeDrive:
 
     def reset(self):
         self.total_episodes = self.episodes_at_home = self.episodes_away = 0
-        self.total_returns  = self._ep_steps_out    = 0
-        self._ep_returned   = False
+        self.total_returns = self._ep_steps_out = 0
+        self._ep_returned = False
         if self._file.exists():
             self._file.unlink()
 
@@ -88,9 +89,9 @@ class HomeDrive:
         try:
             with open(self._file, encoding="utf-8") as f:
                 d = json.load(f)
-            self.total_episodes   = d.get("total_episodes", 0)
+            self.total_episodes = d.get("total_episodes", 0)
             self.episodes_at_home = d.get("episodes_at_home", 0)
-            self.episodes_away    = d.get("episodes_away", 0)
-            self.total_returns    = d.get("total_returns", 0)
+            self.episodes_away = d.get("episodes_away", 0)
+            self.total_returns = d.get("total_returns", 0)
         except (FileNotFoundError, json.JSONDecodeError):
             pass

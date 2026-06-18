@@ -1,6 +1,10 @@
 """Tests para world/level_factory.py."""
+
 from world.level_factory import (
-    get_maze_for_level, save_level_stats, load_level_stats, BASE_WALLS,
+    get_maze_for_level,
+    save_level_stats,
+    load_level_stats,
+    BASE_WALLS,
 )
 
 
@@ -10,8 +14,16 @@ def test_get_maze_returns_dict():
 
 def test_get_maze_required_keys():
     info = get_maze_for_level(1)
-    for key in ("level", "walls", "seed", "density", "difficulty",
-                "solvable", "description", "wall_count"):
+    for key in (
+        "level",
+        "walls",
+        "seed",
+        "density",
+        "difficulty",
+        "solvable",
+        "description",
+        "wall_count",
+    ):
         assert key in info, f"Falta clave: {key}"
 
 
@@ -87,6 +99,7 @@ def test_load_missing_returns_empty(tmp_path):
 
 
 # 0.2.2 ── llave y puerta ────────────────────────────────────────────────────
+
 
 def test_requires_key_door_key_present():
     for level in range(7):

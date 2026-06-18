@@ -26,9 +26,12 @@ def test_load_returns_false_when_no_model(store):
 def test_load_returns_true_after_save(store, tmp_path):
     store.save_latest()
     brain2 = BabyBrain()
-    store2 = ModelStore(brain2, model_latest=tmp_path / "latest.pt",
-                        model_best=tmp_path / "best.pt",
-                        checkpoints_dir=tmp_path / "checkpoints")
+    store2 = ModelStore(
+        brain2,
+        model_latest=tmp_path / "latest.pt",
+        model_best=tmp_path / "best.pt",
+        checkpoints_dir=tmp_path / "checkpoints",
+    )
     assert store2.load() is True
 
 
@@ -54,8 +57,10 @@ def test_save_checkpoint_at_interval(store, tmp_path):
 
 def test_no_checkpoint_before_interval(store, tmp_path):
     store.save_checkpoint(50)
-    assert not (tmp_path / "checkpoints").exists() or \
-           len(list((tmp_path / "checkpoints").iterdir())) == 0
+    assert (
+        not (tmp_path / "checkpoints").exists()
+        or len(list((tmp_path / "checkpoints").iterdir())) == 0
+    )
 
 
 def test_reset_removes_files(store, tmp_path):
@@ -77,6 +82,7 @@ def test_init_best_rate(store):
 
 # 0.2.2 ── reporte de errores ────────────────────────────────────────────────
 
+
 def test_last_load_error_empty_initially(store):
     assert store.last_load_error == ""
 
@@ -84,7 +90,7 @@ def test_last_load_error_empty_initially(store):
 def test_load_no_error_when_no_file(store):
     result = store.load()
     assert result is False
-    assert store.last_load_error == ""   # no hay archivo -> no es un error
+    assert store.last_load_error == ""  # no hay archivo -> no es un error
 
 
 def test_model_load_reports_incompatible_model(tmp_path):
@@ -95,18 +101,24 @@ def test_model_load_reports_incompatible_model(tmp_path):
 
     # Guardar modelo con tamano de entrada incorrecto (10 en vez de 18)
     wrong_net = nn.Sequential(
-        nn.Linear(10, 128), nn.ReLU(),
-        nn.Linear(128, 64), nn.ReLU(),
+        nn.Linear(10, 128),
+        nn.ReLU(),
+        nn.Linear(128, 64),
+        nn.ReLU(),
         nn.Linear(64, 5),
     )
     model_file = tmp_path / "bad_brain.pt"
-    torch.save({"q_net": wrong_net.state_dict(), "epsilon": 0.5, "train_steps": 0},
-               model_file)
+    torch.save(
+        {"q_net": wrong_net.state_dict(), "epsilon": 0.5, "train_steps": 0}, model_file
+    )
 
     brain = BabyBrain()
-    store = ModelStore(brain, model_latest=model_file,
-                       model_best=tmp_path / "best.pt",
-                       checkpoints_dir=tmp_path / "ckpt")
+    store = ModelStore(
+        brain,
+        model_latest=model_file,
+        model_best=tmp_path / "best.pt",
+        checkpoints_dir=tmp_path / "ckpt",
+    )
     result = store.load()
 
     assert result is False

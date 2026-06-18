@@ -79,7 +79,16 @@ def test_reset(tmp_path):
 
 def test_to_dict_keys(metrics):
     d = metrics.to_dict()
-    for key in ["total_episodes", "recent_success_rate", "best_success_rate",
-                "average_reward", "average_steps", "wall_hits",
-                "goal_reached_count", "exploration_rate", "current_level", "last_updated"]:
+    for key in [
+        "total_episodes",
+        "recent_success_rate",
+        "best_success_rate",
+        "average_reward",
+        "average_steps",
+        "wall_hits",
+        "goal_reached_count",
+        "exploration_rate",
+        "current_level",
+        "last_updated",
+    ]:
         assert key in d

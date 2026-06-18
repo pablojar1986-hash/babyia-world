@@ -1,5 +1,6 @@
 {
   "level": 1,
+  "grid_size": 10,
   "walls": [
     [
       2,
@@ -47,5 +48,6 @@
   "difficulty": "Basico",
   "solvable": true,
   "description": "paredes fijas del mundo base",
-  "wall_count": 10
+  "wall_count": 10,
+  "requires_key_door": false
 }

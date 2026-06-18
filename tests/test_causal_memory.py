@@ -1,7 +1,6 @@
 """Tests de brain/causal_memory.py."""
-import json
+
 import pytest
-from pathlib import Path
 from brain.causal_memory import CausalMemory, CausalRelation
 
 

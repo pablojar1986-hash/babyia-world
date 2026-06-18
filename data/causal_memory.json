@@ -1,0 +1,90 @@
+[
+  {
+    "cause": "fire_zone",
+    "effect": "energy_damage",
+    "successes": 5358,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 30
+  },
+  {
+    "cause": "mud",
+    "effect": "reduce_speed",
+    "successes": 487,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 18
+  },
+  {
+    "cause": "spikes",
+    "effect": "energy_damage",
+    "successes": 1317,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 27
+  },
+  {
+    "cause": "speed_boots",
+    "effect": "increase_speed",
+    "successes": 2334,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 30
+  },
+  {
+    "cause": "growth_crystal",
+    "effect": "increase_size",
+    "successes": 4502,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 26
+  },
+  {
+    "cause": "energy_food",
+    "effect": "energy_restore",
+    "successes": 77,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 30
+  },
+  {
+    "cause": "small_door",
+    "effect": "blocked",
+    "successes": 0,
+    "failures": 1501,
+    "confidence": 0.0,
+    "last_episode": 5
+  },
+  {
+    "cause": "shield_orb",
+    "effect": "add_shield",
+    "successes": 2387,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 4
+  },
+  {
+    "cause": "heavy_door",
+    "effect": "opened",
+    "successes": 280181,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 70
+  },
+  {
+    "cause": "small_door",
+    "effect": "opened",
+    "successes": 94,
+    "failures": 0,
+    "confidence": 1.0,
+    "last_episode": 755
+  },
+  {
+    "cause": "heavy_door",
+    "effect": "blocked",
+    "successes": 0,
+    "failures": 6658,
+    "confidence": 0.0,
+    "last_episode": 9
+  }
+]

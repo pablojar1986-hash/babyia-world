@@ -1,31 +1,64 @@
 {
-  "total_episodes": 1321,
-  "recent_success_rate": 0.85,
+  "total_episodes": 10038,
+  "recent_success_rate": 0.0,
   "best_success_rate": 1.0,
-  "average_reward": 44.09,
-  "average_steps": 136.9,
-  "wall_hits": 8824,
-  "goal_reached_count": 1126,
+  "average_reward": 168.8,
+  "average_steps": 200.0,
+  "wall_hits": 166630,
+  "goal_reached_count": 3518,
   "exploration_rate": 0.05,
   "current_level": 1,
-  "keys_collected": 1156,
-  "doors_opened": 1148,
-  "food_consumed": 1076,
-  "danger_entries": 589,
-  "concepts_discovered": 6,
-  "interactions_ok": 1156,
+  "keys_collected": 7412,
+  "doors_opened": 7181,
+  "food_consumed": 4762,
+  "danger_entries": 4047,
+  "concepts_discovered": 18,
+  "interactions_ok": 7412,
   "interactions_fail": 0,
   "level_stats": {
     "0": {
-      "episodes": 19,
-      "successes": 18,
-      "total_reward": 735.3500000000001
+      "episodes": 2500,
+      "successes": 85,
+      "total_reward": 2291944.2200000016
     },
     "1": {
-      "episodes": 981,
-      "successes": 842,
-      "total_reward": 40999.350000000006
+      "episodes": 5226,
+      "successes": 2737,
+      "total_reward": 921491.6199999987
+    },
+    "2": {
+      "episodes": 1317,
+      "successes": 429,
+      "total_reward": 258495.77999999985
+    },
+    "3": {
+      "episodes": 674,
+      "successes": 1,
+      "total_reward": 272825.3899999999
     }
   },
-  "last_updated": "2026-06-15T07:15:17.568692"
+  "world_visits": {
+    "home": 5726,
+    "food_world": 949,
+    "danger_world": 779,
+    "curiosity_world": 252,
+    "challenge_world": 11
+  },
+  "episodes_at_home": 5726,
+  "episodes_away": 1991,
+  "return_home_rate": 0.57,
+  "powerups_collected": 47,
+  "hazards_hit": 108,
+  "hazards_blocked": 0,
+  "door_attempts": 1,
+  "door_successes": 0,
+  "causal_learned": 9,
+  "level_completed_count": 2,
+  "next_level_door_attempts": 20,
+  "next_level_door_successes": 2,
+  "next_level_door_fails_no_key": 20,
+  "optional_rooms_entered": 19,
+  "treasure_rooms_entered": 19,
+  "episodes_without_progress": 25,
+  "last_updated": "2026-06-17T21:51:36.827085"
 }

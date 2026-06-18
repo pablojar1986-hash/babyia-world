@@ -1,4 +1,5 @@
 """Versionado y persistencia de pesos del cerebro."""
+
 import shutil
 import sys
 from pathlib import Path
@@ -16,16 +17,21 @@ class ModelStore:
     Acepta rutas opcionales para facilitar tests sin tocar el sistema de archivos real.
     """
 
-    def __init__(self, brain,
-                 model_latest: Path | None = None,
-                 model_best:   Path | None = None,
-                 checkpoints_dir: Path | None = None):
-        self.brain            = brain
-        self._latest          = Path(model_latest)    if model_latest    else MODEL_LATEST
-        self._best            = Path(model_best)      if model_best      else MODEL_BEST
-        self._checkpoints_dir = Path(checkpoints_dir) if checkpoints_dir else CHECKPOINTS_DIR
-        self._best_rate       = 0.0
-        self.last_load_error  = ""   # 0.2.2: razon del ultimo fallo de carga
+    def __init__(
+        self,
+        brain,
+        model_latest: Path | None = None,
+        model_best: Path | None = None,
+        checkpoints_dir: Path | None = None,
+    ):
+        self.brain = brain
+        self._latest = Path(model_latest) if model_latest else MODEL_LATEST
+        self._best = Path(model_best) if model_best else MODEL_BEST
+        self._checkpoints_dir = (
+            Path(checkpoints_dir) if checkpoints_dir else CHECKPOINTS_DIR
+        )
+        self._best_rate = 0.0
+        self.last_load_error = ""  # 0.2.2: razon del ultimo fallo de carga
 
     # ── Guardado ──────────────────────────────────────────────────────────────
 
@@ -67,7 +73,9 @@ class ModelStore:
         except Exception as e:
             msg = str(e)
             if "size mismatch" in msg.lower() or "mismatch" in msg.lower():
-                self.last_load_error = f"Modelo incompatible (STATE_SIZE diferente): {msg[:120]}"
+                self.last_load_error = (
+                    f"Modelo incompatible (STATE_SIZE diferente): {msg[:120]}"
+                )
             else:
                 self.last_load_error = f"Error al cargar modelo: {msg[:120]}"
             print(f"[model_store] {self.last_load_error}", file=sys.stderr)

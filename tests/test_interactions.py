@@ -1,4 +1,5 @@
 """Tests de logica de interaccion (world/interactions.py)."""
+
 from world.interactions import (
     interact_danger,
     interact_door_closed,
@@ -16,6 +17,7 @@ def _assert_structure(result):
 
 
 # ── interact_key ──────────────────────────────────────────────────────────────
+
 
 def test_pick_key_first_time():
     r = interact_key(has_key=False, first_time=True)
@@ -39,6 +41,7 @@ def test_pick_key_already_has_key():
 
 # ── interact_door_closed ──────────────────────────────────────────────────────
 
+
 def test_door_without_key():
     r = interact_door_closed(has_key=False)
     assert r["success"] is False
@@ -56,6 +59,7 @@ def test_door_with_key():
 
 # ── interact_food ─────────────────────────────────────────────────────────────
 
+
 def test_food_when_low_energy():
     r = interact_food(energy=0.3)
     assert r["success"] is True
@@ -71,6 +75,7 @@ def test_food_when_ok_energy():
 
 # ── interact_danger ───────────────────────────────────────────────────────────
 
+
 def test_danger_always_fails():
     r = interact_danger()
     assert r["success"] is False
@@ -80,6 +85,7 @@ def test_danger_always_fails():
 
 
 # ── interact_unknown ──────────────────────────────────────────────────────────
+
 
 def test_unknown_first_time():
     r = interact_unknown(first_time=True)

@@ -1,4 +1,5 @@
 """Tests de brain/utility_evaluator.py."""
+
 import pytest
 from brain.utility_evaluator import UtilityEvaluator
 
@@ -34,8 +35,12 @@ def test_last_breakdown_keys(ue):
 
 
 def test_all_costs_negative_effect(ue):
-    u_no_cost = ue.evaluate(expected_reward=5.0, expected_risk=0.0, energy_cost=0.0, time_cost=0.0)
-    u_with_cost = ue.evaluate(expected_reward=5.0, expected_risk=1.0, energy_cost=0.5, time_cost=0.2)
+    u_no_cost = ue.evaluate(
+        expected_reward=5.0, expected_risk=0.0, energy_cost=0.0, time_cost=0.0
+    )
+    u_with_cost = ue.evaluate(
+        expected_reward=5.0, expected_risk=1.0, energy_cost=0.5, time_cost=0.2
+    )
     assert u_no_cost > u_with_cost
 
 
@@ -65,5 +70,10 @@ def test_negative_utility_possible(ue):
 def test_to_dict_keys(ue):
     ue.evaluate(expected_reward=1.0)
     d = ue.to_dict()
-    for k in ["last_utility", "avg_episode_utility", "steps_evaluated", "last_breakdown"]:
+    for k in [
+        "last_utility",
+        "avg_episode_utility",
+        "steps_evaluated",
+        "last_breakdown",
+    ]:
         assert k in d

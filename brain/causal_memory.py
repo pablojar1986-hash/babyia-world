@@ -4,18 +4,19 @@ Almacena que acciones/objetos provocaron que resultados, con nivel de confianza.
 La confianza aumenta con evidencia consistente; disminuye con evidencia contraria.
 No es un modelo bayesiano real — es un sistema de conteo simple con clamping.
 """
+
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 
 
 @dataclass
 class CausalRelation:
-    cause      : str
-    effect     : str
-    successes  : int   = 0   # veces que cause -> effect se confirmo
-    failures   : int   = 0   # veces que cause -> effect fallo / no ocurrio
-    last_episode: int  = 0
+    cause: str
+    effect: str
+    successes: int = 0  # veces que cause -> effect se confirmo
+    failures: int = 0  # veces que cause -> effect fallo / no ocurrio
+    last_episode: int = 0
 
     @property
     def confidence(self) -> float:
@@ -30,19 +31,19 @@ class CausalRelation:
 
     def to_dict(self) -> dict:
         return {
-            "cause"          : self.cause,
-            "effect"         : self.effect,
-            "successes"      : self.successes,
-            "failures"       : self.failures,
-            "confidence"     : self.confidence,
-            "last_episode"   : self.last_episode,
+            "cause": self.cause,
+            "effect": self.effect,
+            "successes": self.successes,
+            "failures": self.failures,
+            "confidence": self.confidence,
+            "last_episode": self.last_episode,
         }
 
 
 class CausalMemory:
     def __init__(self, filepath: Path):
-        self._path      : Path  = filepath
-        self._relations : dict[str, CausalRelation] = {}
+        self._path: Path = filepath
+        self._relations: dict[str, CausalRelation] = {}
         self._load()
 
     # ── Registro de observaciones ─────────────────────────────────────────────
@@ -56,7 +57,7 @@ class CausalMemory:
         if success:
             rel.successes += 1
         else:
-            rel.failures  += 1
+            rel.failures += 1
         rel.last_episode = episode
 
     # ── Consultas ─────────────────────────────────────────────────────────────
@@ -72,7 +73,8 @@ class CausalMemory:
     def best_effect_for(self, cause: str) -> str | None:
         """Efecto con mayor confianza para una causa dada."""
         candidates = {
-            k: r for k, r in self._relations.items()
+            k: r
+            for k, r in self._relations.items()
             if r.cause == cause and r.total_observations >= 2
         }
         if not candidates:
@@ -83,8 +85,11 @@ class CausalMemory:
         return list(self._relations.values())
 
     def count_learned(self, min_confidence: float = 0.6) -> int:
-        return sum(1 for r in self._relations.values()
-                   if r.confidence >= min_confidence and r.total_observations >= 3)
+        return sum(
+            1
+            for r in self._relations.values()
+            if r.confidence >= min_confidence and r.total_observations >= 3
+        )
 
     # ── Persistencia ──────────────────────────────────────────────────────────
 
@@ -100,9 +105,9 @@ class CausalMemory:
 
     def to_dict(self) -> dict:
         return {
-            "total_relations"  : len(self._relations),
+            "total_relations": len(self._relations),
             "learned_confident": self.count_learned(),
-            "relations"        : [r.to_dict() for r in self._relations.values()],
+            "relations": [r.to_dict() for r in self._relations.values()],
         }
 
     def _load(self):
@@ -113,11 +118,11 @@ class CausalMemory:
                 data = json.load(f)
             for entry in data:
                 rel = CausalRelation(
-                    cause        = entry["cause"],
-                    effect       = entry["effect"],
-                    successes    = entry.get("successes", 0),
-                    failures     = entry.get("failures",  0),
-                    last_episode = entry.get("last_episode", 0),
+                    cause=entry["cause"],
+                    effect=entry["effect"],
+                    successes=entry.get("successes", 0),
+                    failures=entry.get("failures", 0),
+                    last_episode=entry.get("last_episode", 0),
                 )
                 self._relations[f"{rel.cause}::{rel.effect}"] = rel
         except (json.JSONDecodeError, KeyError):

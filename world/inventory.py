@@ -1,9 +1,9 @@
 """Inventario de BabyIA — objetos y energia durante un episodio."""
 
-MAX_ENERGY        = 1.0
-ENERGY_START      = 1.0
+MAX_ENERGY = 1.0
+ENERGY_START = 1.0
 ENERGY_COST_DANGER = 0.2
-ENERGY_GAIN_FOOD   = 0.3
+ENERGY_GAIN_FOOD = 0.3
 
 
 class Inventory:
@@ -16,8 +16,8 @@ class Inventory:
         self.reset()
 
     def reset(self):
-        self.has_key    = False
-        self.energy     = ENERGY_START
+        self.has_key = False
+        self.energy = ENERGY_START
         self.food_count = 0
         self.touched_objects: list[str] = []
 
@@ -69,10 +69,10 @@ class Inventory:
 
     def to_dict(self) -> dict:
         return {
-            "has_key"   : self.has_key,
-            "energy"    : round(self.energy, 3),
+            "has_key": self.has_key,
+            "energy": round(self.energy, 3),
             "food_count": self.food_count,
-            "touched"   : self.touched_objects[-5:],
+            "touched": self.touched_objects[-5:],
         }
 
     # ── Interno ───────────────────────────────────────────────────────────────

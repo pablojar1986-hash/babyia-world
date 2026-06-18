@@ -1,5 +1,6 @@
 """Tests de Inventory (world/inventory.py)."""
-from world.inventory import Inventory, ENERGY_START, ENERGY_COST_DANGER, ENERGY_GAIN_FOOD, MAX_ENERGY
+
+from world.inventory import Inventory, ENERGY_START, ENERGY_COST_DANGER, MAX_ENERGY
 
 
 def test_initial_state():

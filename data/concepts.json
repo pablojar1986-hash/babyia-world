@@ -5,9 +5,9 @@
       "relation": "key_found",
       "value": "True",
       "confidence": 1.0,
-      "evidence_count": 1156,
+      "evidence_count": 7425,
       "first_discovered_episode": 1,
-      "last_seen_episode": 1000
+      "last_seen_episode": 30
     },
     {
       "name": "danger_reduces:energy",
@@ -16,16 +16,16 @@
       "confidence": 0.0,
       "evidence_count": 0,
       "first_discovered_episode": 2,
-      "last_seen_episode": 1000
+      "last_seen_episode": 30
     },
     {
       "name": "key_opens:door",
       "relation": "key_opens",
       "value": "door",
       "confidence": 1.0,
-      "evidence_count": 1148,
+      "evidence_count": 23340,
       "first_discovered_episode": 2,
-      "last_seen_episode": 1000
+      "last_seen_episode": 30
     },
     {
       "name": "door_requires:unknown_tool",
@@ -34,25 +34,133 @@
       "confidence": 0.0,
       "evidence_count": 0,
       "first_discovered_episode": 5,
-      "last_seen_episode": 842
+      "last_seen_episode": 22
     },
     {
       "name": "food_restores:energy",
       "relation": "food_restores",
       "value": "energy",
       "confidence": 1.0,
-      "evidence_count": 1076,
+      "evidence_count": 4762,
       "first_discovered_episode": 5,
-      "last_seen_episode": 1000
+      "last_seen_episode": 9
     },
     {
       "name": "unknown_object:discovered",
       "relation": "unknown_object",
       "value": "discovered",
       "confidence": 1.0,
-      "evidence_count": 1008,
+      "evidence_count": 3991,
       "first_discovered_episode": 5,
-      "last_seen_episode": 1000
+      "last_seen_episode": 4
+    },
+    {
+      "name": "cause:speed_boots",
+      "relation": "cause",
+      "value": "speed_boots",
+      "confidence": 1.0,
+      "evidence_count": 2347,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 30
+    },
+    {
+      "name": "effect:increase_speed",
+      "relation": "effect",
+      "value": "increase_speed",
+      "confidence": 1.0,
+      "evidence_count": 2347,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 30
+    },
+    {
+      "name": "useful_for:speed_door",
+      "relation": "useful_for",
+      "value": "speed_door",
+      "confidence": 1.0,
+      "evidence_count": 2347,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 30
+    },
+    {
+      "name": "cause:growth_crystal",
+      "relation": "cause",
+      "value": "growth_crystal",
+      "confidence": 1.0,
+      "evidence_count": 4519,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 26
+    },
+    {
+      "name": "effect:increase_size",
+      "relation": "effect",
+      "value": "increase_size",
+      "confidence": 1.0,
+      "evidence_count": 4519,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 26
+    },
+    {
+      "name": "useful_for:heavy_door",
+      "relation": "useful_for",
+      "value": "heavy_door",
+      "confidence": 1.0,
+      "evidence_count": 4519,
+      "first_discovered_episode": 1,
+      "last_seen_episode": 26
+    },
+    {
+      "name": "cause:energy_food",
+      "relation": "cause",
+      "value": "energy_food",
+      "confidence": 1.0,
+      "evidence_count": 77,
+      "first_discovered_episode": 2,
+      "last_seen_episode": 30
+    },
+    {
+      "name": "effect:energy_restore",
+      "relation": "effect",
+      "value": "energy_restore",
+      "confidence": 1.0,
+      "evidence_count": 77,
+      "first_discovered_episode": 2,
+      "last_seen_episode": 30
+    },
+    {
+      "name": "useful_for:low_energy",
+      "relation": "useful_for",
+      "value": "low_energy",
+      "confidence": 1.0,
+      "evidence_count": 77,
+      "first_discovered_episode": 2,
+      "last_seen_episode": 30
+    },
+    {
+      "name": "cause:shield_orb",
+      "relation": "cause",
+      "value": "shield_orb",
+      "confidence": 1.0,
+      "evidence_count": 2396,
+      "first_discovered_episode": 5,
+      "last_seen_episode": 4
+    },
+    {
+      "name": "effect:add_shield",
+      "relation": "effect",
+      "value": "add_shield",
+      "confidence": 1.0,
+      "evidence_count": 2396,
+      "first_discovered_episode": 5,
+      "last_seen_episode": 4
+    },
+    {
+      "name": "useful_for:spikes",
+      "relation": "useful_for",
+      "value": "spikes",
+      "confidence": 1.0,
+      "evidence_count": 2396,
+      "first_discovered_episode": 5,
+      "last_seen_episode": 4
     }
   ]
 }

@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 from scripts.health_check import (
     check_file_lengths,
     check_interface_purity,

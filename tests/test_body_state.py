@@ -1,7 +1,8 @@
 """Tests de brain/body_state.py — estado corporal de BabyIA."""
+
 import numpy as np
 import pytest
-from brain.body_state import BodyState, MAX_SIZE, MAX_SPEED, MIN_SIZE, MIN_SPEED
+from brain.body_state import BodyState, MAX_SIZE, MAX_SPEED, MIN_SPEED
 
 
 def make():
@@ -10,13 +11,13 @@ def make():
 
 def test_initial_values():
     bs = make()
-    assert bs.size            == 1.0
-    assert bs.speed           == 1.0
-    assert bs.shield          == 0.0
-    assert bs.fire_immunity   is False
+    assert bs.size == 1.0
+    assert bs.speed == 1.0
+    assert bs.shield == 0.0
+    assert bs.fire_immunity is False
     assert bs.poison_immunity is False
-    assert bs.vision_range    == 3
-    assert bs.memory_focus    == 1.0
+    assert bs.vision_range == 3
+    assert bs.memory_focus == 1.0
 
 
 def test_apply_powerup_increase_size():
@@ -109,9 +110,9 @@ def test_reset_for_episode():
     bs.fire_immunity = True
     bs.shield = 0.8
     bs.reset_for_episode()
-    assert bs.size          == 1.0
+    assert bs.size == 1.0
     assert bs.fire_immunity is False
-    assert bs.shield        == 0.0
+    assert bs.shield == 0.0
 
 
 def test_get_state_features_length():
@@ -123,16 +124,24 @@ def test_get_state_features_length():
 
 def test_get_state_features_normalizado():
     bs = make()
-    bs.size  = MAX_SIZE
+    bs.size = MAX_SIZE
     bs.speed = MAX_SPEED
     feats = bs.get_state_features()
-    assert feats[0] == pytest.approx(1.0)   # size normalizado
-    assert feats[1] == pytest.approx(1.0)   # speed normalizado
+    assert feats[0] == pytest.approx(1.0)  # size normalizado
+    assert feats[1] == pytest.approx(1.0)  # speed normalizado
 
 
 def test_to_dict_contains_keys():
     bs = make()
     d = bs.to_dict()
-    for key in ["size", "speed", "shield", "fire_immunity", "poison_immunity",
-                "vision_range", "memory_focus", "active_effects"]:
+    for key in [
+        "size",
+        "speed",
+        "shield",
+        "fire_immunity",
+        "poison_immunity",
+        "vision_range",
+        "memory_focus",
+        "active_effects",
+    ]:
         assert key in d

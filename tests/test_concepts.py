@@ -1,8 +1,7 @@
 """Tests de ConceptMemory (brain/concepts.py)."""
+
 import json
-import pytest
-from pathlib import Path
-from brain.concepts import ConceptMemory, CONFIDENCE_THRESHOLD, CONFIDENCE_GAIN_OK, CONFIDENCE_LOSS
+from brain.concepts import ConceptMemory
 
 
 def make_cm(tmp_path) -> ConceptMemory:

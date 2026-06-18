@@ -1,9 +1,9 @@
 {
-  "input_size": 18,
+  "input_size": 40,
   "output_size": 5,
-  "total_params": 11013,
+  "total_params": 13829,
   "layer_sizes": [
-    18,
+    40,
     128,
     64,
     5
@@ -11,9 +11,9 @@
   "layers": [
     {
       "name": "net.0",
-      "in": 18,
+      "in": 40,
       "out": 128,
-      "params": 2432
+      "params": 5248
     },
     {
       "name": "net.2",
@@ -28,6 +28,6 @@
       "params": 325
     }
   ],
-  "last_updated": "2026-06-15T08:03:19.726973",
-  "version": "0.2.2"
+  "last_updated": "2026-06-17T21:49:21.231351",
+  "version": "0.3"
 }
