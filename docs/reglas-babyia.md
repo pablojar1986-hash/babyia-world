@@ -16,6 +16,11 @@
 - Calcular funcionalmente una "mision" por prioridad: FIND_KEY / GO_TO_NEXT_LEVEL_DOOR / AVOID_DANGER (0.4.4)
 - Recibir reward shaping de mision (< 1 pt) que guia hacia llave y puerta sin dominar el objetivo real (0.4.4)
 - Mostrar objetivo funcional en la pestana Mision (tecla 6) y en la brujula de navegacion (0.4.4)
+- "Ver" objetos cercanos con campo visual real (FOV) bloqueado por paredes (0.4.5)
+- Recordar posiciones de llave, puerta y hazards vistos durante el episodio (visual_memory) (0.4.5)
+- Aprender con Double DQN + Prioritized Experience Replay (STATE_SIZE=40) (0.4.6)
+- Diagnosticar si existe ruta accesible a la llave y a la puerta mediante BFS (0.4.6b)
+- Detectar estancamiento: colisiones repetidas, oscilacion, zona mas visitada (0.4.6b)
 - Registrar frases autobiográficas generadas por reglas simples
 - Mantener un modelo del yo con nivel, habilidades y objetivo
 

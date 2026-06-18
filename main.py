@@ -32,8 +32,8 @@ from config import (
     MODE_EVALUATE,
     MODE_TRAIN,
     MODE_WATCH,
-    MODEL_V4_BEST,
-    MODEL_V4_LATEST,
+    MODEL_V4_6_BEST,
+    MODEL_V4_6_LATEST,
     SAVE_LATEST_EVERY,
     SAVE_METRICS_EVERY,
 )
@@ -232,7 +232,7 @@ def main():
     trainer = Trainer(training=is_training)
     metrics = TrainingMetrics()
     store = ModelStore(
-        trainer.brain, model_latest=MODEL_V4_LATEST, model_best=MODEL_V4_BEST
+        trainer.brain, model_latest=MODEL_V4_6_LATEST, model_best=MODEL_V4_6_BEST
     )
     view = PygameView(title=f"BabyIA World {APP_VERSION}")
 

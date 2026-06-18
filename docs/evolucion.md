@@ -148,7 +148,7 @@
   opened_door (la llave persiste para next_level_door); status actualizado tras end_episode;
   1 nuevo archivo de test; 495 tests pasando
 
-### 0.4.4 — Inteligencia orientada a misiones, mejor diseno visual y senales de decision mas claras (actual)
+### 0.4.4 — Inteligencia orientada a misiones, mejor diseno visual y senales de decision mas claras (completado)
 - brain/mission.py (NUEVO): MissionState dataclass; MissionTracker.compute() calcula funcionalmente
   FIND_KEY / GO_TO_NEXT_LEVEL_DOOR / AVOID_DANGER / LEVEL_COMPLETED por prioridad funcional
 - brain/decision_context.py (NUEVO): DecisionContext.build() sintetiza estado por paso en dict
@@ -177,6 +177,48 @@
 - 6 nuevos archivos de test; 582 tests pasando
 - NOTA: _full_obs() cambio en indices 14-16 — los pesos .pt guardados son incompatibles.
   Usar --reset-model para empezar desde cero con la nueva observacion.
+
+### 0.4.5 — Mundo escalable, percepcion funcional real y camara viewport (completado)
+- world/world_config.py (NUEVO): grid_size por nivel (8x8 nivel 0-3 → 12x12 nivel 4-6 → 16x16 nivel 7+)
+- world/grid_world.py: viewport 8x8 con camara centrada en BabyIA; grid escalable hasta 16x16
+- brain/perception.py (NUEVO): campo visual real con bloqueo por paredes (FOV); SemanticMap
+- brain/visual_memory.py (NUEVO): posiciones vistas, llave/puerta/hazards recordados por episodio
+- interface/perception_view.py (NUEVO): pestana Percepcion (tecla 7) — FOV, objetos visibles
+- interface/panel_renderer.py: 7 pestanas; minimap con posiciones dinamicas segun grid_size
+- STATE_SIZE 34 → 34 en 0.4.5 (percepcion va al contexto, no al DQN)
+- Confianza por logros parciales (llave recogida, puerta vista)
+- 380+ tests pasando
+
+### 0.4.6 — Double DQN, Prioritized Experience Replay y STATE_SIZE=40 (completado)
+- brain/baby_brain.py: Double DQN (q_net selecciona, target_net evalua — elimina sobreestimacion)
+- brain/baby_brain.py: Prioritized Experience Replay (PER) con _SumTree O(log n), alpha=0.6
+- brain/baby_brain.py: STATE_SIZE 34 → 40 (+6 features de percepcion: key_visible, door_visible,
+  hazards_count, blocked_count, exploration_ratio, rewards_count)
+- brain/baby_brain.py: REPLAY_CAPACITY=50.000; EPSILON_DECAY=0.998 (mas lento para grids grandes)
+- world/objects.py: STATE_SIZE actualizado a 40 (sincronizado con baby_brain.py)
+- Arquitectura DQN: 40 → 128 → 64 → 5; ~13.829 parametros entrenables
+- NOTA: modelos .pt anteriores (STATE_SIZE=34) son incompatibles — usar --reset-model
+
+### 0.4.6b — Diagnostico de rutas BFS y anti-estancamiento (completado)
+- world/path_diagnostics.py (NUEVO): check_path_to_key_and_door() — BFS baby→llave y llave→puerta
+- brain/visual_memory.py: registro de colisiones/hazards repetidos, frecuencia de visita, stuck_zone_hint
+- brain/mission_reward.py: WALL_REPEAT_PENALTY, HAZARD_REPEAT_PENALTY, OSCILLATION_PENALTY
+- brain/mission_reward.py: cap MAX_MISSION_REWARD_PER_EPISODE=8.0
+- brain/trainer.py: path_diagnostics en get_status(); refrescado en cambio de nivel
+- interface/mission_view.py: seccion "Diagnostico de rutas" con estado BFS en tiempo real
+- 5 nuevos archivos de test; 1001 tests pasando
+
+### 0.4.7 — Estabilizacion, limpieza tecnica y coherencia documental (completado)
+- Documentacion alineada con 0.4.6 real: STATE_SIZE=40 en todos los documentos
+- Modelos versionados como babyia_v0_4_6_latest.pt / babyia_v0_4_6_best.pt
+- config.py: MODEL_V4_6_LATEST y MODEL_V4_6_BEST para estado actual (STATE_SIZE=40)
+- main.py: usa MODEL_V4_6_LATEST/BEST — incompatibilidad de pesos reportada claramente
+- brain/network_inspector.py: version actualizada a 0.4.6
+- docs/arquitectura.md: DQN 40->128->64->5 documentado; todos los modulos 0.4.5/0.4.6 incluidos
+- AGENTS.md: reglas obligatorias para agentes IA que trabajen en el proyecto
+- health_check: check_047_integrity() verifica coherencia de 0.4.7
+- 4 nuevos archivos de test; APP_VERSION=0.4.7
+- Sin nuevas funciones jugables — version de consolidacion
 
 ### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas

@@ -6,10 +6,8 @@ from brain.baby_brain import STATE_SIZE
 from world.objects import STATE_SIZE as OBJECTS_STATE_SIZE
 
 
-def test_app_version_is_046():
-    assert APP_VERSION.startswith(
-        "0.4.6"
-    ), f"APP_VERSION={APP_VERSION!r} no empieza por 0.4.6"
+def test_app_version_is_046_or_later():
+    assert APP_VERSION >= "0.4.6", f"APP_VERSION={APP_VERSION!r} debe ser >= 0.4.6"
 
 
 def test_state_size_brain_is_40():

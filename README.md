@@ -1,7 +1,14 @@
-# BabyIA World 0.4.6b
+# BabyIA World 0.4.7
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
+> **0.4.7 — Estabilizacion, limpieza tecnica y coherencia documental.**
+> Documentacion alineada con 0.4.6 real: STATE_SIZE=40, DQN 40→128→64→5.
+> Modelos renombrados a `babyia_v0_4_6_latest.pt` para reflejar la arquitectura actual.
+> AGENTS.md con reglas obligatorias para agentes IA que contribuyan al proyecto.
+> Health check actualizado para verificar coherencia de 0.4.7.
+> Sin nuevas funciones jugables — version de consolidacion.
+>
 > **0.4.6b — Diagnostico de rutas y anti-estancamiento real.**
 > `check_path_to_key_and_door()` usa BFS para verificar si existe ruta accesible baby→llave y llave→puerta.
 > VisualMemory registra colisiones repetidas, entradas repetidas a hazards y frecuencia de visita por celda.

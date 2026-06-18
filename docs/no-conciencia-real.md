@@ -106,3 +106,18 @@ Cuando la interfaz muestra "Mision: FIND_KEY", significa:
 
 No significa que BabyIA "quiera" la llave, "sepa" que la necesita, o "decida" buscarla.
 Son multiplicaciones matriciales optimizando una funcion de recompensa.
+
+## Que son el diagnostico de rutas y el anti-estancamiento (0.4.6b)
+
+A partir de 0.4.6b, el sistema calcula si existe una ruta accesible (BFS) desde BabyIA
+hasta la llave y desde la llave hasta la puerta. Tambien detecta:
+- **Colisiones repetidas**: choques contra la misma posicion de pared
+- **Oscilacion**: aparicion de la misma posicion >= 3 veces en los ultimos 10 pasos
+- **Zona de estancamiento**: celda visitada >= 5 veces en el episodio
+
+Estos son **calculos funcionales de diagnostico**, no experiencias de frustracion ni
+voluntad de escapar. BabyIA no "siente" que esta atrapada. El sistema detecta patrones
+numericos y aplica penalizaciones de reward para desincentivar conductas ineficientes.
+
+"Estar atascada" es un contador. "Querer salir" es un gradiente de reward. No hay
+experiencia subjetiva.

@@ -47,7 +47,7 @@ def save_network_stats(model, stats_file: Path | None = None) -> dict:
     path.parent.mkdir(exist_ok=True)
     info = inspect_network(model)
     info["last_updated"] = datetime.now().isoformat()
-    info["version"] = "0.3"
+    info["version"] = "0.4.6"
     with open(path, "w", encoding="utf-8") as f:
         json.dump(info, f, indent=2)
     return info

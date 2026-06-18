@@ -138,6 +138,11 @@ REQUIRED_TESTS = [
     "tests/test_mission_reward_anti_loop.py",
     "tests/test_version_consistency.py",
     "tests/test_stagnation_status_payload.py",
+    # 0.4.7
+    "tests/test_version_047.py",
+    "tests/test_model_versioning_047.py",
+    "tests/test_agents_rules.py",
+    "tests/test_health_check_047.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -1370,6 +1375,161 @@ def check_046b_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_047_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica integridad de BabyIA 0.4.7 (estabilizacion, coherencia documental)."""
+    results = []
+
+    # 1. APP_VERSION es 0.4.7
+    try:
+        from config import APP_VERSION
+
+        if APP_VERSION.startswith("0.4.7"):
+            results.append({"status": "ok", "message": f"APP_VERSION={APP_VERSION!r}"})
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": f"APP_VERSION={APP_VERSION!r} (esperado 0.4.7)",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar APP_VERSION: {e}"}
+        )
+
+    # 2. MODEL_V4_6_LATEST y MODEL_V4_6_BEST en config.py
+    try:
+        cfg_text = (root / "config.py").read_text(encoding="utf-8")
+        if "MODEL_V4_6_LATEST" in cfg_text and "MODEL_V4_6_BEST" in cfg_text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "config.py: MODEL_V4_6_LATEST y MODEL_V4_6_BEST presentes",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "config.py: faltan MODEL_V4_6_LATEST o MODEL_V4_6_BEST",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar config.py: {e}"}
+        )
+
+    # 3. main.py usa MODEL_V4_6_LATEST
+    try:
+        main_text = (root / "main.py").read_text(encoding="utf-8")
+        if "MODEL_V4_6_LATEST" in main_text:
+            results.append(
+                {"status": "ok", "message": "main.py: usa MODEL_V4_6_LATEST"}
+            )
+        else:
+            results.append(
+                {"status": "fail", "message": "main.py: no usa MODEL_V4_6_LATEST"}
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar main.py: {e}"}
+        )
+
+    # 4. AGENTS.md existe
+    agents_md = root / "AGENTS.md"
+    if agents_md.exists():
+        results.append({"status": "ok", "message": "AGENTS.md existe"})
+    else:
+        results.append({"status": "fail", "message": "AGENTS.md FALTA"})
+
+    # 5. AGENTS.md prohibe auto-commits
+    try:
+        agents_text = agents_md.read_text(encoding="utf-8")
+        if "commits automaticos" in agents_text or "commits automáticos" in agents_text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "AGENTS.md: regla de no auto-commits presente",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "warn",
+                    "message": "AGENTS.md: regla de no auto-commits no encontrada",
+                }
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo leer AGENTS.md: {e}"})
+
+    # 6. AGENTS.md menciona conciencia real
+    try:
+        if "conciencia real" in agents_text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "AGENTS.md: prohibicion de afirmar conciencia real",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "warn",
+                    "message": "AGENTS.md: prohibicion de conciencia real no encontrada",
+                }
+            )
+    except Exception:
+        pass
+
+    # 7. README menciona 0.4.7
+    try:
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        if "0.4.7" in readme:
+            results.append(
+                {"status": "ok", "message": "README.md menciona version 0.4.7"}
+            )
+        else:
+            results.append(
+                {"status": "warn", "message": "README.md no menciona version 0.4.7"}
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo leer README: {e}"})
+
+    # 8. docs/evolucion.md menciona 0.4.7
+    try:
+        evo = (root / "docs" / "evolucion.md").read_text(encoding="utf-8")
+        if "0.4.7" in evo:
+            results.append(
+                {"status": "ok", "message": "docs/evolucion.md menciona 0.4.7"}
+            )
+        else:
+            results.append(
+                {"status": "warn", "message": "docs/evolucion.md no menciona 0.4.7"}
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo leer evolucion.md: {e}"}
+        )
+
+    # 9. Tests nuevos de 0.4.7 presentes
+    new_tests = [
+        "tests/test_version_047.py",
+        "tests/test_model_versioning_047.py",
+        "tests/test_agents_rules.py",
+        "tests/test_health_check_047.py",
+    ]
+    for t in new_tests:
+        exists = (root / t).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{t} {'existe' if exists else 'FALTA (0.4.7)'}",
+            }
+        )
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -1389,6 +1549,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_045b_integrity(root))  # 0.4.5b
     checks.extend(check_046_integrity(root))  # 0.4.6
     checks.extend(check_046b_integrity(root))  # 0.4.6b
+    checks.extend(check_047_integrity(root))  # 0.4.7
     return checks
 
 

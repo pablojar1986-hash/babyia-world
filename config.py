@@ -18,6 +18,9 @@ MODEL_V3_BEST = MODELS_DIR / "babyia_v0_3_best.pt"
 # 0.4 — modelos con STATE_SIZE=34 (incompatibles con 0.3)
 MODEL_V4_LATEST = MODELS_DIR / "babyia_v0_4_latest.pt"
 MODEL_V4_BEST = MODELS_DIR / "babyia_v0_4_best.pt"
+# 0.4.6 — modelos con STATE_SIZE=40, Double DQN + PER (incompatibles con 0.4.x anterior)
+MODEL_V4_6_LATEST = MODELS_DIR / "babyia_v0_4_6_latest.pt"
+MODEL_V4_6_BEST = MODELS_DIR / "babyia_v0_4_6_best.pt"
 
 # Archivos de datos persistentes
 STATS_FILE = DATA_DIR / "training_stats.json"
@@ -37,7 +40,7 @@ SAVE_METRICS_EVERY = 10  # episodios entre guardados de training_stats.json
 CHECKPOINT_EVERY = 100  # episodios entre checkpoints numerados
 
 # ── Versión de la aplicación ──────────────────────────────────────────────────
-APP_VERSION = "0.4.6"
+APP_VERSION = "0.4.7"
 
 # ── Modos de ejecución ─────────────────────────────────────────────────────────
 MODE_TRAIN = "train"

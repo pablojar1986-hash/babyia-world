@@ -9,7 +9,7 @@ BabyIA World/
 ├── main.py              ← Argparse, loop de episodios, orquestación.
 |
 |-- world/               <- Reglas fisicas del mundo. No sabe nada del cerebro.
-|   |-- objects.py       <- Cell (incl. LEVEL_DOOR=12, OPTIONAL_DOOR=13 0.4.3); STATE_SIZE=34.
+|   |-- objects.py       <- Cell (incl. LEVEL_DOOR=12, OPTIONAL_DOOR=13 0.4.3); STATE_SIZE=40.
 |   |-- rewards.py       <- REWARD_LEVEL_COMPLETED=120; REWARD_NEW_CELL=0.05 (0.4.3).
 |   |-- level_doors.py   <- LevelDoor; LEVEL_DOOR_POSITIONS; attempt_level_door() (0.4.3).
 |   |-- grid_world.py    <- Cuadricula 8x8; NEXT_LEVEL_DOOR bloqueante; level_completed (0.4.3).
@@ -19,10 +19,12 @@ BabyIA World/
 |   |-- hazards.py       <- 8 hazards; apply_hazard_to_body() con bloqueo por estado corporal.
 |   |-- doors.py         <- DoorRequirement.max_size; small_door max_size=1.2 (0.4.2).
 |   |-- maze_generator.py <- BFS simple y BFS por etapas llave-puerta (0.2.2).
-|   `-- level_factory.py  <- Laberintos por nivel: 0=vacio, 1=base, 4-6=llave-puerta (0.2.2).
+|   |-- level_factory.py  <- Laberintos por nivel: 0=vacio, 1=base, 4-6=llave-puerta (0.2.2).
+|   |-- world_config.py   <- Tamanos de grid por nivel (8x8 -> 16x16); escala progresiva (0.4.5).
+|   `-- path_diagnostics.py <- BFS: check_path_to_key_and_door(); accesibilidad de rutas (0.4.6b).
 |
 |-- brain/               <- Todo lo relacionado con el aprendizaje.
-|   |-- baby_brain.py    <- DQN: red neuronal 34->128->64->5, replay buffer; last_decision (0.4.1).
+|   |-- baby_brain.py    <- DQN: red neuronal 40->128->64->5, Double DQN + PER, STATE_SIZE=40 (0.4.6).
 |   |-- neural_debugger.py <- Inspeccion diagnostica: Q-values, activaciones por capa (0.4.1).
 |   |-- survival.py      <- SurvivalEvaluator: risk_level, recommendation, diagnostico funcional (0.4.2).
 |   |-- trainer.py       <- Orquesta mundo <-> cerebro <-> memoria; handlers powerup/hazard/door (0.4.2).
@@ -43,7 +45,9 @@ BabyIA World/
 |   |-- home_drive.py    <- Impulso de regreso a casa (0.3).
 |   |-- mission.py       <- MissionState; MissionTracker.compute() prioridad funcional (0.4.4).
 |   |-- decision_context.py <- DecisionContext.build() — resumen por paso para UI/reward (0.4.4).
-|   `-- mission_reward.py <- Reward shaping por mision; magnitudes << REWARD_LEVEL_COMPLETED (0.4.4).
+|   |-- mission_reward.py <- Reward shaping por mision; cap MAX_MISSION_REWARD_PER_EPISODE=8 (0.4.6b).
+|   |-- visual_memory.py <- Objetos vistos; colisiones/hazards repetidos; stuck_zone_hint (0.4.5/0.4.6b).
+|   `-- perception.py    <- Campo visual FOV real; SemanticMap; rangos desde body_state (0.4.5).
 |
 |-- worlds/              <- Sistema de mundos multiples (0.3). No sabe nada del cerebro.
 |   |-- world_definition.py <- Dataclass: id, perfil, riesgo, nivel minimo, descripcion.
@@ -56,13 +60,14 @@ BabyIA World/
 │   ├── pygame_view.py      ← Coordinador: ventana, grid, log inferior (0.4.1).
 │   ├── layout.py           ← Constantes de geometria: areas, tamanios, pestanas (0.4.1).
 │   ├── ui_components.py    ← Paleta de colores y primitivas de dibujo (0.4.1).
-│   ├── panel_renderer.py   ← Sistema de 6 pestanas con scroll y navegacion (0.4.4).
+│   ├── panel_renderer.py   ← Sistema de 7 pestanas con scroll y navegacion (0.4.5).
 │   ├── status_view.py      ← Pestana Estado: episodio, emociones, epsilon (0.4.1).
 │   ├── world_info_view.py  ← Pestana Mundo: portales, retorno, historial (0.4.1).
 │   ├── body_view.py        ← Pestana Cuerpo: size, speed, shield, energia, supervivencia (0.4.2).
-│   ├── brain_view.py       ← Pestana Cerebro: Q-values, arquitectura DQN + mision funcional (0.4.4).
+│   ├── brain_view.py       ← Pestana Cerebro: Q-values, arquitectura DQN 40->128->64->5 (0.4.6).
 │   ├── memory_view.py      ← Pestana Memoria: conceptos, relaciones causales, inventario (0.4.2).
-│   ├── mission_view.py     ← Pestana Mision (tecla 6): objetivo, distancias, reward shaping (0.4.4).
+│   ├── mission_view.py     ← Pestana Mision (tecla 6): objetivo, distancias, rutas BFS (0.4.6b).
+│   ├── perception_view.py  ← Pestana Percepcion (tecla 7): FOV, objetos visibles (0.4.5).
 │   ├── minimap_view.py     ← Brujula textual de navegacion hacia llave/puerta/amenazas (0.4.4).
 │   ├── visual_theme.py     ← Paleta de colores centralizada por mision y estado (0.4.4).
 │   ├── avatar_renderer.py  ← Avatar con indicadores de objetivo funcional por mision (0.4.4).
@@ -99,7 +104,7 @@ BabyIA World/
 5. **model_store gestiona el cerebro**: trainer.py ya no llama a brain.save().
 6. **metrics.py es independiente**: puede usarse sin Pygame.
 7. **interactions.py es puro**: devuelve dicts, no modifica estado directamente.
-8. **trainer._full_obs() construye el estado de 34 features**: world (10) + inventory (8) + world_context (8) + body (8).
+8. **trainer._full_obs() construye el estado de 40 features**: world (10) + inventory (8) + world_context (8) + body (8) + percepcion (6).
 9. **level_factory es la fuente de verdad de laberintos**: trainer delega en ella al subir de nivel.
 10. **network_inspector no toca el training loop**: solo lee arquitectura y escribe JSON.
 11. **worlds/ no importa de brain/**: el sistema de mundos es independiente del aprendizaje.
