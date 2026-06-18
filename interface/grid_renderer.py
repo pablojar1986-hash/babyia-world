@@ -89,6 +89,7 @@ def _draw_cell(
     full_lbl: bool,
     compact_lbl: bool,
     fog: bool = False,
+    portal_colors: dict | None = None,
 ) -> None:
     rect = pygame.Rect(sx, sy, cs - 2, cs - 2)
     is_vis = (wx, wy) in visited
@@ -97,7 +98,7 @@ def _draw_cell(
         pygame.draw.rect(screen, _FOG, rect, border_radius=4)
         return
 
-    portal_c = PORTAL_COLORS.get((wx, wy))
+    portal_c = portal_colors.get((wx, wy)) if portal_colors else None
     base_color = CELL_COLORS.get(val, _VISIT if is_vis else _EMPTY)
     pygame.draw.rect(screen, base_color, rect, border_radius=4)
 
@@ -134,6 +135,8 @@ def draw_full_world(
     ox, oy = get_grid_draw_origin(grid_area, world_size, cs)
     full_lbl = should_draw_label(cs)
     compact_lbl = should_draw_compact_label(cs)
+    # Portales solo existen en el grid 8x8 (home world, nivel 0)
+    _portal_colors = PORTAL_COLORS if world_size == 8 else {}
 
     for wy in range(world_size):
         for wx in range(world_size):
@@ -151,6 +154,7 @@ def draw_full_world(
                 full_lbl,
                 compact_lbl,
                 fog,
+                _portal_colors,
             )
 
     av_sx, av_sy = world_to_fullmap_screen((bx, by), (ox, oy), cs)
@@ -183,6 +187,7 @@ def draw_camera_world(
     world_size = getattr(world, "size", 8)
     bx, by = world.baby_pos
     ox, oy = grid_area[0], grid_area[1]
+    _portal_colors = PORTAL_COLORS if world_size == 8 else {}
 
     camera.update((bx, by), grid_size=world_size)
     mn_x, mn_y, mx_x, mx_y = camera.get_visible_bounds()
@@ -202,6 +207,8 @@ def draw_camera_world(
                 fonts,
                 True,
                 False,
+                False,
+                _portal_colors,
             )
 
     av_sx, av_sy = camera.world_to_screen(bx, by, cell_size, ox, oy)
