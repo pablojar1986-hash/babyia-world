@@ -3,6 +3,7 @@
 from interface.grid_scaler import (
     get_grid_draw_origin,
     get_scaled_cell_size,
+    is_in_grid_bounds,
     should_draw_compact_label,
     should_draw_label,
     world_to_fullmap_screen,
@@ -144,3 +145,38 @@ class TestShouldDrawLabel:
     def test_no_compact_above_or_equal_40(self):
         assert should_draw_compact_label(40) is False
         assert should_draw_compact_label(58) is False
+
+
+class TestIsInGridBounds:
+    def test_origin_pixel_is_inside(self):
+        origin = (10, 20)
+        assert is_in_grid_bounds((10, 20), origin, 8, 50) is True
+
+    def test_last_pixel_in_last_cell_is_inside(self):
+        origin = (0, 0)
+        # 8 celdas * 50px = 400; pixel 399 está dentro
+        assert is_in_grid_bounds((399, 399), origin, 8, 50) is True
+
+    def test_first_pixel_past_end_is_outside(self):
+        origin = (0, 0)
+        assert is_in_grid_bounds((400, 0), origin, 8, 50) is False
+        assert is_in_grid_bounds((0, 400), origin, 8, 50) is False
+
+    def test_pixel_before_origin_is_outside(self):
+        origin = (10, 10)
+        assert is_in_grid_bounds((9, 10), origin, 8, 50) is False
+        assert is_in_grid_bounds((10, 9), origin, 8, 50) is False
+
+    def test_center_of_map_is_inside(self):
+        origin = (0, 0)
+        assert is_in_grid_bounds((200, 200), origin, 8, 50) is True
+
+    def test_16x16_real_layout(self):
+        from interface.layout import GRID_AREA
+
+        cs = get_scaled_cell_size(GRID_AREA, 16)
+        ox, oy = get_grid_draw_origin(GRID_AREA, 16, cs)
+        # esquina superior-izquierda
+        assert is_in_grid_bounds((ox, oy), (ox, oy), 16, cs) is True
+        # un pixel antes
+        assert is_in_grid_bounds((ox - 1, oy), (ox, oy), 16, cs) is False

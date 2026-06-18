@@ -122,7 +122,7 @@ def draw_full_world(
     fonts: dict,
     avatar,
     grid_area: tuple,
-    fog: bool = True,
+    fog: bool = False,
 ) -> int:
     """Dibuja el mundo completo escalado. Devuelve el cell_size usado."""
     grid = world.get_grid()

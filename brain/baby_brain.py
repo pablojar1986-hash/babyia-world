@@ -16,8 +16,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-STATE_SIZE = 40  # 10 base + 8 extra + 8 mundo + 8 cuerpo + 6 percepcion
-ACTION_SIZE = 5
+from config import ACTION_SIZE, STATE_SIZE  # fuente de verdad en config.py
+
 REPLAY_CAPACITY = 50_000  # ampliado para grids 16x16
 BATCH_SIZE = 64
 GAMMA = 0.99

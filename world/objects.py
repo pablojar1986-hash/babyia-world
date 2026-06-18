@@ -1,5 +1,10 @@
 from enum import IntEnum
 
+from config import (
+    ACTION_SIZE,
+    STATE_SIZE,
+)  # noqa: F401 — re-exportados para compatibilidad
+
 
 class Cell(IntEnum):
     EMPTY = 0
@@ -35,6 +40,3 @@ ACTION_NAMES = {
 }
 
 GRID_SIZE = 8
-# 0.4.6: ampliado a 40 (10 base + 8 extra + 8 mundo + 8 cuerpo + 6 percepcion)
-STATE_SIZE = 40
-ACTION_SIZE = 5

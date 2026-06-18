@@ -39,6 +39,11 @@ SAVE_LATEST_EVERY = 10  # episodios entre guardados de babyia_latest.pt
 SAVE_METRICS_EVERY = 10  # episodios entre guardados de training_stats.json
 CHECKPOINT_EVERY = 100  # episodios entre checkpoints numerados
 
+# ── Arquitectura del agente (fuente de verdad) ────────────────────────────────
+# Re-exportados desde brain/baby_brain.py y world/objects.py para evitar duplicacion.
+STATE_SIZE = 40  # 10 base + 8 extra + 8 mundo + 8 cuerpo + 6 percepcion
+ACTION_SIZE = 5  # UP DOWN LEFT RIGHT WAIT
+
 # ── Versión de la aplicación ──────────────────────────────────────────────────
 APP_VERSION = "0.4.7"
 
