@@ -1,35 +1,35 @@
 {
-  "total_episodes": 13041,
+  "total_episodes": 14492,
   "recent_success_rate": 0.0,
   "best_success_rate": 1.0,
-  "average_reward": 448.02,
+  "average_reward": 634.53,
   "average_steps": 200.0,
-  "wall_hits": 240816,
-  "goal_reached_count": 3554,
-  "exploration_rate": 0.25,
+  "wall_hits": 250204,
+  "goal_reached_count": 3565,
+  "exploration_rate": 0.05,
   "current_level": 2,
-  "keys_collected": 9371,
-  "doors_opened": 8643,
-  "food_consumed": 4985,
-  "danger_entries": 5608,
+  "keys_collected": 10819,
+  "doors_opened": 10088,
+  "food_consumed": 4987,
+  "danger_entries": 7048,
   "concepts_discovered": 18,
-  "interactions_ok": 9371,
+  "interactions_ok": 10819,
   "interactions_fail": 0,
   "level_stats": {
     "0": {
-      "episodes": 2611,
+      "episodes": 2614,
       "successes": 85,
-      "total_reward": 2321216.9600000023
+      "total_reward": 2320984.960000002
     },
     "1": {
-      "episodes": 5783,
-      "successes": 2749,
-      "total_reward": 1012822.5799999989
+      "episodes": 6505,
+      "successes": 2755,
+      "total_reward": 1415973.369999997
     },
     "2": {
-      "episodes": 2824,
-      "successes": 444,
-      "total_reward": 721636.5700000005
+      "episodes": 3550,
+      "successes": 449,
+      "total_reward": 1068847.390000001
     },
     "3": {
       "episodes": 1416,
@@ -43,27 +43,27 @@
     }
   },
   "world_visits": {
-    "home": 8217,
-    "food_world": 1254,
-    "danger_world": 885,
-    "curiosity_world": 278,
+    "home": 9660,
+    "food_world": 1256,
+    "danger_world": 888,
+    "curiosity_world": 281,
     "challenge_world": 86
   },
-  "episodes_at_home": 8217,
-  "episodes_away": 2503,
-  "return_home_rate": 0.63,
-  "powerups_collected": 871,
-  "hazards_hit": 731,
+  "episodes_at_home": 9660,
+  "episodes_away": 2511,
+  "return_home_rate": 0.667,
+  "powerups_collected": 1519,
+  "hazards_hit": 869,
   "hazards_blocked": 0,
-  "door_attempts": 6,
-  "door_successes": 0,
+  "door_attempts": 10,
+  "door_successes": 6,
   "causal_learned": 9,
   "level_completed_count": 5,
-  "next_level_door_attempts": 0,
+  "next_level_door_attempts": 2,
   "next_level_door_successes": 5,
-  "next_level_door_fails_no_key": 0,
-  "optional_rooms_entered": 398,
-  "treasure_rooms_entered": 398,
-  "episodes_without_progress": 174,
-  "last_updated": "2026-06-18T09:14:12.278111"
+  "next_level_door_fails_no_key": 2,
+  "optional_rooms_entered": 737,
+  "treasure_rooms_entered": 737,
+  "episodes_without_progress": 45,
+  "last_updated": "2026-06-18T10:55:48.461263"
 }

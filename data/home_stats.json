@@ -1,7 +1,7 @@
 {
-  "total_episodes": 10720,
+  "total_episodes": 12160,
   "episodes_at_home": 1662,
-  "episodes_away": 9058,
+  "episodes_away": 10498,
   "total_returns": 3622,
-  "return_home_rate": 0.155
+  "return_home_rate": 0.137
 }
