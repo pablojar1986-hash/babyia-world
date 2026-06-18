@@ -2,89 +2,89 @@
   {
     "cause": "fire_zone",
     "effect": "energy_damage",
-    "successes": 5358,
+    "successes": 11633,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 30
+    "last_episode": 469
   },
   {
     "cause": "mud",
     "effect": "reduce_speed",
-    "successes": 487,
+    "successes": 1142,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 18
+    "last_episode": 16
   },
   {
     "cause": "spikes",
     "effect": "energy_damage",
-    "successes": 1317,
+    "successes": 2979,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 27
+    "last_episode": 10
   },
   {
     "cause": "speed_boots",
     "effect": "increase_speed",
-    "successes": 2334,
+    "successes": 4314,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 30
+    "last_episode": 470
   },
   {
     "cause": "growth_crystal",
     "effect": "increase_size",
-    "successes": 4502,
+    "successes": 6304,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 26
+    "last_episode": 469
   },
   {
     "cause": "energy_food",
     "effect": "energy_restore",
-    "successes": 77,
+    "successes": 244,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 30
+    "last_episode": 59
   },
   {
     "cause": "small_door",
     "effect": "blocked",
     "successes": 0,
-    "failures": 1501,
+    "failures": 2546,
     "confidence": 0.0,
-    "last_episode": 5
+    "last_episode": 2
   },
   {
     "cause": "shield_orb",
     "effect": "add_shield",
-    "successes": 2387,
+    "successes": 2557,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 4
+    "last_episode": 16
   },
   {
     "cause": "heavy_door",
     "effect": "opened",
-    "successes": 280181,
+    "successes": 280772,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 70
+    "last_episode": 802
   },
   {
     "cause": "small_door",
     "effect": "opened",
-    "successes": 94,
+    "successes": 6059,
     "failures": 0,
     "confidence": 1.0,
-    "last_episode": 755
+    "last_episode": 301
   },
   {
     "cause": "heavy_door",
     "effect": "blocked",
     "successes": 0,
-    "failures": 6658,
+    "failures": 8216,
     "confidence": 0.0,
-    "last_episode": 9
+    "last_episode": 16
   }
 ]

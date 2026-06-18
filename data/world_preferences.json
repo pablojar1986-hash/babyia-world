@@ -1,23 +1,30 @@
 {
   "home": {
-    "visits": 28,
+    "visits": 459,
     "average_reward": 0.0,
-    "average_risk": 0.893,
+    "average_risk": 0.967,
     "return_home_rate": 1.0,
-    "preference_score": 1.429
+    "preference_score": 1.131
   },
   "food_world": {
     "visits": 1,
     "average_reward": 0.0,
     "average_risk": 1.0,
     "return_home_rate": 0.0,
-    "preference_score": -6.45
+    "preference_score": -5.35
   },
   "danger_world": {
-    "visits": 1,
+    "visits": 2,
     "average_reward": 0.0,
-    "average_risk": 1.0,
+    "average_risk": 0.5,
     "return_home_rate": 0.0,
-    "preference_score": -12.95
+    "preference_score": -4.575
+  },
+  "curiosity_world": {
+    "visits": 8,
+    "average_reward": 0.0,
+    "average_risk": 0.875,
+    "return_home_rate": 0.0,
+    "preference_score": -6.419
   }
 }

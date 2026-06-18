@@ -8,75 +8,14 @@ import pygame
 from config import APP_VERSION
 from interface.avatar_renderer import AvatarRenderer
 from interface.camera import Camera
+from interface.grid_renderer import (
+    draw_camera_world,
+    draw_full_world,
+    draw_view_info,
+)
 from interface.layout import WINDOW_W, WINDOW_H, GRID_AREA, LOG_AREA, CELL_SIZE
 from interface.panel_renderer import PanelRenderer
 from interface.ui_components import BG, LOG_BG, TEXT_DIM, ACCENT, divider
-from world.objects import Cell
-
-# ── Colores específicos del grid ───────────────────────────────────────────────
-_EMPTY = (42, 44, 56)
-_VISIT = (55, 80, 130)
-_WALL = (90, 90, 100)
-_GOAL = (50, 200, 90)
-_KEY = (255, 220, 80)
-_DOOR_C = (160, 80, 40)
-_DOOR_O = (100, 160, 80)
-_FOOD = (80, 200, 120)
-_DANGER = (200, 60, 60)
-_UNKNWN = (140, 80, 200)
-_POWERUP = (60, 200, 240)  # 0.4.2: cian
-_HAZARD = (240, 110, 30)  # 0.4.2: naranja
-_SPDOOR = (180, 90, 200)  # 0.4.2: violeta
-_LVLDOOR = (255, 200, 0)  # 0.4.3: dorado — puerta de progreso
-_OPTDOOR = (50, 220, 180)  # 0.4.3: turquesa — puerta opcional
-
-PORTAL_COLORS = {
-    (7, 2): (50, 130, 220),
-    (7, 4): (210, 50, 50),
-    (7, 6): (50, 200, 80),
-    (6, 7): (255, 200, 0),
-    (0, 0): (200, 200, 255),
-}
-
-CELL_COLORS = {
-    int(Cell.WALL): _WALL,
-    int(Cell.GOAL): _GOAL,
-    int(Cell.KEY): _KEY,
-    int(Cell.DOOR_CLOSED): _DOOR_C,
-    int(Cell.DOOR_OPEN): _DOOR_O,
-    int(Cell.FOOD): _FOOD,
-    int(Cell.DANGER): _DANGER,
-    int(Cell.UNKNOWN_OBJECT): _UNKNWN,
-    int(Cell.POWERUP): _POWERUP,  # 0.4.2
-    int(Cell.HAZARD): _HAZARD,  # 0.4.2
-    int(Cell.SPECIAL_DOOR): _SPDOOR,  # 0.4.2
-    int(Cell.LEVEL_DOOR): _LVLDOOR,  # 0.4.3: dorado
-    int(Cell.OPTIONAL_DOOR): _OPTDOOR,  # 0.4.3: turquesa
-}
-
-CELL_LABELS = {
-    Cell.GOAL: ("META", (10, 40, 20)),
-    Cell.KEY: ("K", (80, 60, 10)),
-    Cell.DOOR_CLOSED: ("D", (60, 30, 10)),
-    Cell.DOOR_OPEN: ("O", (30, 60, 20)),
-    Cell.FOOD: ("F", (20, 60, 30)),
-    Cell.DANGER: ("X", (80, 20, 20)),
-    Cell.UNKNOWN_OBJECT: ("?", (50, 20, 80)),
-    Cell.POWERUP: ("+", (10, 70, 90)),  # 0.4.2
-    Cell.HAZARD: ("!", (90, 30, 10)),  # 0.4.2
-    Cell.SPECIAL_DOOR: ("S", (60, 20, 70)),  # 0.4.2
-    Cell.LEVEL_DOOR: ("N", (80, 60, 0)),  # 0.4.3: Nivel
-    Cell.OPTIONAL_DOOR: ("O", (10, 70, 60)),  # 0.4.3: Opcional
-}
-
-_LEGEND = [
-    ("P", "Portal"),
-    ("F", "Comida"),
-    ("X", "Peligro"),
-    ("K", "Llave"),
-    ("D", "Puerta"),
-    ("?", "Desc."),
-]
 
 
 class PygameView:
@@ -95,6 +34,7 @@ class PygameView:
         self.panels = PanelRenderer()
         self.panels.set_fonts(self.fonts)
         self._cam = Camera()
+        self.view_mode: str = "full"
         self.running = True
 
     # ── Bucle principal ───────────────────────────────────────────────────────
@@ -106,6 +46,10 @@ class PygameView:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
+                elif event.key == pygame.K_f:
+                    self.view_mode = "full"
+                elif event.key in (pygame.K_c, pygame.K_z, pygame.K_v):
+                    self.view_mode = "camera"
                 else:
                     self.panels.handle_key(event.key, pygame.key.get_mods())
         return self.running
@@ -125,55 +69,25 @@ class PygameView:
     # ── Grid ──────────────────────────────────────────────────────────────────
 
     def _draw_grid(self, world, status: dict):
-        grid = world.get_grid()
-        visited = world.visited
-        bx, by = world.baby_pos
-        ox, oy = GRID_AREA[0], GRID_AREA[1]
-        gs = CELL_SIZE
         world_size = getattr(world, "size", 8)
-
-        # Actualizar cámara según posición de BabyIA y tamaño del mundo
-        self._cam.update((bx, by), grid_size=world_size)
-        mn_x, mn_y, mx_x, mx_y = self._cam.get_visible_bounds()
-
-        for wy in range(mn_y, mx_y):
-            for wx in range(mn_x, mx_x):
-                sx, sy = self._cam.world_to_screen(wx, wy, gs, ox, oy)
-                rect = pygame.Rect(sx, sy, gs - 2, gs - 2)
-                val = grid[wy][wx]
-
-                portal_c = PORTAL_COLORS.get((wx, wy))
-                base_color = CELL_COLORS.get(
-                    val, _VISIT if (wx, wy) in visited else _EMPTY
-                )
-                pygame.draw.rect(self.screen, base_color, rect, border_radius=4)
-
-                if portal_c:
-                    pygame.draw.rect(
-                        self.screen, portal_c, rect, width=3, border_radius=4
-                    )
-                    p = self.fonts["xs"].render("P", True, portal_c)
-                    self.screen.blit(p, (sx + gs // 2 - 4, sy + 3))
-
-                cell_e = Cell(val) if val in [c.value for c in Cell] else None
-                if cell_e and cell_e in CELL_LABELS:
-                    lbl_txt, lbl_clr = CELL_LABELS[cell_e]
-                    lbl = self.fonts["xs"].render(lbl_txt, True, lbl_clr)
-                    self.screen.blit(lbl, (sx + gs // 2 - 6, sy + gs // 2 - 6))
-
-        # Avatar — posición calculada con cámara, nunca fuera del viewport
-        av_sx, av_sy = self._cam.world_to_screen(bx, by, gs, ox, oy)
-        av_cx = av_sx + gs // 2
-        av_cy = av_sy + gs // 2
-        self.avatar.draw(
-            self.screen,
-            av_cx,
-            av_cy,
-            gs,
-            status.get("level", 0),
-            status.get("emotions", {}),
-            status.get("body_state", {}),
-            mission_goal=status.get("mission", {}).get("current_goal", ""),
+        if self.view_mode == "full":
+            cs = draw_full_world(
+                self.screen, world, status, self.fonts, self.avatar, GRID_AREA
+            )
+        else:
+            cs = CELL_SIZE
+            draw_camera_world(
+                self.screen,
+                world,
+                status,
+                self.fonts,
+                self.avatar,
+                self._cam,
+                GRID_AREA,
+                CELL_SIZE,
+            )
+        draw_view_info(
+            self.screen, self.fonts, GRID_AREA, self.view_mode, world_size, cs
         )
 
     def _draw_world_border(self, status: dict):

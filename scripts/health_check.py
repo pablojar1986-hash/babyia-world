@@ -143,6 +143,11 @@ REQUIRED_TESTS = [
     "tests/test_model_versioning_047.py",
     "tests/test_agents_rules.py",
     "tests/test_health_check_047.py",
+    # 0.4.6c
+    "tests/test_grid_scaler.py",
+    "tests/test_full_world_view.py",
+    "tests/test_view_mode_toggle.py",
+    "tests/test_grid_renderer.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -1530,6 +1535,113 @@ def check_047_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_046c_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica integridad de BabyIA 0.4.6c (vista completa escalable del mundo)."""
+    results = []
+
+    # 1. interface/grid_scaler.py existe
+    gs_path = root / "interface" / "grid_scaler.py"
+    results.append(
+        {
+            "status": "ok" if gs_path.exists() else "fail",
+            "message": "interface/grid_scaler.py "
+            + ("existe" if gs_path.exists() else "FALTA"),
+        }
+    )
+
+    # 2. interface/grid_renderer.py existe
+    gr_path = root / "interface" / "grid_renderer.py"
+    results.append(
+        {
+            "status": "ok" if gr_path.exists() else "fail",
+            "message": "interface/grid_renderer.py "
+            + ("existe" if gr_path.exists() else "FALTA"),
+        }
+    )
+
+    # 3. pygame_view.py usa view_mode="full" por defecto
+    try:
+        pv_text = (root / "interface" / "pygame_view.py").read_text(encoding="utf-8")
+        if 'self.view_mode = "full"' in pv_text or "self.view_mode = 'full'" in pv_text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "pygame_view.py: view_mode='full' por defecto",
+                }
+            )
+        else:
+            results.append(
+                {"status": "fail", "message": "pygame_view.py: falta view_mode='full'"}
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar pygame_view: {e}"}
+        )
+
+    # 4. 16x16 cabe en GRID_AREA con cell_size >= 28
+    try:
+        import sys as _sys
+
+        _sys.path.insert(0, str(root))
+        from interface.grid_scaler import get_scaled_cell_size
+        from interface.layout import GRID_AREA
+
+        cs = get_scaled_cell_size(GRID_AREA, 16)
+        if cs >= 28:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": f"16x16 en GRID_AREA: cell_size={cs}px >= 28",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": f"16x16: cell_size={cs}px < 28 (ilegible)",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar cell_size 16x16: {e}"}
+        )
+
+    # 5. grid_scaler.py y grid_renderer.py <= 300 lineas
+    for fname in ["interface/grid_scaler.py", "interface/grid_renderer.py"]:
+        try:
+            lines = len((root / fname).read_text(encoding="utf-8").splitlines())
+            if lines <= 300:
+                results.append(
+                    {"status": "ok", "message": f"{fname}: {lines} lineas (<= 300)"}
+                )
+            else:
+                results.append(
+                    {"status": "fail", "message": f"{fname}: {lines} lineas (> 300)"}
+                )
+        except Exception as e:
+            results.append(
+                {"status": "warn", "message": f"No se pudo verificar {fname}: {e}"}
+            )
+
+    # 6. Tests nuevos de 0.4.6c presentes
+    new_tests = [
+        "tests/test_grid_scaler.py",
+        "tests/test_full_world_view.py",
+        "tests/test_view_mode_toggle.py",
+        "tests/test_grid_renderer.py",
+    ]
+    for t in new_tests:
+        exists = (root / t).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{t} {'existe' if exists else 'FALTA (0.4.6c)'}",
+            }
+        )
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -1550,6 +1662,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_046_integrity(root))  # 0.4.6
     checks.extend(check_046b_integrity(root))  # 0.4.6b
     checks.extend(check_047_integrity(root))  # 0.4.7
+    checks.extend(check_046c_integrity(root))  # 0.4.6c
     return checks
 
 

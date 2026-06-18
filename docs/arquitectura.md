@@ -57,7 +57,10 @@ BabyIA World/
 |   `-- world_manager.py    <- Detecta portales, gestiona transiciones, genera features DQN.
 │
 ├── interface/           ← Solo visualización. Sin lógica de entrenamiento.
-│   ├── pygame_view.py      ← Coordinador: ventana, grid, log inferior (0.4.1).
+│   ├── pygame_view.py      ← Coordinador: ventana, view_mode full/camera, log inferior (0.4.6c).
+│   ├── grid_renderer.py    ← Dibuja el grid en modo full y camera; CELL_COLORS/LABELS (0.4.6c).
+│   ├── grid_scaler.py      ← Funciones puras de escala (sin pygame); importable en tests (0.4.6c).
+│   ├── camera.py           ← Viewport 8x8 que sigue a BabyIA; world_to_screen (0.4.5).
 │   ├── layout.py           ← Constantes de geometria: areas, tamanios, pestanas (0.4.1).
 │   ├── ui_components.py    ← Paleta de colores y primitivas de dibujo (0.4.1).
 │   ├── panel_renderer.py   ← Sistema de 7 pestanas con scroll y navegacion (0.4.5).

@@ -1,7 +1,13 @@
-# BabyIA World 0.4.7
+# BabyIA World 0.4.7 (0.4.6c)
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
+> **0.4.6c — Vista completa escalable del mundo.**
+> `interface/grid_renderer.py` + `interface/grid_scaler.py`: el mundo se escala para caber entero en pantalla.
+> Tecla **F** activa vista completa (default); **C/Z/V** activa viewport de camara clasico.
+> Fog of war: celdas no visitadas se oscurecen. Etiquetas adaptativas segun tamano de celda.
+> 16×16 (nivel max) cabe en 464×464px con cell_size=29px — cada celda sigue siendo legible.
+>
 > **0.4.7 — Estabilizacion, limpieza tecnica y coherencia documental.**
 > Documentacion alineada con 0.4.6 real: STATE_SIZE=40, DQN 40→128→64→5.
 > Modelos renombrados a `babyia_v0_4_6_latest.pt` para reflejar la arquitectura actual.

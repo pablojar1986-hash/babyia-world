@@ -31,10 +31,12 @@ class TestPygameUsesWorldSizeOrCamera:
         assert "world_size" in src or "world.size" in src
 
     def test_pygame_view_uses_camera_update(self):
-        from interface import pygame_view
+        """0.4.6c: la logica de camera.update se delega a draw_camera_world."""
+        import inspect
+        from interface import grid_renderer
 
-        src = inspect.getsource(pygame_view.PygameView._draw_grid)
-        assert "_cam.update" in src
+        src = inspect.getsource(grid_renderer.draw_camera_world)
+        assert "camera.update" in src or ".update(" in src
 
     def test_pygame_view_has_cam_attribute(self):
         from interface import pygame_view
@@ -43,18 +45,23 @@ class TestPygameUsesWorldSizeOrCamera:
         assert "_cam" in src and "Camera" in src
 
     def test_pygame_view_uses_world_to_screen_for_avatar(self):
-        from interface import pygame_view
+        """0.4.6c: world_to_screen vive en draw_camera_world de grid_renderer."""
+        import inspect
+        from interface import grid_renderer
 
-        src = inspect.getsource(pygame_view.PygameView._draw_grid)
+        src = inspect.getsource(grid_renderer.draw_camera_world)
         assert "world_to_screen" in src
 
     def test_pygame_view_no_bx_times_CELL_SIZE_direct(self):
         """Avatar no debe calcularse con bx * gs directamente (sin cámara)."""
-        from interface import pygame_view
+        import inspect
+        from interface import grid_renderer
 
-        src = inspect.getsource(pygame_view.PygameView._draw_grid)
-        # La posición del avatar debe venir de world_to_screen, no de bx * gs
-        assert "av_sx, av_sy = self._cam.world_to_screen" in src
+        src = inspect.getsource(grid_renderer.draw_camera_world)
+        # La posicion del avatar debe venir de camera.world_to_screen
+        assert "world_to_screen" in src
+        assert "bx * cell_size" not in src
+        assert "by * cell_size" not in src
 
 
 class TestAvatarPositionUsesCamera:

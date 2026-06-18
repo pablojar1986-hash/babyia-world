@@ -220,6 +220,16 @@
 - 4 nuevos archivos de test; APP_VERSION=0.4.7
 - Sin nuevas funciones jugables — version de consolidacion
 
+### 0.4.6c — Vista completa escalable del mundo (completado)
+- interface/grid_scaler.py: funciones puras para escalar cell_size al mundo completo (sin pygame)
+- interface/grid_renderer.py: draw_full_world / draw_camera_world / draw_view_info
+- Colores CELL_COLORS/CELL_LABELS/PORTAL_COLORS movidos de pygame_view a grid_renderer
+- PygameView.view_mode="full" por defecto; teclas F (full) / C/Z/V (camara)
+- Fog of war: celdas no visitadas se oscurecen en modo full (world.visited)
+- Etiquetas adaptativas: >=40px full, >=28px compacto, <28px solo color
+- 16x16 cabe en GRID_AREA 464x464px con cell_size=29px (> umbral minimo 28px)
+- 4 nuevos archivos de test (59 tests adicionales); 1091 tests pasando
+
 ### 0.5.0 — Lenguaje simple por plantillas
 - Frases generadas por plantillas mas ricas
 - Vocabulario basico de navegacion y objetos
