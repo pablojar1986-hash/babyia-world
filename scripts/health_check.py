@@ -128,6 +128,10 @@ REQUIRED_TESTS = [
     "tests/test_strategy_progress.py",
     "tests/test_mission_ui_payload.py",
     "tests/test_visual_theme.py",
+    # 0.4.6
+    "tests/test_double_dqn.py",
+    "tests/test_per.py",
+    "tests/test_perception_in_state.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -1083,6 +1087,139 @@ def check_045b_integrity(root: Path = ROOT) -> list[dict]:
     return results
 
 
+def check_046_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica integridad de BabyIA 0.4.6 (Double DQN, PER, percepcion en estado)."""
+    results = []
+    import sys as _sys
+
+    _sys.path.insert(0, str(root))
+
+    # 1. STATE_SIZE == 40
+    try:
+        from brain.baby_brain import STATE_SIZE
+
+        if STATE_SIZE == 40:
+            results.append(
+                {"status": "ok", "message": f"STATE_SIZE={STATE_SIZE} (40 features)"}
+            )
+        else:
+            results.append(
+                {"status": "fail", "message": f"STATE_SIZE={STATE_SIZE} (esperado 40)"}
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar STATE_SIZE: {e}"}
+        )
+
+    # 2. Double DQN en baby_brain.py
+    try:
+        bb_path = root / "brain" / "baby_brain.py"
+        text = bb_path.read_text(encoding="utf-8")
+        if "q_net(ns).argmax" in text and "target_net(ns).gather" in text:
+            results.append(
+                {"status": "ok", "message": "baby_brain.py: Double DQN implementado"}
+            )
+        else:
+            results.append(
+                {"status": "fail", "message": "baby_brain.py: Double DQN no detectado"}
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar Double DQN: {e}"}
+        )
+
+    # 3. Prioritized Experience Replay en baby_brain.py
+    try:
+        bb_path = root / "brain" / "baby_brain.py"
+        text = bb_path.read_text(encoding="utf-8")
+        if "_SumTree" in text and "_PrioritizedReplayBuffer" in text:
+            results.append(
+                {"status": "ok", "message": "baby_brain.py: PER implementado"}
+            )
+        else:
+            results.append(
+                {"status": "fail", "message": "baby_brain.py: PER no detectado"}
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo verificar PER: {e}"})
+
+    # 4. Percepcion en _full_obs
+    try:
+        import inspect
+        from brain.trainer import Trainer
+
+        src = inspect.getsource(Trainer._full_obs)
+        if "perc_feats" in src and "key_visible" in src and "exploration_ratio" in src:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "Trainer._full_obs: percepcion en estado DQN",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "Trainer._full_obs: faltan features de percepcion",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar _full_obs: {e}"}
+        )
+
+    # 5. REPLAY_CAPACITY >= 50000
+    try:
+        from brain.baby_brain import REPLAY_CAPACITY
+
+        if REPLAY_CAPACITY >= 50_000:
+            results.append(
+                {"status": "ok", "message": f"REPLAY_CAPACITY={REPLAY_CAPACITY}"}
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": f"REPLAY_CAPACITY={REPLAY_CAPACITY} (esperado >=50000)",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar REPLAY_CAPACITY: {e}"}
+        )
+
+    # 6. Tests nuevos de 0.4.6 presentes
+    new_tests = [
+        "tests/test_double_dqn.py",
+        "tests/test_per.py",
+        "tests/test_perception_in_state.py",
+    ]
+    for t in new_tests:
+        exists = (root / t).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{t} {'existe' if exists else 'FALTA (0.4.6)'}",
+            }
+        )
+
+    # 7. README menciona version 0.4.6
+    try:
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        if "0.4.6" in readme:
+            results.append(
+                {"status": "ok", "message": "README.md menciona version 0.4.6"}
+            )
+        else:
+            results.append(
+                {"status": "warn", "message": "README.md no menciona version 0.4.6"}
+            )
+    except Exception as e:
+        results.append({"status": "warn", "message": f"No se pudo leer README: {e}"})
+
+    return results
+
+
 def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks = []
     checks.extend(check_structure(root))
@@ -1100,6 +1237,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_044_integrity(root))  # 0.4.4
     checks.extend(check_045_integrity(root))  # 0.4.5
     checks.extend(check_045b_integrity(root))  # 0.4.5b
+    checks.extend(check_046_integrity(root))  # 0.4.6
     return checks
 
 

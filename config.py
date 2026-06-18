@@ -37,7 +37,7 @@ SAVE_METRICS_EVERY = 10  # episodios entre guardados de training_stats.json
 CHECKPOINT_EVERY = 100  # episodios entre checkpoints numerados
 
 # ── Versión de la aplicación ──────────────────────────────────────────────────
-APP_VERSION = "0.4.5"
+APP_VERSION = "0.4.6"
 
 # ── Modos de ejecución ─────────────────────────────────────────────────────────
 MODE_TRAIN = "train"

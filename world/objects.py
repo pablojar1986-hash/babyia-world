@@ -35,6 +35,6 @@ ACTION_NAMES = {
 }
 
 GRID_SIZE = 8
-# 0.4: ampliado a 34 (10 base + 8 inventario/objetos + 8 contexto-mundo + 8 estado-corporal)
-STATE_SIZE = 34
+# 0.4.6: ampliado a 40 (10 base + 8 extra + 8 mundo + 8 cuerpo + 6 percepcion)
+STATE_SIZE = 40
 ACTION_SIZE = 5

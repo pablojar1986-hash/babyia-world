@@ -444,7 +444,7 @@ class Trainer:
     def _full_obs(self, base_obs: np.ndarray) -> np.ndarray:
         """
         Vector de observacion completo para el DQN.
-        10 base + 8 inventario/objetos + 8 contexto-mundo + 8 estado-corporal = 34
+        10 base + 8 extra + 8 mundo + 8 cuerpo + 6 percepcion = 40
         """
         inv = self.inventory
         world = self.world
@@ -479,7 +479,22 @@ class Trainer:
         hz_near = 1.0 if self.world.get_nearby_hazard() else 0.0
         sd_near = 1.0 if self.world.get_nearby_special_door() else 0.0
         body_feats = self.body_state.get_state_features(pu_near, hz_near, sd_near)
-        return np.concatenate([base_obs, extra, world_feats, body_feats])
+        # 0.4.6: 6 features de percepcion (indices 34-39)
+        dc = self._current_decision_context
+        perc = self._last_perception or {}
+        exploration_ratio = self._visual_memory.exploration_ratio(world.size)
+        perc_feats = np.array(
+            [
+                float(dc.get("key_visible", False)),  # 34
+                float(dc.get("progress_door_visible", False)),  # 35
+                float(dc.get("visible_hazards_count", 0)) / 5.0,  # 36
+                float(perc.get("blocked_count", 0)) / 4.0,  # 37
+                float(exploration_ratio),  # 38
+                float(dc.get("visible_rewards_count", 0)) / 5.0,  # 39
+            ],
+            dtype=np.float32,
+        )
+        return np.concatenate([base_obs, extra, world_feats, body_feats, perc_feats])
 
     def _apply_interactions(self, info: dict) -> float:
         """

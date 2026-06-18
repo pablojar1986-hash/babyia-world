@@ -1,7 +1,13 @@
-# BabyIA World 0.4.5
+# BabyIA World 0.4.6
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
+> **0.4.6 mejora el algoritmo central de aprendizaje.**
+> Double DQN elimina la sobreestimacion de Q-values usando redes separadas para seleccionar y evaluar acciones.
+> Prioritized Experience Replay muestrea experiencias por error TD — aprende mas de las sorpresas.
+> El vector de estado DQN crece de 34 a 40 features incluyendo percepcion (key_visible, door_visible, exploration_ratio).
+> REPLAY_CAPACITY aumenta a 50.000 y EPSILON_DECAY se ralentiza a 0.998 para grids grandes.
+>
 > **0.4.5 introduce mundo escalable (8x8 a 16x16), camara viewport y percepcion funcional real.**
 > BabyIA ahora "ve" objetos cercanos con campo visual real — las paredes bloquean la vision (FOV).
 > El rango de vision viene de `body_state.vision_range` (modificable por powerups).

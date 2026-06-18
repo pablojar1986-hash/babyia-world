@@ -14,8 +14,8 @@ def test_reset_returns_10_features():
 
 
 def test_state_size_constant():
-    # 0.4.3: STATE_SIZE corregido de 18 a 34 (valor real del DQN)
-    assert STATE_SIZE == 34
+    # 0.4.6: STATE_SIZE ampliado a 40 (incluye 6 features de percepcion)
+    assert STATE_SIZE == 40
 
 
 # ── Puerta cerrada sin llave ──────────────────────────────────────────────────
