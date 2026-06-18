@@ -1,7 +1,15 @@
-# BabyIA World 0.4.6
+# BabyIA World 0.4.6b
 
 Una IA que nace desde cero, aprende por experiencia y evoluciona por etapas.
 
+> **0.4.6b — Diagnostico de rutas y anti-estancamiento real.**
+> `check_path_to_key_and_door()` usa BFS para verificar si existe ruta accesible baby→llave y llave→puerta.
+> VisualMemory registra colisiones repetidas, entradas repetidas a hazards y frecuencia de visita por celda.
+> `stuck_zone_hint` identifica la zona de maximo estancamiento del episodio.
+> MissionReward aplica `WALL_REPEAT_PENALTY`, `HAZARD_REPEAT_PENALTY` y `OSCILLATION_PENALTY`.
+> El cap `MAX_MISSION_REWARD_PER_EPISODE=8.0` evita que el shaping de mision domine la politica.
+> La UI (pestana Mision) muestra el estado de las rutas BFS en tiempo real.
+>
 > **0.4.6 mejora el algoritmo central de aprendizaje.**
 > Double DQN elimina la sobreestimacion de Q-values usando redes separadas para seleccionar y evaluar acciones.
 > Prioritized Experience Replay muestrea experiencias por error TD — aprende mas de las sorpresas.

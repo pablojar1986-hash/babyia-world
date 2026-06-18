@@ -31,6 +31,7 @@ from world.interactions import (
     interact_unknown,
 )
 from world.inventory import Inventory
+from world.path_diagnostics import check_path_to_key_and_door
 from worlds.world_manager import WorldManager
 
 SAVE_EVERY = 10  # episodios entre guardados de memoria
@@ -82,6 +83,8 @@ class Trainer:
         self._visual_memory = VisualMemory()
         self._last_perception: dict = {}
         self._last_semantic: list = []
+        # 0.4.6b — diagnostico de ruta (calculado una vez por episodio/nivel)
+        self._path_diagnostics: dict = {}
 
         # 0.4.1 — diagnóstico de red neuronal (actualizado cada 5 pasos)
         self._last_brain_debug: dict = {}
@@ -153,6 +156,8 @@ class Trainer:
         self.utility.reset_episode()
         base_obs = self.world.reset()
         self._current_state = self._full_obs(base_obs)
+        # 0.4.6b: diagnostico de ruta al inicio del episodio
+        self._path_diagnostics = check_path_to_key_and_door(self.world)
         # Construir contexto inicial para que get_status() sea valido antes del primer step
         self._current_decision_context = self._dec_ctx_builder.build(
             self.world,
@@ -178,6 +183,16 @@ class Trainer:
         # Aplicar interacciones de objetos y calcular delta de recompensa
         obj_delta = self._apply_interactions(info)
 
+        # 0.4.6b: registrar colisiones y hazards repetidos en VisualMemory
+        if info["hit_wall"]:
+            info["repeated_wall"] = self._visual_memory.register_collision(
+                tuple(self.world.baby_pos)
+            )
+        if info.get("hit_hazard"):
+            info["repeated_hazard"] = self._visual_memory.register_hazard(
+                tuple(self.world.baby_pos)
+            )
+
         # 0.3: recompensa del mundo actual y transiciones de portal
         w_delta, w_events = self.world_manager.process_step(
             self.world.baby_pos, self.self_model.level
@@ -199,6 +214,7 @@ class Trainer:
             self._last_perception, self.causal_memory, self._current_mission
         )
         self._visual_memory.update(self._last_perception, tuple(self.world.baby_pos))
+        self._visual_memory.register_visit(tuple(self.world.baby_pos))
 
         # 0.4.4: mision y reward shaping (pequeno, no dominante)
         self._current_mission = self.mission_tracker.compute(
@@ -229,7 +245,10 @@ class Trainer:
         self._current_decision_context = curr_context
         if prev_context:
             mission_delta = self.mission_reward_tracker.compute(
-                prev_context, curr_context, info
+                prev_context,
+                curr_context,
+                info,
+                baby_pos=tuple(self.world.baby_pos),
             )
             reward += mission_delta
 
@@ -321,6 +340,7 @@ class Trainer:
             self.world.set_walls(maze["walls"])
             self._maze_info = maze
             save_level_stats(maze)
+            self._path_diagnostics = check_path_to_key_and_door(self.world)
 
         # 0.3 — registrar visita y actualizar preferencias
         ep_sum = self.world_manager.get_episode_summary()
@@ -437,6 +457,8 @@ class Trainer:
             "grid_size": self.world.size,
             "key_pos": list(self.world.key_pos),
             "progress_door_pos": list(self.world.progress_door_pos),
+            # 0.4.6b
+            "path_diagnostics": dict(self._path_diagnostics),
         }
 
     # ── Internos ──────────────────────────────────────────────────────────────

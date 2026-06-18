@@ -132,6 +132,12 @@ REQUIRED_TESTS = [
     "tests/test_double_dqn.py",
     "tests/test_per.py",
     "tests/test_perception_in_state.py",
+    # 0.4.6b
+    "tests/test_path_diagnostics.py",
+    "tests/test_visual_memory_stagnation.py",
+    "tests/test_mission_reward_anti_loop.py",
+    "tests/test_version_consistency.py",
+    "tests/test_stagnation_status_payload.py",
 ]
 NETWORK_IMPORTS = ["requests", "urllib.request", "httpx", "aiohttp", "socket"]
 MAX_LINES = 300
@@ -1188,7 +1194,33 @@ def check_046_integrity(root: Path = ROOT) -> list[dict]:
             {"status": "warn", "message": f"No se pudo verificar REPLAY_CAPACITY: {e}"}
         )
 
-    # 6. Tests nuevos de 0.4.6 presentes
+    # 6. STATE_SIZE sincronizado en objects.py
+    try:
+        from world.objects import STATE_SIZE as OBJECTS_STATE_SIZE
+
+        if OBJECTS_STATE_SIZE == 40:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": f"world/objects.py STATE_SIZE={OBJECTS_STATE_SIZE}",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": f"world/objects.py STATE_SIZE={OBJECTS_STATE_SIZE} (esperado 40)",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {
+                "status": "warn",
+                "message": f"No se pudo verificar objects STATE_SIZE: {e}",
+            }
+        )
+
+    # 7. Tests nuevos de 0.4.6 presentes
     new_tests = [
         "tests/test_double_dqn.py",
         "tests/test_per.py",
@@ -1203,7 +1235,7 @@ def check_046_integrity(root: Path = ROOT) -> list[dict]:
             }
         )
 
-    # 7. README menciona version 0.4.6
+    # 8. README menciona version 0.4.6
     try:
         readme = (root / "README.md").read_text(encoding="utf-8")
         if "0.4.6" in readme:
@@ -1216,6 +1248,124 @@ def check_046_integrity(root: Path = ROOT) -> list[dict]:
             )
     except Exception as e:
         results.append({"status": "warn", "message": f"No se pudo leer README: {e}"})
+
+    return results
+
+
+def check_046b_integrity(root: Path = ROOT) -> list[dict]:
+    """Verifica integridad de BabyIA 0.4.6b (diagnostico de rutas, anti-estancamiento)."""
+    results = []
+
+    # 1. world/path_diagnostics.py existe y contiene check_path_to_key_and_door
+    try:
+        pd_path = root / "world" / "path_diagnostics.py"
+        if pd_path.exists():
+            text = pd_path.read_text(encoding="utf-8")
+            if "check_path_to_key_and_door" in text:
+                results.append(
+                    {
+                        "status": "ok",
+                        "message": "world/path_diagnostics.py: check_path implementado",
+                    }
+                )
+            else:
+                results.append(
+                    {
+                        "status": "fail",
+                        "message": "path_diagnostics.py: falta check_path_to_key_and_door",
+                    }
+                )
+        else:
+            results.append(
+                {"status": "fail", "message": "world/path_diagnostics.py FALTA"}
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar path_diagnostics: {e}"}
+        )
+
+    # 2. MissionReward tiene MAX_MISSION_REWARD_PER_EPISODE
+    try:
+        mr_path = root / "brain" / "mission_reward.py"
+        text = mr_path.read_text(encoding="utf-8")
+        if "MAX_MISSION_REWARD_PER_EPISODE" in text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "mission_reward.py: MAX_MISSION_REWARD_PER_EPISODE presente",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "mission_reward.py: falta MAX_MISSION_REWARD_PER_EPISODE",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar mission_reward: {e}"}
+        )
+
+    # 3. VisualMemory tiene repeated_collision_count
+    try:
+        vm_path = root / "brain" / "visual_memory.py"
+        text = vm_path.read_text(encoding="utf-8")
+        if "repeated_collision_count" in text:
+            results.append(
+                {
+                    "status": "ok",
+                    "message": "visual_memory.py: repeated_collision_count presente",
+                }
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "visual_memory.py: falta repeated_collision_count",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar visual_memory: {e}"}
+        )
+
+    # 4. path_diagnostics expuesto en get_status()
+    try:
+        tr_path = root / "brain" / "trainer.py"
+        text = tr_path.read_text(encoding="utf-8")
+        if "path_diagnostics" in text and "check_path_to_key_and_door" in text:
+            results.append(
+                {"status": "ok", "message": "trainer.py: path_diagnostics integrado"}
+            )
+        else:
+            results.append(
+                {
+                    "status": "fail",
+                    "message": "trainer.py: path_diagnostics no integrado",
+                }
+            )
+    except Exception as e:
+        results.append(
+            {"status": "warn", "message": f"No se pudo verificar trainer: {e}"}
+        )
+
+    # 5. Tests nuevos de 0.4.6b presentes
+    new_tests = [
+        "tests/test_path_diagnostics.py",
+        "tests/test_visual_memory_stagnation.py",
+        "tests/test_mission_reward_anti_loop.py",
+        "tests/test_version_consistency.py",
+        "tests/test_stagnation_status_payload.py",
+    ]
+    for t in new_tests:
+        exists = (root / t).exists()
+        results.append(
+            {
+                "status": "ok" if exists else "fail",
+                "message": f"{t} {'existe' if exists else 'FALTA (0.4.6b)'}",
+            }
+        )
 
     return results
 
@@ -1238,6 +1388,7 @@ def run_all_checks(root: Path = ROOT) -> list[dict]:
     checks.extend(check_045_integrity(root))  # 0.4.5
     checks.extend(check_045b_integrity(root))  # 0.4.5b
     checks.extend(check_046_integrity(root))  # 0.4.6
+    checks.extend(check_046b_integrity(root))  # 0.4.6b
     return checks
 
 

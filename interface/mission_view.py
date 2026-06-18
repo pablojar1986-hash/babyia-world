@@ -171,5 +171,68 @@ def render(surface: pygame.Surface, fonts: dict, area: tuple, status: dict):
     req = cur.get("required", 1)
     txt(surface, f"Completados:  {lc}/{req}", x, py, fonts["xs"], TEXT_DIM)
     py += 14
+    divider(surface, x, py, w - 4)
+    py += 10
+
+    # ── Diagnostico de rutas (0.4.6b) ─────────────────────────────────────────
+    txt(surface, "Diagnostico de rutas", x, py, fonts["sm"], ACCENT)
+    py += 18
+    pd = status.get("path_diagnostics", {})
+    if pd:
+        key_ok = pd.get("route_to_key_exists", False)
+        door_ok = pd.get("route_key_to_door_exists", False)
+        dk = pd.get("shortest_distance_to_key")
+        dd = pd.get("shortest_distance_key_to_door")
+        hazards_on = pd.get("hazards_on_route", 0)
+        walls_bl = pd.get("walls_blocking", 0)
+        vm = status.get("visual_memory", {})
+        stuck = vm.get("stuck_zone_hint")
+
+        key_c = (80, 220, 80) if key_ok else (220, 70, 70)
+        door_c = (80, 220, 80) if door_ok else (220, 70, 70)
+        txt(
+            surface,
+            f"Ruta a llave:  {'OK' if key_ok else 'BLOQUEADA'}",
+            x,
+            py,
+            fonts["xs"],
+            key_c,
+        )
+        py += 14
+        dk_str = str(dk) if dk is not None else "---"
+        txt(surface, f"  Dist. llave: {dk_str}", x, py, fonts["xs"], TEXT_DIM)
+        py += 14
+        txt(
+            surface,
+            f"Ruta lv→puerta: {'OK' if door_ok else 'BLOQUEADA'}",
+            x,
+            py,
+            fonts["xs"],
+            door_c,
+        )
+        py += 14
+        dd_str = str(dd) if dd is not None else "---"
+        txt(surface, f"  Dist. puerta: {dd_str}", x, py, fonts["xs"], TEXT_DIM)
+        py += 14
+        hz_c = (220, 130, 40) if hazards_on > 0 else TEXT_DIM
+        txt(surface, f"Hazards en ruta: {hazards_on}", x, py, fonts["xs"], hz_c)
+        py += 14
+        if walls_bl > 0:
+            txt(
+                surface,
+                f"Muros bloqueando: {walls_bl}",
+                x,
+                py,
+                fonts["xs"],
+                (220, 70, 70),
+            )
+            py += 14
+        if stuck:
+            stuck_c = (220, 130, 40)
+            txt(surface, f"Zona bloqueada: {stuck}", x, py, fonts["xs"], stuck_c)
+            py += 14
+    else:
+        txt(surface, "Sin datos", x, py, fonts["xs"], TEXT_DIM)
+        py += 14
 
     return py
