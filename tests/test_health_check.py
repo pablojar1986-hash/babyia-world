@@ -48,6 +48,27 @@ def test_no_selfmod_in_project():
     assert len(fails) == 0
 
 
+def test_selfmod_detects_builtin_eval(tmp_path):
+    (tmp_path / "bad.py").write_text("x = eval('1 + 1')\n", encoding="utf-8")
+    results = check_selfmod(tmp_path)
+    warns = [r for r in results if r["status"] == "warn"]
+    assert any("eval()" in r["message"] for r in warns)
+
+
+def test_selfmod_ignores_method_eval(tmp_path):
+    (tmp_path / "ok.py").write_text("model.eval()\n", encoding="utf-8")
+    results = check_selfmod(tmp_path)
+    warns = [r for r in results if r["status"] == "warn"]
+    assert warns == []
+
+
+def test_known_long_files_are_documented_debt():
+    results = check_file_lengths(ROOT)
+    warns = [r for r in results if r["status"] == "warn"]
+    assert warns == []
+    assert any("Deuda conocida" in r["message"] for r in results)
+
+
 def test_interface_is_pure():
     results = check_interface_purity(ROOT)
     warns = [r for r in results if r["status"] == "warn"]

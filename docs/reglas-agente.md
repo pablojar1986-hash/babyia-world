@@ -27,6 +27,7 @@ Estas reglas aplican cuando un agente de IA (Claude Code u otro) modifica este p
 ## Criterios de calidad mínima
 
 - `pytest tests` pasa sin fallos
-- `ruff check .` sin errores
+- `python scripts/health_check.py` termina sin errores
+- `ruff check .` sin errores si `ruff` esta instalado en el entorno de desarrollo
 - Ningún archivo nuevo supera 300 líneas sin justificación
 - La visualización Pygame sigue funcionando

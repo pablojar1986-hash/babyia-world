@@ -1,9 +1,7 @@
 from enum import IntEnum
 
-from config import (
-    ACTION_SIZE,
-    STATE_SIZE,
-)  # noqa: F401 — re-exportados para compatibilidad
+# Re-exportados para compatibilidad con imports historicos.
+from config import ACTION_SIZE, STATE_SIZE  # noqa: F401
 
 
 class Cell(IntEnum):

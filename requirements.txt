@@ -1,13 +1,6 @@
 numpy
-matplotlib
 pygame
 rich
 pytest
 pytest-cov
-black
-ruff
-gymnasium
 torch
-torchvision
-torchaudio
-stable-baselines3[extra]
